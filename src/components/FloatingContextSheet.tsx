@@ -1,0 +1,85 @@
+import { useEffect, type ReactNode } from 'react';
+import { XIcon } from '../icons/ApertureIcon.js';
+
+export interface FloatingContextSheetProps {
+  open: boolean;
+  title: string;
+  subtitle?: string;
+  badge?: string;
+  onClose?: () => void;
+  closeLabel?: string;
+  headerRight?: ReactNode;
+  footer?: ReactNode;
+  children: ReactNode;
+  className?: string;
+}
+
+/**
+ * Recessed monochrome bottom tray sliding cleanly above `FloatingComposer`
+ * inside `SidePanelShell` for local context ingestion queues or permission stacks.
+ */
+export function FloatingContextSheet({
+  open,
+  title,
+  subtitle,
+  badge,
+  onClose,
+  closeLabel = 'Close sheet',
+  headerRight,
+  footer,
+  children,
+  className,
+}: FloatingContextSheetProps) {
+  useEffect(() => {
+    if (!open || !onClose) return;
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        event.preventDefault();
+        onClose();
+      }
+    };
+    document.addEventListener('keydown', onKeyDown);
+    return () => document.removeEventListener('keydown', onKeyDown);
+  }, [open, onClose]);
+
+  if (!open) return null;
+
+  const sheetClass = ['yui-ctx-sheet', className].filter(Boolean).join(' ');
+
+  return (
+    <section
+      data-slot="floating-context-sheet"
+      role="dialog"
+      aria-label={title}
+      className={sheetClass}
+    >
+      <div className="yui-sheet-grabber-row" aria-hidden="true">
+        <span className="yui-sheet-grabber" />
+      </div>
+      <div className="yui-sheet-head">
+        <div className="yui-col-min">
+          <div className="yui-sheet-title-row">
+            <span className="yui-genui-title">{title}</span>
+            {badge ? <span className="yui-badge">{badge}</span> : null}
+          </div>
+          {subtitle ? <div className="yui-genui-muted">{subtitle}</div> : null}
+        </div>
+        <div className="yui-action-group">
+          {headerRight}
+          {onClose ? (
+            <button
+              type="button"
+              className="yui-icon-btn"
+              aria-label={closeLabel}
+              onClick={onClose}
+            >
+              <XIcon size={13} />
+            </button>
+          ) : null}
+        </div>
+      </div>
+      <div className="yui-sheet-body">{children}</div>
+      {footer ? <div className="yui-sheet-foot">{footer}</div> : null}
+    </section>
+  );
+}

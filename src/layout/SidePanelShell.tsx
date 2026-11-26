@@ -6,6 +6,7 @@ export interface SidePanelShellProps {
   notch?: ReactNode;
   veilOpen?: boolean;
   onVeilClick?: () => void;
+  sheet?: ReactNode;
   footer?: ReactNode;
   children?: ReactNode;
   className?: string;
@@ -13,8 +14,8 @@ export interface SidePanelShellProps {
 
 /**
  * Cotton Paper / Anodized Obsidian side-panel bezel wrapping a recessed stage,
- * sculpted top-center notch slot, optional focus veil, scrollable stream, and
- * floating bottom composer slot.
+ * sculpted top-center notch slot, optional focus veil, scrollable stream,
+ * floating context sheet slot, and floating bottom composer slot.
  */
 export function SidePanelShell({
   theme = 'system',
@@ -22,6 +23,7 @@ export function SidePanelShell({
   notch,
   veilOpen = false,
   onVeilClick,
+  sheet,
   footer,
   children,
   className,
@@ -43,6 +45,7 @@ export function SidePanelShell({
         />
         {notch}
         <div className="yui-scroll-stage">{children}</div>
+        {sheet ? <div className="yui-sheet-region">{sheet}</div> : null}
         {footer ? <div className="yui-composer-region">{footer}</div> : null}
       </div>
     </div>

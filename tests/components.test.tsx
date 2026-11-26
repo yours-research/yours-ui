@@ -11,8 +11,10 @@ import {
   EmptyState,
   ErrorRecoveryBanner,
   FloatingComposer,
+  FloatingContextSheet,
   FollowUpSuggestions,
   InlineCitationPill,
+  InlineCitationPopover,
   KbdHint,
   MessageSkeleton,
   ModelDownloadGate,
@@ -949,5 +951,142 @@ describe('@yours/ui chat & runtime primitives', () => {
     expect(cssSource).toContain('.yui-seg-btn.is-active');
     expect(cssSource).toContain('.yui-citation-pill');
     expect(cssSource).toContain('.yui-notch-opt-row');
+  });
+
+  it('drives WAAPI spring sliding thumb on SegmentedControl and renders FloatingContextSheet & InlineCitationPopover', async () => {
+    const animateSpy = vi.fn<
+      (
+        keyframes: Keyframe[] | PropertyIndexedKeyframes | null,
+        options?: number | KeyframeAnimationOptions,
+      ) => Animation
+    >(() => ({ cancel: vi.fn() }) as unknown as Animation);
+    Object.defineProperty(HTMLElement.prototype, 'animate', {
+      configurable: true,
+      writable: true,
+      value: animateSpy,
+    });
+
+    const onChangeSeg = vi.fn();
+    const onCloseSheet = vi.fn();
+    const onJumpSource = vi.fn();
+
+    let currentVal: 'max' | 'balanced' = 'max';
+    const el = renderNode(
+      <div>
+        <SegmentedControl
+          value={currentVal}
+          onChange={(v) => {
+            currentVal = v;
+            onChangeSeg(v);
+          }}
+          options={[
+            { value: 'max', label: 'Max' },
+            { value: 'balanced', label: 'Balanced' },
+          ]}
+        />
+        <FloatingContextSheet
+          open
+          title="Ingestion queue"
+          subtitle="2 local files ready"
+          badge="OPFS"
+          onClose={onCloseSheet}
+          footer={<span className="yui-genui-muted">All SHA-256 verified</span>}
+        >
+          <div>spec.pdf</div>
+        </FloatingContextSheet>
+        <InlineCitationPopover
+          source={{
+            index: 1,
+            label: 'pricing.yours.sh',
+            title: 'Enterprise & Team Plan FAQ',
+            domain: 'pricing.yours.sh',
+            snippet: 'Annual billing lowers per-seat cost by 17% for 8+ seats.',
+            url: 'https://yours.sh/pricing',
+          }}
+          onJumpToSource={onJumpSource}
+        />
+      </div>,
+    );
+
+    // Simulate non-zero browser layout widths on segmented buttons and re-render to trigger spring glide
+    const segBtns = Array.from(el.querySelectorAll('.yui-seg-btn')) as HTMLButtonElement[];
+    Object.defineProperty(segBtns[0], 'offsetWidth', { configurable: true, value: 48 });
+    Object.defineProperty(segBtns[0], 'offsetLeft', { configurable: true, value: 2 });
+    Object.defineProperty(segBtns[1], 'offsetWidth', { configurable: true, value: 72 });
+    Object.defineProperty(segBtns[1], 'offsetLeft', { configurable: true, value: 52 });
+
+    rerenderNode(
+      <div>
+        <SegmentedControl
+          value="balanced"
+          onChange={onChangeSeg}
+          options={[
+            { value: 'max', label: 'Max' },
+            { value: 'balanced', label: 'Balanced' },
+          ]}
+        />
+        <FloatingContextSheet
+          open
+          title="Ingestion queue"
+          subtitle="2 local files ready"
+          badge="OPFS"
+          onClose={onCloseSheet}
+          footer={<span className="yui-genui-muted">All SHA-256 verified</span>}
+        >
+          <div>spec.pdf</div>
+        </FloatingContextSheet>
+        <InlineCitationPopover
+          source={{
+            index: 1,
+            label: 'pricing.yours.sh',
+            title: 'Enterprise & Team Plan FAQ',
+            domain: 'pricing.yours.sh',
+            snippet: 'Annual billing lowers per-seat cost by 17% for 8+ seats.',
+            url: 'https://yours.sh/pricing',
+          }}
+          onJumpToSource={onJumpSource}
+        />
+      </div>,
+    );
+
+    expect(el.querySelector('[data-slot="segmented-control"]')?.getAttribute('data-thumb')).toBe(
+      'animated',
+    );
+    expect(animateSpy).toHaveBeenCalled();
+
+    // FloatingContextSheet renders & Escape dismisses
+    const sheet = el.querySelector('[data-slot="floating-context-sheet"]');
+    expect(sheet).toBeTruthy();
+    expect(sheet?.textContent).toContain('Ingestion queue');
+    expect(sheet?.textContent).toContain('All SHA-256 verified');
+
+    // InlineCitationPopover click opens grounded snippet and Jump button fires + closes
+    const pillBtn = el.querySelector('[data-slot="inline-citation-popover"] button.yui-citation-pill') as HTMLButtonElement;
+    act(() => {
+      pillBtn.click();
+    });
+    const citeCard = el.querySelector('.yui-cite-card');
+    expect(citeCard).toBeTruthy();
+    expect(citeCard?.textContent).toContain('Enterprise & Team Plan FAQ');
+    expect(citeCard?.textContent).toContain('17%');
+
+    const jumpBtn = citeCard?.querySelector('.yui-micro-pill') as HTMLButtonElement;
+    act(() => {
+      jumpBtn.click();
+    });
+    expect(onJumpSource).toHaveBeenCalledTimes(1);
+    expect(el.querySelector('.yui-cite-card')).toBeNull();
+
+    // Escape closes FloatingContextSheet
+    act(() => {
+      document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
+    });
+    expect(onCloseSheet).toHaveBeenCalledTimes(1);
+
+    const cssSource = await readSourceFile('../src/styles/components.css');
+    expect(cssSource).toContain('.yui-seg-thumb');
+    expect(cssSource).toContain('.yui-ctx-sheet');
+    expect(cssSource).toContain('.yui-cite-card');
+    expect(cssSource).toContain('.yui-sheet-region');
   });
 });

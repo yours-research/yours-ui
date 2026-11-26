@@ -1,4 +1,7 @@
-export interface InlineCitationPillProps {
+import type { ComponentProps } from 'react';
+
+export interface InlineCitationPillProps
+  extends Omit<ComponentProps<'span'>, 'children' | 'onClick'> {
   index?: number | string;
   label: string;
   href?: string;
@@ -20,6 +23,7 @@ export function InlineCitationPill({
   active = false,
   onClick,
   className,
+  ...rest
 }: InlineCitationPillProps) {
   const pillClass = ['yui-citation-pill', active ? 'is-active' : '', className]
     .filter(Boolean)
@@ -43,6 +47,8 @@ export function InlineCitationPill({
         target={external ? '_blank' : undefined}
         rel={external ? 'noopener noreferrer' : undefined}
         onClick={onClick}
+        aria-expanded={rest['aria-expanded']}
+        aria-controls={rest['aria-controls']}
       >
         {content}
       </a>
@@ -56,7 +62,9 @@ export function InlineCitationPill({
         type="button"
         className={pillClass}
         title={title ?? label}
-        aria-pressed={active}
+        aria-pressed={rest['aria-expanded'] !== undefined ? undefined : active}
+        aria-expanded={rest['aria-expanded']}
+        aria-controls={rest['aria-controls']}
         onClick={onClick}
       >
         {content}
@@ -65,7 +73,7 @@ export function InlineCitationPill({
   }
 
   return (
-    <span data-slot="inline-citation-pill" className={pillClass} title={title ?? label}>
+    <span data-slot="inline-citation-pill" className={pillClass} title={title ?? label} {...rest}>
       {content}
     </span>
   );

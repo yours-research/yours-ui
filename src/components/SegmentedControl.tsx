@@ -1,3 +1,4 @@
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { ApertureIcon } from '../icons/ApertureIcon.js';
 import type { ApertureIconName } from '../icons/iconData.js';
 
@@ -18,9 +19,87 @@ export interface SegmentedControlProps<T extends string = string> {
   className?: string;
 }
 
+const SPRING_STIFFNESS = 420;
+const SPRING_DAMPING = 34;
+const SPRING_MASS = 0.7;
+const SPRING_DURATION_MS = 320;
+const SPRING_STEPS = 20;
+
+function sampleDampedSpring(
+  tSec: number,
+  stiffness = SPRING_STIFFNESS,
+  damping = SPRING_DAMPING,
+  mass = SPRING_MASS,
+): number {
+  if (tSec <= 0) return 0;
+  const omega0 = Math.sqrt(stiffness / mass);
+  const zeta = damping / (2 * Math.sqrt(stiffness * mass));
+  if (zeta < 1) {
+    const sqrtOneMinusZetaSq = Math.sqrt(1 - zeta * zeta);
+    const omegaD = omega0 * sqrtOneMinusZetaSq;
+    const envelope = Math.exp(-zeta * omega0 * tSec);
+    return (
+      1 -
+      envelope *
+        (Math.cos(omegaD * tSec) + (zeta / sqrtOneMinusZetaSq) * Math.sin(omegaD * tSec))
+    );
+  }
+  const envelope = Math.exp(-omega0 * tSec);
+  return 1 - envelope * (1 + omega0 * tSec);
+}
+
+const SPRING_PROGRESS: readonly number[] = Array.from(
+  { length: SPRING_STEPS + 1 },
+  (_, index) => {
+    if (index === 0) return 0;
+    if (index === SPRING_STEPS) return 1;
+    return sampleDampedSpring((index / SPRING_STEPS) * (SPRING_DURATION_MS / 1000));
+  },
+);
+
+function lerp(start: number, end: number, t: number): number {
+  return start + (end - start) * t;
+}
+
+function roundPx(value: number): number {
+  return Math.round(value * 100) / 100;
+}
+
+function getPrefersReducedMotion(): boolean {
+  if (typeof window === 'undefined' || typeof window.matchMedia !== 'function') {
+    return false;
+  }
+  return Boolean(window.matchMedia('(prefers-reduced-motion: reduce)')?.matches);
+}
+
+function useReducedMotion(): boolean {
+  const [reduced, setReduced] = useState<boolean>(getPrefersReducedMotion);
+
+  useEffect(() => {
+    if (typeof window === 'undefined' || typeof window.matchMedia !== 'function') {
+      return;
+    }
+    const mq = window.matchMedia('(prefers-reduced-motion: reduce)');
+    if (!mq) {
+      return;
+    }
+    setReduced(Boolean(mq.matches));
+    const onChange = (event: MediaQueryListEvent) => setReduced(Boolean(event.matches));
+    if (typeof mq.addEventListener === 'function') {
+      mq.addEventListener('change', onChange);
+      return () => mq.removeEventListener('change', onChange);
+    }
+    mq.addListener?.(onChange);
+    return () => mq.removeListener?.(onChange);
+  }, []);
+
+  return reduced;
+}
+
 /**
  * Minimalist hairline segmented selector (`Max · Balanced · Smooth` or
- * `Auto · Think · Fast`) with keyboard Left/Right navigation.
+ * `Auto · Think · Fast`) with a spring-animated WAAPI sliding pill thumb
+ * and keyboard Left/Right navigation.
  */
 export function SegmentedControl<T extends string = string>({
   options,
@@ -31,6 +110,88 @@ export function SegmentedControl<T extends string = string>({
   ariaLabel = 'Mode selector',
   className,
 }: SegmentedControlProps<T>) {
+  const reducedMotion = useReducedMotion();
+  const trackRef = useRef<HTMLDivElement | null>(null);
+  const thumbRef = useRef<HTMLSpanElement | null>(null);
+  const btnRefs = useRef<Array<HTMLButtonElement | null>>([]);
+  btnRefs.current.length = options.length;
+
+  const prevThumbRef = useRef<{ x: number; width: number } | null>(null);
+  const activeAnimRef = useRef<Animation | undefined>(undefined);
+  const [thumbAnimated, setThumbAnimated] = useState(false);
+
+  const activeIdx = Math.max(
+    0,
+    options.findIndex((opt) => opt.value === value),
+  );
+
+  const syncThumb = useCallback(
+    (allowAnimate: boolean) => {
+      const thumbEl = thumbRef.current;
+      const activeBtn = btnRefs.current[activeIdx];
+      if (!thumbEl || !activeBtn) return;
+
+      const width = activeBtn.offsetWidth;
+      if (width <= 0 || typeof thumbEl.animate !== 'function') {
+        setThumbAnimated(false);
+        return;
+      }
+
+      const targetX = Math.max(0, activeBtn.offsetLeft - 2);
+      const prev = prevThumbRef.current;
+      setThumbAnimated(true);
+
+      const unchanged =
+        prev !== null &&
+        Math.abs(prev.x - targetX) < 0.5 &&
+        Math.abs(prev.width - width) < 0.5;
+      if (unchanged) {
+        return;
+      }
+
+      const snap = !allowAnimate || prev === null || reducedMotion;
+      activeAnimRef.current?.cancel();
+
+      const keyframes: Keyframe[] = snap
+        ? [
+            { transform: `translateX(${roundPx(targetX)}px)`, width: `${roundPx(width)}px` },
+            { transform: `translateX(${roundPx(targetX)}px)`, width: `${roundPx(width)}px` },
+          ]
+        : SPRING_PROGRESS.map((p) => ({
+            transform: `translateX(${roundPx(lerp(prev.x, targetX, p))}px)`,
+            width: `${roundPx(lerp(prev.width, width, p))}px`,
+          }));
+
+      activeAnimRef.current = thumbEl.animate(keyframes, {
+        duration: snap ? 0 : SPRING_DURATION_MS,
+        easing: 'linear',
+        fill: 'forwards',
+      });
+      prevThumbRef.current = { x: targetX, width };
+    },
+    [activeIdx, reducedMotion],
+  );
+
+  useLayoutEffect(() => {
+    syncThumb(true);
+  }, [syncThumb, options.length, size, fullWidth]);
+
+  useLayoutEffect(() => {
+    const track = trackRef.current;
+    if (!track || typeof ResizeObserver === 'undefined') {
+      return;
+    }
+    const observer = new ResizeObserver(() => {
+      syncThumb(false);
+    });
+    observer.observe(track);
+    return () => observer.disconnect();
+  }, [syncThumb]);
+
+  useEffect(() => {
+    return () => activeAnimRef.current?.cancel();
+  }, []);
+
   const trackClass = [
     'yui-seg',
     size === 'md' ? 'yui-seg--md' : '',
@@ -54,11 +215,14 @@ export function SegmentedControl<T extends string = string>({
 
   return (
     <div
+      ref={trackRef}
       data-slot="segmented-control"
+      data-thumb={thumbAnimated ? 'animated' : 'static'}
       role="radiogroup"
       aria-label={ariaLabel}
       className={trackClass}
     >
+      <span ref={thumbRef} aria-hidden="true" className="yui-seg-thumb" />
       {options.map((opt, idx) => {
         const active = opt.value === value;
         const btnClass = ['yui-seg-btn', active ? 'is-active' : '']
@@ -68,6 +232,9 @@ export function SegmentedControl<T extends string = string>({
         return (
           <button
             key={opt.value}
+            ref={(el) => {
+              btnRefs.current[idx] = el;
+            }}
             type="button"
             role="radio"
             aria-checked={active}

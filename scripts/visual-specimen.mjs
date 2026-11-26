@@ -47,9 +47,11 @@ import {
   EmptyState,
   EntitySummaryCard,
   FloatingComposer,
+  FloatingContextSheet,
   FollowUpSuggestions,
   HookSidebarList,
   InlineCitationPill,
+  InlineCitationPopover,
   MatrixOrb,
   MetricStripCard,
   MicIcon,
@@ -470,6 +472,87 @@ function GenUiShowcasePanel({ theme }: { theme: 'light' | 'dark' }) {
   );
 }
 
+function SheetAndCitationPanel({ theme }: { theme: 'light' | 'dark' }) {
+  const [draft, setDraft] = useState('');
+
+  return (
+    <SidePanelShell
+      theme={theme}
+      veilOpen
+      notch={<TopNotch items={NOTCH_ITEMS} expandedId={null} />}
+      sheet={
+        <FloatingContextSheet
+          open
+          title="Context ingestion queue"
+          subtitle="3 local sources verified"
+          badge="OPFS"
+          onClose={() => {}}
+          footer={
+            <>
+              <StatusBadge tone="accent" dot>24.8 KB ready</StatusBadge>
+              <button type="button" className="yui-pill-btn yui-pill-btn--primary">
+                Attach all
+              </button>
+            </>
+          }
+        >
+          <div className="yui-spec-foot">
+            <NotchOptionRow
+              icon="page"
+              dotTone="green"
+              title="Active tab · pricing.yours.sh"
+              subtitle="Extracted 18 FAQ clauses (DOM text only)"
+              meta="Verified"
+              selected
+              onClick={() => {}}
+            />
+            <NotchOptionRow
+              icon="document"
+              title="Pinned spec · Q3-Enterprise.md"
+              subtitle="Local workspace note"
+              meta="6.4 KB"
+              onClick={() => {}}
+            />
+          </div>
+        </FloatingContextSheet>
+      }
+      footer={
+        <FloatingComposer
+          value={draft}
+          onChange={setDraft}
+          onSubmit={() => {}}
+          leftSlot={<StatusBadge tone="muted">3 attached</StatusBadge>}
+        />
+      }
+    >
+      <UserMessageBubble content="Compare the team billing discount across plans." />
+      <AssistantMessage>
+        <p className="yui-assistant-p">
+          Verified local plan breakdown across active workspace tiers:
+        </p>
+        <p className="yui-assistant-p">
+          <span>Annual seats drop from $25 to $20 once a workspace crosses 8 members </span>
+          <InlineCitationPopover
+            defaultOpen
+            hoverOpen={false}
+            source={{
+              index: 1,
+              label: 'pricing.yours.sh',
+              title: 'Enterprise & Team Plan FAQ',
+              domain: 'pricing.yours.sh',
+              timestampLabel: 'Active tab',
+              snippet: 'Annual billing drops effective cost from $25 to $20 per seat across 8+ seats.',
+              url: 'https://yours.sh/pricing',
+            }}
+            onJumpToSource={() => {}}
+          />
+          <span> and apply automatically at renewal.</span>
+        </p>
+      </AssistantMessage>
+    </SidePanelShell>
+  );
+}
+
 function SpecimenApp() {
   const params = new URLSearchParams(window.location.search);
   const mode = params.get('mode') || 'gallery';
@@ -484,6 +567,7 @@ function SpecimenApp() {
         {panel === 'notch' ? <NotchExpandedPanel theme={theme} /> : null}
         {panel === 'chat' ? <ActiveChatPanel theme={theme} /> : null}
         {panel === 'live' ? <LiveStreamPopoverPanel theme={theme} /> : null}
+        {panel === 'sheet' ? <SheetAndCitationPanel theme={theme} /> : null}
         {panel === 'genui' ? <GenUiShowcasePanel theme={theme} /> : null}
       </div>
     );
@@ -495,6 +579,7 @@ function SpecimenApp() {
       <div className="yui-spec-frame"><NotchExpandedPanel theme={theme} /></div>
       <div className="yui-spec-frame"><LiveStreamPopoverPanel theme={theme} /></div>
       <div className="yui-spec-frame"><ActiveChatPanel theme={theme} /></div>
+      <div className="yui-spec-frame"><SheetAndCitationPanel theme={theme} /></div>
       <div className="yui-spec-frame-auto"><GenUiShowcasePanel theme={theme} /></div>
     </div>
   );
@@ -685,17 +770,55 @@ async function main() {
       });
     });
 
-    const singlePanels = ['resting', 'notch', 'live', 'chat', 'genui'];
+    const waitForSpecimen = async (label) => {
+      try {
+        await page.waitForSelector('#specimen-root > div', { timeout: 6000 });
+      } catch (err) {
+        const msg = err && typeof err === 'object' && 'message' in err ? err.message : String(err);
+        throw new Error(
+          `Specimen mount failed on ${label}: ${msg}\nerrors=${JSON.stringify(errors)}\ncsp=${JSON.stringify(cspViolations)}`,
+        );
+      }
+    };
+
+    const singlePanels = ['resting', 'notch', 'live', 'chat', 'sheet', 'genui'];
     for (const theme of ['light', 'dark']) {
       await page.setViewportSize({ width: 380, height: 828 });
       for (const panel of singlePanels) {
         await page.goto(`${baseUrl}/?mode=single&theme=${theme}&panel=${panel}`, {
           waitUntil: 'networkidle',
         });
-        await page.waitForSelector('#specimen-root > div');
+        await waitForSpecimen(`${theme}/${panel}`);
 
-        if (panel === 'live') {
+        if (panel === 'live' || panel === 'sheet') {
           await page.waitForTimeout(300);
+        }
+
+        if (panel === 'chat') {
+          const clearance = await page.evaluate(() => {
+            const stage = document.querySelector('.yui-scroll-stage');
+            if (stage) stage.scrollTop = stage.scrollHeight;
+            const actionRow = Array.from(document.querySelectorAll('.yui-action-row')).at(-1);
+            const composer = document.querySelector('.yui-composer');
+            if (!stage || !actionRow || !composer) return null;
+            const sr = stage.getBoundingClientRect();
+            const ar = actionRow.getBoundingClientRect();
+            const cr = composer.getBoundingClientRect();
+            return {
+              actionBottom: Math.round(ar.bottom),
+              stageBottom: Math.round(sr.bottom),
+              composerTop: Math.round(cr.top),
+            };
+          });
+          if (
+            !clearance ||
+            clearance.actionBottom > clearance.stageBottom + 1 ||
+            clearance.actionBottom > clearance.composerTop - 12
+          ) {
+            throw new Error(
+              `380px chat clearance failed (${theme}): ${JSON.stringify(clearance)}`,
+            );
+          }
         }
 
         const audit = await page.evaluate(() => {
@@ -740,11 +863,39 @@ async function main() {
 
       // Narrow 340px stress pass across interactive & dense panels
       await page.setViewportSize({ width: 340, height: 828 });
-      for (const narrowPanel of ['resting', 'live', 'chat', 'genui']) {
+      for (const narrowPanel of ['resting', 'live', 'chat', 'sheet', 'genui']) {
         await page.goto(`${baseUrl}/?mode=single&theme=${theme}&panel=${narrowPanel}&narrow=1`, {
           waitUntil: 'networkidle',
         });
-        await page.waitForSelector('#specimen-root > div');
+        await waitForSpecimen(`340/${theme}/${narrowPanel}`);
+
+        if (narrowPanel === 'chat') {
+          const narrowClearance = await page.evaluate(() => {
+            const stage = document.querySelector('.yui-scroll-stage');
+            if (stage) stage.scrollTop = stage.scrollHeight;
+            const actionRow = Array.from(document.querySelectorAll('.yui-action-row')).at(-1);
+            const composer = document.querySelector('.yui-composer');
+            if (!stage || !actionRow || !composer) return null;
+            const sr = stage.getBoundingClientRect();
+            const ar = actionRow.getBoundingClientRect();
+            const cr = composer.getBoundingClientRect();
+            return {
+              actionBottom: Math.round(ar.bottom),
+              stageBottom: Math.round(sr.bottom),
+              composerTop: Math.round(cr.top),
+            };
+          });
+          if (
+            !narrowClearance ||
+            narrowClearance.actionBottom > narrowClearance.stageBottom + 1 ||
+            narrowClearance.actionBottom > narrowClearance.composerTop - 12
+          ) {
+            throw new Error(
+              `340px narrow chat clearance failed (${theme}): ${JSON.stringify(narrowClearance)}`,
+            );
+          }
+        }
+
         const narrowAudit = await page.evaluate(() => {
           const root = document.getElementById('specimen-root');
           const inlineStyleCount = root ? root.querySelectorAll('[style]').length : -1;
@@ -763,8 +914,8 @@ async function main() {
         }
       }
 
-      // Overview 5-up comparison sheet
-      await page.setViewportSize({ width: 2040, height: 900 });
+      // Overview 6-up comparison sheet
+      await page.setViewportSize({ width: 2444, height: 900 });
       await page.goto(`${baseUrl}/?mode=gallery&theme=${theme}`, { waitUntil: 'networkidle' });
       const overviewPath = path.join(OUT_DIR, `specimen-${theme}-overview.png`);
       await page.screenshot({ path: overviewPath, fullPage: true });
