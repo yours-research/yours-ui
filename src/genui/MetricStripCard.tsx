@@ -16,6 +16,7 @@ function buildSparklineGeometry(values: readonly number[], width = 318, height =
   if (values.length === 0) {
     return {
       pathD: 'M 4 28 L 314 28',
+      areaD: '',
       avgY: 28,
       lastX: 314,
       lastY: 28,
@@ -45,9 +46,14 @@ function buildSparklineGeometry(values: readonly number[], width = 318, height =
   const pathD = points
     .map((pt, idx) => `${idx === 0 ? 'M' : 'L'} ${pt.x} ${pt.y}`)
     .join(' ');
+  const first = points[0] ?? { x: width / 2, y: height / 2 };
   const last = points[points.length - 1] ?? { x: width / 2, y: height / 2 };
+  const areaD =
+    points.length >= 2
+      ? `${pathD} L ${last.x} ${height - 4} L ${first.x} ${height - 4} Z`
+      : '';
 
-  return { pathD, avgY, lastX: last.x, lastY: last.y };
+  return { pathD, areaD, avgY, lastX: last.x, lastY: last.y };
 }
 
 /**
@@ -65,7 +71,7 @@ export function MetricStripCard({
   highLabel,
   footnote,
 }: MetricStripCardProps) {
-  const { pathD, avgY, lastX, lastY } = buildSparklineGeometry(values);
+  const { pathD, areaD, avgY, lastX, lastY } = buildSparklineGeometry(values);
   const rangeText = [lowLabel ? `Low ${lowLabel}` : '', highLabel ? `High ${highLabel}` : '']
     .filter(Boolean)
     .join(' · ');
@@ -80,10 +86,10 @@ export function MetricStripCard({
         {averageLabel ? <span className="yui-speed-readout">{averageLabel}</span> : null}
       </div>
 
-      <div className="yui-drawer-body">
+      <div className="yui-genui-body">
         <div className="yui-action-row">
           <div className="yui-action-group">
-            <strong className="yui-optin-title">{primaryValue}</strong>
+            <strong className="yui-metric-primary">{primaryValue}</strong>
             {unitLabel ? <span className="yui-genui-muted">{unitLabel}</span> : null}
           </div>
           {deltaLabel ? <span className="yui-delta-pill">{deltaLabel}</span> : null}
@@ -97,6 +103,7 @@ export function MetricStripCard({
           fill="none"
           aria-hidden="true"
         >
+          {areaD ? <path d={areaD} className="yui-spark-area" /> : null}
           <line
             x1="4"
             y1={avgY}

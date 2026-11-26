@@ -7,6 +7,7 @@ import {
   AttachmentStrip,
   BranchPicker,
   CodeBlock,
+  EmptyState,
   ErrorRecoveryBanner,
   FloatingComposer,
   FollowUpSuggestions,
@@ -18,6 +19,7 @@ import {
   ReasoningTrace,
   ScrollToBottomButton,
   SourcesDrawer,
+  StatusBadge,
   StreamingResponse,
   SuggestionChipRow,
   ThreadHistoryDrawer,
@@ -697,5 +699,125 @@ describe('@yours/ui chat & runtime primitives', () => {
     expect(reducedMotionIdx).toBeGreaterThan(-1);
     expect(cssSource.slice(reducedMotionIdx)).toContain('.yui-sr-caret');
     expect(cssSource.slice(reducedMotionIdx)).toContain('.yui-sr-action-btn');
+  });
+
+  it('renders EmptyState, StatusBadge, FloatingComposer rightSlot/IME, UserMessageBubble Escape, and ThreadHistoryDrawer empty state', () => {
+    const onSubmit = vi.fn();
+    const onCancelEdit = vi.fn();
+    const onSelectThread = vi.fn();
+
+    const el = renderNode(
+      <div>
+        <EmptyState
+          title="Ask anything locally."
+          subtitle="Runs entirely in your browser."
+          orbState="idle"
+        >
+          <PromptCapsuleStack
+            items={[{ id: 'e1', icon: 'document', label: 'Summarize this page' }]}
+            onSelect={() => {}}
+          />
+        </EmptyState>
+        <div data-case="badges">
+          <StatusBadge tone="neutral">Idle</StatusBadge>
+          <StatusBadge tone="local" dot pulse>
+            Local · WebGPU
+          </StatusBadge>
+          <StatusBadge tone="accent" dot>
+            Context
+          </StatusBadge>
+          <StatusBadge tone="amber">Pending</StatusBadge>
+          <StatusBadge tone="danger">Blocked</StatusBadge>
+        </div>
+        <FloatingComposer
+          value={'Line 1\nLine 2'}
+          onChange={() => {}}
+          onSubmit={onSubmit}
+          rightSlot={<StatusBadge tone="local">Ready</StatusBadge>}
+        />
+        <UserMessageBubble
+          content="Original"
+          isEditing
+          onCancelEdit={onCancelEdit}
+          onSaveEdit={() => {}}
+        />
+        <div data-case="history-populated">
+          <ThreadHistoryDrawer
+            threads={[{ id: 't1', title: 'Clean pricing breakdown' }]}
+            activeThreadId="t1"
+            searchQuery=""
+            onSearchChange={() => {}}
+            onSelectThread={onSelectThread}
+            onNewThread={() => {}}
+          />
+        </div>
+        <div data-case="history-empty">
+          <ThreadHistoryDrawer
+            threads={[]}
+            searchQuery="zzz"
+            onSearchChange={() => {}}
+            onSelectThread={() => {}}
+            onNewThread={() => {}}
+            emptyText="Nothing found"
+          />
+        </div>
+      </div>,
+    );
+
+    expect(el.querySelector('[data-slot="empty-state"]')).toBeTruthy();
+    expect(el.querySelectorAll('[data-slot="status-badge"]').length).toBe(6);
+    expect(el.querySelector('.yui-status-badge--local .yui-status-badge-dot.is-pulse')).toBeTruthy();
+
+    const textarea = el.querySelector('.yui-composer-input') as HTMLTextAreaElement;
+    expect(textarea.rows).toBe(2);
+
+    // IME composition Enter should not submit
+    act(() => {
+      const evt = new KeyboardEvent('keydown', { key: 'Enter', bubbles: true });
+      Object.defineProperty(evt, 'isComposing', { value: true });
+      textarea.dispatchEvent(evt);
+    });
+    expect(onSubmit).toHaveBeenCalledTimes(0);
+
+    // Escape inside UserMessageBubble edit cancels cleanly
+    const editBox = el.querySelector('.yui-edit-textarea') as HTMLTextAreaElement;
+    act(() => {
+      editBox.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
+    });
+    expect(onCancelEdit).toHaveBeenCalledTimes(1);
+
+    const threadBtn = el.querySelector('[data-case="history-populated"] .yui-thread-select-btn') as HTMLButtonElement;
+    act(() => {
+      threadBtn.click();
+    });
+    expect(onSelectThread).toHaveBeenCalledWith('t1');
+    expect(el.querySelector('[data-case="history-empty"]')?.textContent).toContain('Nothing found');
+  });
+
+  it('enforces zero JSX style= and zero dangerouslySetInnerHTML across all src TSX files', async () => {
+    const fsId = 'node:fs';
+    const fs = (await import(/* @vite-ignore */ fsId)) as {
+      readdirSync(dir: string, opts: { withFileTypes: true }): Array<{ name: string; isDirectory(): boolean }>;
+      readFileSync(file: string, enc: string): string;
+    };
+
+    const tsxFiles: string[] = [];
+    const walk = (dir: string) => {
+      for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
+        const next = `${dir}/${entry.name}`;
+        if (entry.isDirectory()) walk(next);
+        else if (entry.name.endsWith('.tsx')) tsxFiles.push(next);
+      }
+    };
+    walk('src');
+
+    expect(tsxFiles.length).toBeGreaterThan(20);
+    for (const file of tsxFiles) {
+      const src = fs.readFileSync(file, 'utf8');
+      expect(src, `${file} must not contain JSX style={`).not.toMatch(/\bstyle\s*=\s*\{/);
+      expect(src, `${file} must not contain dangerouslySetInnerHTML`).not.toMatch(
+        /\bdangerouslySetInnerHTML\s*=/,
+      );
+    }
   });
 });

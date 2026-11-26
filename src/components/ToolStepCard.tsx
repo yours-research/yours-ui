@@ -31,11 +31,11 @@ export function ToolStepCard({
   return (
     <div className="yui-tool-card">
       <div className="yui-tool-card-head">
-        <div className="yui-action-group">
+        <div className="yui-tool-card-title-row">
           {status === 'running' ? <MatrixOrb state="streaming" size={14} /> : null}
           {status === 'done' ? <CheckIcon size={13} /> : null}
           {status === 'error' ? <AlertIcon size={13} className="yui-error-icon" /> : null}
-          <span>{title}</span>
+          <span className="yui-tool-card-title">{title}</span>
         </div>
         <div className="yui-action-group">
           {durationLabel ? <span className="yui-speed-readout">{durationLabel}</span> : null}

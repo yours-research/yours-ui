@@ -32,19 +32,19 @@ export function PageActionCard({
           <span className="yui-icon-badge">
             <ShieldIcon size={14} />
           </span>
-          <div>
+          <div className="yui-col-min">
             <div className="yui-genui-title">{title}</div>
             {subtitle ? <div className="yui-genui-muted">{subtitle}</div> : null}
           </div>
         </div>
       </div>
 
-      <div className="yui-drawer-body">
-        <div className="yui-entity-tile">
+      <div className="yui-genui-body">
+        <div className="yui-kv-list">
           {fields.map((field, idx) => (
-            <div key={`${field.label}-${idx}`} className="yui-table-row">
-              <span className="yui-genui-muted">{field.label} &middot;</span>
-              <span className="yui-prompt-capsule-title">{field.value}</span>
+            <div key={`${field.label}-${idx}`} className="yui-kv-row">
+              <span className="yui-kv-key">{field.label}</span>
+              <span className="yui-kv-val">{field.value}</span>
             </div>
           ))}
         </div>

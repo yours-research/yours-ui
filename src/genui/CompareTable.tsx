@@ -53,7 +53,10 @@ export function CompareTable({
 
       <div>
         {rows.map((row, idx) => (
-          <div key={`${row.feature}-${idx}`} className="yui-table-row">
+          <div
+            key={`${row.feature}-${idx}`}
+            className={row.emphasize ? 'yui-table-row is-emphasized' : 'yui-table-row'}
+          >
             <span className="yui-table-cell-label">{row.feature}</span>
             <span className="yui-table-cell-val">{row.leftValue}</span>
             <span className="yui-table-cell-val">{row.rightValue}</span>

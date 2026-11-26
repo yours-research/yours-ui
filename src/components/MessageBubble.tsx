@@ -1,4 +1,4 @@
-import { useState, type ReactNode } from 'react';
+import { useEffect, useState, type ReactNode } from 'react';
 import { CopyIcon, PageIcon, RetryIcon } from '../icons/ApertureIcon.js';
 
 export interface UserMessageBubbleProps {
@@ -26,6 +26,12 @@ export function UserMessageBubble({
 }: UserMessageBubbleProps) {
   const [draft, setDraft] = useState(content);
 
+  useEffect(() => {
+    if (!isEditing) {
+      setDraft(content);
+    }
+  }, [content, isEditing]);
+
   if (isEditing) {
     return (
       <div className="yui-edit-card">
@@ -34,6 +40,12 @@ export function UserMessageBubble({
           value={draft}
           aria-label="Edit message"
           onChange={(e) => setDraft(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === 'Escape') {
+              setDraft(content);
+              onCancelEdit?.();
+            }
+          }}
         />
         <div className="yui-btn-row">
           <button
@@ -111,7 +123,7 @@ export interface AssistantMessageProps {
 export function AssistantMessage({ children, footer }: AssistantMessageProps) {
   return (
     <div className="yui-assistant-turn">
-      <div>{children}</div>
+      <div className="yui-assistant-body">{children}</div>
       {footer}
     </div>
   );

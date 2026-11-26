@@ -15,6 +15,7 @@ export interface ThreadHistoryDrawerProps {
   onNewThread: () => void;
   onArchiveThread?: (id: string) => void;
   onDeleteThread?: (id: string) => void;
+  emptyText?: string;
 }
 
 /** Conversation search and management drawer card. */
@@ -27,6 +28,7 @@ export function ThreadHistoryDrawer({
   onNewThread,
   onArchiveThread,
   onDeleteThread,
+  emptyText = 'No matching conversations',
 }: ThreadHistoryDrawerProps) {
   return (
     <div className="yui-thread-drawer">
@@ -48,22 +50,25 @@ export function ThreadHistoryDrawer({
         </button>
       </div>
 
-      <div>
-        {threads.map((thread) => {
-          const active = thread.id === activeThreadId;
-          return (
-            <div
-              key={thread.id}
-              className={active ? 'yui-thread-item is-active' : 'yui-thread-item'}
-            >
-              <button
-                type="button"
-                className="yui-icon-btn"
-                onClick={() => onSelectThread(thread.id)}
+      <div className="yui-thread-list">
+        {threads.length === 0 ? (
+          <div className="yui-genui-muted">{emptyText}</div>
+        ) : (
+          threads.map((thread) => {
+            const active = thread.id === activeThreadId;
+            return (
+              <div
+                key={thread.id}
+                className={active ? 'yui-thread-item is-active' : 'yui-thread-item'}
               >
-                <span className="yui-prompt-capsule-title">{thread.title}</span>
-              </button>
-              <div className="yui-action-group">
+                <button
+                  type="button"
+                  className="yui-thread-select-btn"
+                  onClick={() => onSelectThread(thread.id)}
+                >
+                  <span className="yui-prompt-capsule-title">{thread.title}</span>
+                </button>
+                <div className="yui-action-group">
                 {thread.updatedLabel ? (
                   <span className="yui-speed-readout">{thread.updatedLabel}</span>
                 ) : null}
@@ -90,7 +95,8 @@ export function ThreadHistoryDrawer({
               </div>
             </div>
           );
-        })}
+        })
+        )}
       </div>
     </div>
   );

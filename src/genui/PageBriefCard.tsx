@@ -36,7 +36,7 @@ export function PageBriefCard({
           <span className="yui-icon-badge">
             <PageScanIcon size={14} />
           </span>
-          <div>
+          <div className="yui-col-min">
             <div className="yui-genui-title">{title}</div>
             {subtitle ? <div className="yui-genui-muted">{subtitle}</div> : null}
           </div>
@@ -44,8 +44,8 @@ export function PageBriefCard({
         <span className="yui-speed-readout">{originLabel}</span>
       </div>
 
-      <div className="yui-drawer-body">
-        <ul>
+      <div className="yui-genui-body">
+        <ul className="yui-brief-list">
           {bullets.map((bullet, idx) => (
             <li key={idx}>{bullet}</li>
           ))}
