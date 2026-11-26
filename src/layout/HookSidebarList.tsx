@@ -6,6 +6,7 @@ import {
   useState,
   type FocusEvent,
 } from 'react';
+import { lerp, roundPx, sampleDampedSpring, useReducedMotion } from '../utils/spring.js';
 
 export interface HookSidebarItem {
   id: string;
@@ -43,51 +44,6 @@ function nowMs(): number {
   return typeof performance !== 'undefined' ? performance.now() : Date.now();
 }
 
-function lerp(start: number, end: number, t: number): number {
-  return start + (end - start) * t;
-}
-
-function roundPx(value: number): number {
-  return Math.round(value * 100) / 100;
-}
-
-/**
- * Evaluates normalized damped-spring progress `p(t)` starting from rest
- * toward `1` for `stiffness = 420`, `damping = 34`, `mass = 0.7`.
- */
-function sampleDampedSpring(
-  tSec: number,
-  stiffness = SPRING_STIFFNESS,
-  damping = SPRING_DAMPING,
-  mass = SPRING_MASS,
-): number {
-  if (tSec <= 0) return 0;
-  const omega0 = Math.sqrt(stiffness / mass);
-  const zeta = damping / (2 * Math.sqrt(stiffness * mass));
-  if (zeta < 1) {
-    const sqrtOneMinusZetaSq = Math.sqrt(1 - zeta * zeta);
-    const omegaD = omega0 * sqrtOneMinusZetaSq;
-    const envelope = Math.exp(-zeta * omega0 * tSec);
-    return (
-      1 -
-      envelope *
-        (Math.cos(omegaD * tSec) + (zeta / sqrtOneMinusZetaSq) * Math.sin(omegaD * tSec))
-    );
-  }
-  if (zeta === 1) {
-    const envelope = Math.exp(-omega0 * tSec);
-    return 1 - envelope * (1 + omega0 * tSec);
-  }
-  const sqrtZetaSqMinusOne = Math.sqrt(zeta * zeta - 1);
-  const gamma = omega0 * sqrtZetaSqMinusOne;
-  const envelope = Math.exp(-zeta * omega0 * tSec);
-  return (
-    1 -
-    envelope *
-      (Math.cosh(gamma * tSec) + (zeta / sqrtZetaSqMinusOne) * Math.sinh(gamma * tSec))
-  );
-}
-
 const SPRING_PROGRESS: readonly number[] = Array.from(
   { length: SPRING_STEPS + 1 },
   (_, index) => {
@@ -96,37 +52,6 @@ const SPRING_PROGRESS: readonly number[] = Array.from(
     return sampleDampedSpring((index / SPRING_STEPS) * (SPRING_DURATION_MS / 1000));
   },
 );
-
-function getPrefersReducedMotion(): boolean {
-  if (typeof window === 'undefined' || typeof window.matchMedia !== 'function') {
-    return false;
-  }
-  return window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-}
-
-/** Tracks `prefers-reduced-motion: reduce` safely across SSR and jsdom. */
-function useReducedMotion(): boolean {
-  const [reduced, setReduced] = useState<boolean>(getPrefersReducedMotion);
-
-  useEffect(() => {
-    if (typeof window === 'undefined' || typeof window.matchMedia !== 'function') {
-      return;
-    }
-    const mq = window.matchMedia('(prefers-reduced-motion: reduce)');
-    setReduced(mq.matches);
-    const onChange = (event: MediaQueryListEvent) => {
-      setReduced(event.matches);
-    };
-    if (typeof mq.addEventListener === 'function') {
-      mq.addEventListener('change', onChange);
-      return () => mq.removeEventListener('change', onChange);
-    }
-    mq.addListener?.(onChange);
-    return () => mq.removeListener?.(onChange);
-  }, []);
-
-  return reduced;
-}
 
 interface ScalarTrack {
   from: number;

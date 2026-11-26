@@ -69,6 +69,8 @@ import {
   MatrixOrb,
   MemoryInspectorList,
   MetricStripCard,
+  ModelParametersCard,
+  NetworkAuditCard,
   MicIcon,
   ModelDownloadGate,
   ModelDownloadProgressBar,
@@ -1672,6 +1674,76 @@ function StorageAndFindPanel({ theme }: { theme: 'light' | 'dark' }) {
   );
 }
 
+function ControlsAndAuditPanel({ theme }: { theme: 'light' | 'dark' }) {
+  const [thinking, setThinking] = useState<'auto' | 'fast' | 'deep'>('deep');
+  const [pacing, setPacing] = useState<'balanced' | 'smooth'>('balanced');
+  const [temp, setTemp] = useState(0.65);
+  const [topP, setTopP] = useState(0.9);
+  const [maxTokens, setMaxTokens] = useState(4096);
+  const [statusMsg, setStatusMsg] = useState('Local WebGPU · CSP guard active');
+  const [events, setEvents] = useState([
+    {
+      id: 'n1',
+      target: 'telemetry.analytics.invalid',
+      detail: 'Outbound beacon blocked by guard',
+      decision: 'blocked' as const,
+      timestamp: '05:32:04',
+    },
+    {
+      id: 'n2',
+      target: 'yours.sh/docs/mv3-csp',
+      detail: 'Read-only active tab fetch',
+      decision: 'allowed-once' as const,
+      timestamp: '05:32:09',
+    },
+    {
+      id: 'n3',
+      target: 'opfs://qwen3.5-4b-q4.bin',
+      detail: 'Verified local OPFS shard read',
+      decision: 'local' as const,
+      timestamp: '05:32:11',
+    },
+  ]);
+
+  return (
+    <SidePanelShell
+      theme={theme}
+      notch={<TopNotch items={NOTCH_ITEMS} expandedId={null} />}
+      footer={
+        <FloatingComposer
+          value=""
+          onChange={() => {}}
+          onSubmit={() => {}}
+          leftSlot={<StatusBadge tone="local" dot>{statusMsg}</StatusBadge>}
+        />
+      }
+    >
+      <ModelParametersCard
+        modelLabel="Qwen3.5-4B"
+        thinkingMode={thinking}
+        onThinkingModeChange={setThinking}
+        gpuPacing={pacing}
+        onGpuPacingChange={setPacing}
+        temperature={temp}
+        onTemperatureChange={setTemp}
+        topP={topP}
+        onTopPChange={setTopP}
+        maxTokens={maxTokens}
+        onMaxTokensChange={setMaxTokens}
+        onReset={() => setStatusMsg('Parameters reset to defaults')}
+      />
+      <NetworkAuditCard
+        events={events}
+        onExportJson={(ev) => setStatusMsg('Exported ' + ev.length + ' audit events')}
+        onClearLog={() => {
+          setEvents([]);
+          setStatusMsg('Audit log cleared locally');
+        }}
+      />
+    </SidePanelShell>
+  );
+}
+
 function SpecimenApp() {
   const params = new URLSearchParams(window.location.search);
   const mode = params.get('mode') || 'gallery';
@@ -1709,6 +1781,7 @@ function SpecimenApp() {
         {panel === 'templates' ? <TemplatesAndExportPanel theme={theme} /> : null}
         {panel === 'genui' ? <GenUiShowcasePanel theme={theme} /> : null}
         {panel === 'storage' ? <StorageAndFindPanel theme={theme} /> : null}
+        {panel === 'controls' ? <ControlsAndAuditPanel theme={theme} /> : null}
       </div>
     );
   }
@@ -1735,6 +1808,7 @@ function SpecimenApp() {
       <div className="yui-spec-frame"><VoiceAndComposerPanel theme={theme} /></div>
       <div className="yui-spec-frame"><TemplatesAndExportPanel theme={theme} /></div>
       <div className="yui-spec-frame"><StorageAndFindPanel theme={theme} /></div>
+      <div className="yui-spec-frame"><ControlsAndAuditPanel theme={theme} /></div>
       <div className="yui-spec-frame-auto"><GenUiShowcasePanel theme={theme} /></div>
     </div>
   );
@@ -1963,6 +2037,7 @@ async function main() {
       'templates',
       'genui',
       'storage',
+      'controls',
     ];
     const auditPanelContrast = async (activeTheme, panelName) => {
       const failures = await page.evaluate((t) => {
@@ -2080,6 +2155,7 @@ async function main() {
             'shortcuts',
             'welcome',
             'storage',
+            'controls',
           ].includes(panel)
         ) {
           await auditPanelContrast(theme, panel);
@@ -2117,6 +2193,23 @@ async function main() {
             .click();
           if ((await page.locator('[data-storage-id="history"]').count()) !== 0) {
             throw new Error(`StorageQuotaCard Clear row failed (${theme})`);
+          }
+        }
+
+        if (panel === 'controls') {
+          await page.locator('[data-slot="model-parameters-card"] .yui-params-reset-btn').click();
+          const resetBadge = await page.locator('.yui-composer .yui-status-badge').textContent();
+          if (!resetBadge?.includes('Parameters reset')) {
+            throw new Error(`ModelParametersCard reset failed (${theme}): ${resetBadge}`);
+          }
+          await page.locator('[data-slot="network-audit-card"] .yui-audit-export-btn').click();
+          const expBadge = await page.locator('.yui-composer .yui-status-badge').textContent();
+          if (!expBadge?.includes('Exported 3')) {
+            throw new Error(`NetworkAuditCard export failed (${theme}): ${expBadge}`);
+          }
+          await page.locator('[data-slot="network-audit-card"] .yui-audit-clear-btn').click();
+          if ((await page.locator('[data-slot="network-audit-card"] .yui-audit-empty').count()) !== 1) {
+            throw new Error(`NetworkAuditCard clear log failed (${theme})`);
           }
         }
 
@@ -3094,7 +3187,7 @@ async function main() {
       // 400px width verification across key panels + reduced-motion audit
       await page.setViewportSize({ width: 400, height: 828 });
       await page.emulateMedia({ reducedMotion: 'reduce' });
-      for (const widePanel of ['chat', 'data', 'shortcuts', 'welcome', 'palette', 'diff', 'trace', 'drawers', 'budget', 'onboarding', 'recovery', 'voice', 'templates', 'genui', 'storage']) {
+      for (const widePanel of ['chat', 'data', 'shortcuts', 'welcome', 'palette', 'diff', 'trace', 'drawers', 'budget', 'onboarding', 'recovery', 'voice', 'templates', 'genui', 'storage', 'controls']) {
         await page.goto(`${baseUrl}/?mode=single&theme=${theme}&panel=${widePanel}&width=400`, {
           waitUntil: 'networkidle',
         });
@@ -3138,6 +3231,7 @@ async function main() {
         'templates',
         'genui',
         'storage',
+        'controls',
       ]) {
         await page.goto(`${baseUrl}/?mode=single&theme=${theme}&panel=${narrowPanel}&narrow=1`, {
           waitUntil: 'networkidle',
@@ -3384,16 +3478,43 @@ async function main() {
           outputs.push(genuiNarrowPath);
         }
         if (narrowPanel === 'storage') {
+          const storageAlign = await page.evaluate(() => {
+            const title = document.querySelector('[data-storage-id="weights"] .yui-storage-row-label');
+            const status = document.querySelector('[data-storage-id="weights"] .yui-storage-status');
+            const detail = document.querySelector('[data-storage-id="weights"] .yui-storage-row-detail');
+            const size = document.querySelector('[data-storage-id="weights"] .yui-storage-row-size');
+            if (!title || !status || !detail || !size) return null;
+            return {
+              titleLeft: Math.round(title.getBoundingClientRect().left),
+              statusLeft: Math.round(status.getBoundingClientRect().left),
+              detailLeft: Math.round(detail.getBoundingClientRect().left),
+              titleTop: Math.round(title.getBoundingClientRect().top),
+              sizeTop: Math.round(size.getBoundingClientRect().top),
+            };
+          });
+          if (
+            !storageAlign ||
+            Math.abs(storageAlign.statusLeft - storageAlign.titleLeft) > 2 ||
+            Math.abs(storageAlign.detailLeft - storageAlign.titleLeft) > 2 ||
+            Math.abs(storageAlign.sizeTop - storageAlign.titleTop) > 2
+          ) {
+            throw new Error(`340px StorageQuotaCard alignment check failed (${theme}): ${JSON.stringify(storageAlign)}`);
+          }
           const storageNarrowPath = path.join(OUT_DIR, `specimen-${theme}-storage-340.png`);
           await page.screenshot({ path: storageNarrowPath });
           outputs.push(storageNarrowPath);
         }
+        if (narrowPanel === 'controls') {
+          const controlsNarrowPath = path.join(OUT_DIR, `specimen-${theme}-controls-340.png`);
+          await page.screenshot({ path: controlsNarrowPath });
+          outputs.push(controlsNarrowPath);
+        }
       }
 
-      // Forced-colors audit at 380px across settings, recovery, voice, templates, genui & storage
+      // Forced-colors audit at 380px across settings, recovery, voice, templates, genui, storage & controls
       await page.setViewportSize({ width: 380, height: 828 });
       await page.emulateMedia({ forcedColors: 'active' });
-      for (const fcPanel of ['settings', 'recovery', 'voice', 'templates', 'genui', 'storage']) {
+      for (const fcPanel of ['settings', 'recovery', 'voice', 'templates', 'genui', 'storage', 'controls']) {
         await page.goto(`${baseUrl}/?mode=single&theme=${theme}&panel=${fcPanel}`, {
           waitUntil: 'networkidle',
         });

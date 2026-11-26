@@ -1,4 +1,5 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useMemo } from 'react';
+import { useCopyFeedback, useHorizontalFade } from '../utils/clipboard.js';
 import { CheckIcon, CopyIcon, DocumentIcon } from '../icons/ApertureIcon.js';
 
 export type DiffLineType = 'context' | 'add' | 'remove';
@@ -40,10 +41,8 @@ export function DiffCard({
   footerLabel,
   className,
 }: DiffCardProps) {
-  const scrollRef = useRef<HTMLDivElement | null>(null);
-  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const [copied, setCopied] = useState(false);
-  const [canScrollRight, setCanScrollRight] = useState(false);
+  const { scrollRef, canScrollRight } = useHorizontalFade([lines]);
+  const { copied, triggerCopy } = useCopyFeedback(1600);
 
   const computedStats = useMemo(() => {
     let adds = 0;
@@ -66,52 +65,9 @@ export function DiffCard({
     };
   }, [additionsCount, deletionsCount, lines, patchedText]);
 
-  const syncHorizontalFade = useCallback(() => {
-    const el = scrollRef.current;
-    if (!el) return;
-    const next = el.scrollWidth - el.clientWidth - el.scrollLeft > 2;
-    setCanScrollRight((prev) => (prev === next ? prev : next));
-  }, []);
-
-  useEffect(() => {
-    syncHorizontalFade();
-    const el = scrollRef.current;
-    if (!el) return;
-
-    const onScroll = () => syncHorizontalFade();
-    el.addEventListener('scroll', onScroll, { passive: true });
-
-    let ro: ResizeObserver | undefined;
-    if (typeof ResizeObserver !== 'undefined') {
-      ro = new ResizeObserver(() => syncHorizontalFade());
-      ro.observe(el);
-    }
-
-    if (typeof window !== 'undefined') {
-      window.addEventListener('resize', onScroll, { passive: true });
-    }
-
-    return () => {
-      el.removeEventListener('scroll', onScroll);
-      ro?.disconnect();
-      if (typeof window !== 'undefined') {
-        window.removeEventListener('resize', onScroll);
-      }
-    };
-  }, [syncHorizontalFade, lines]);
-
-  useEffect(() => {
-    return () => {
-      if (timerRef.current !== null) clearTimeout(timerRef.current);
-    };
-  }, []);
-
   const handleCopy = () => {
-    void navigator.clipboard?.writeText(computedStats.patchedOutput).catch(() => {});
+    triggerCopy(computedStats.patchedOutput);
     onCopyPatched?.(computedStats.patchedOutput);
-    setCopied(true);
-    if (timerRef.current !== null) clearTimeout(timerRef.current);
-    timerRef.current = setTimeout(() => setCopied(false), 1600);
   };
 
   const cardClass = ['yui-diff-card', className].filter(Boolean).join(' ');
