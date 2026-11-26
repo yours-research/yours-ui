@@ -1,5 +1,5 @@
 import { AlertIcon, GlobeIcon } from '../icons/ApertureIcon.js';
-import { CardFooterChrome, CardHeaderChrome, CardMetaScope } from './CardChrome.js';
+import { CardFooterChrome, CardHeaderChrome, CardMetaScope, cn } from './CardChrome.js';
 import { StatusBadge } from './StatusBadge.js';
 
 export type AgentHandoffState = 'waiting' | 'user-active';
@@ -52,7 +52,7 @@ export function AgentHandoffCard({
       : state === 'user-active'
         ? 'Tab yours'
         : 'Human input needed';
-  const cardClass = ['yui-card-shell', 'yui-handoff-card', className].filter(Boolean).join(' ');
+  const cardClass = cn('yui-card-shell yui-handoff-card', className);
 
   const metaRows = [
     {

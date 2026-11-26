@@ -1,5 +1,6 @@
 import { useId, useState, type ReactNode } from 'react';
 import { CheckIcon, ShieldIcon, TrashIcon, UploadIcon } from '../icons/ApertureIcon.js';
+import { CardHeaderChrome, cn } from './CardChrome.js';
 import { KbdHint } from './KbdHint.js';
 import { StatusBadge, type StatusBadgeTone } from './StatusBadge.js';
 
@@ -83,19 +84,15 @@ export function SettingsSection({
   footer,
   className,
 }: SettingsSectionProps) {
-  const cardClass = ['yui-card-shell', 'yui-settings-card', className].filter(Boolean).join(' ');
+  const cardClass = cn('yui-card-shell yui-settings-card', className);
 
   return (
     <section data-slot="settings-section" className={cardClass} aria-label={title}>
-      <header className="yui-params-head">
-        <div className="yui-col-min">
-          <div className="yui-setting-title-row">
-            <h3 className="yui-genui-title">{title}</h3>
-            {badge ? <StatusBadge tone={badgeTone}>{badge}</StatusBadge> : null}
-          </div>
-          {subtitle ? <p className="yui-genui-muted">{subtitle}</p> : null}
-        </div>
-      </header>
+      <CardHeaderChrome
+        title={title}
+        subtitle={subtitle}
+        right={badge ? <StatusBadge tone={badgeTone}>{badge}</StatusBadge> : null}
+      />
       <div className="yui-list-plain yui-div-list">{children}</div>
       {footer ? <footer className="yui-settings-foot">{footer}</footer> : null}
     </section>
@@ -176,18 +173,12 @@ export function LocalVaultExportCard({
 
   return (
     <section data-slot="local-vault-export-card" className={cardClass} aria-label={title}>
-      <div className="yui-params-head">
-        <div className="yui-col-min">
-          <div className="yui-setting-title-row">
-            <ShieldIcon size={13} className="yui-privacy-icon" />
-            <h3 className="yui-genui-title">{title}</h3>
-          </div>
-          {subtitle ? <p className="yui-genui-muted">{subtitle}</p> : null}
-        </div>
-        {recordCountLabel ? (
-          <StatusBadge tone="neutral">{recordCountLabel}</StatusBadge>
-        ) : null}
-      </div>
+      <CardHeaderChrome
+        icon={<ShieldIcon size={13} className="yui-privacy-icon" />}
+        title={title}
+        subtitle={subtitle}
+        right={recordCountLabel ? <StatusBadge tone="neutral">{recordCountLabel}</StatusBadge> : null}
+      />
 
       <div className="yui-vault-field">
         <label htmlFor={inputId} className="yui-params-label">

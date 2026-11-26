@@ -1,6 +1,7 @@
-import { ArrowDownIcon, LocalDeviceIcon, ShieldIcon } from '../icons/ApertureIcon.js';
+import { ArrowDownIcon, LocalDeviceIcon } from '../icons/ApertureIcon.js';
 import { MatrixOrb } from '../icons/MatrixOrb.js';
 import { YoursMark } from '../icons/YoursMark.js';
+import { CardPrivacyNote, cn } from './CardChrome.js';
 import { StatusBadge } from './StatusBadge.js';
 
 export interface OnboardingCardProps {
@@ -41,7 +42,7 @@ export function OnboardingCard({
   onSecondaryAction,
   className,
 }: OnboardingCardProps) {
-  const rootClass = ['yui-card-shell', 'yui-onb-card', className].filter(Boolean).join(' ');
+  const rootClass = cn('yui-card-shell yui-onb-card', className);
 
   return (
     <section
@@ -95,10 +96,7 @@ export function OnboardingCard({
         ) : null}
       </div>
 
-      <div className="yui-storage-privacy yui-privacy-foot yui-onb-privacy">
-        <ShieldIcon size={12} className="yui-privacy-icon" />
-        <span>{privacyNote}</span>
-      </div>
+      <CardPrivacyNote className="yui-storage-privacy yui-privacy-foot yui-onb-privacy" privacyNote={privacyNote} />
     </section>
   );
 }

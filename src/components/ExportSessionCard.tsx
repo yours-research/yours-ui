@@ -1,6 +1,7 @@
 import { useState } from 'react';
-import { ArrowDownIcon, CheckIcon, CopyIcon, ShieldIcon } from '../icons/ApertureIcon.js';
+import { ArrowDownIcon, CheckIcon, CopyIcon } from '../icons/ApertureIcon.js';
 import { useCopyFeedback } from '../utils/clipboard.js';
+import { CardPrivacyNote, cn } from './CardChrome.js';
 import { SegmentedControl, type SegmentedOption } from './SegmentedControl.js';
 
 export type ExportSessionFormat = 'markdown' | 'json' | 'text';
@@ -108,7 +109,7 @@ export function ExportSessionCard({
     onCopy?.(currentOptions);
   };
 
-  const rootClass = ['yui-card-shell', 'yui-export-card', className].filter(Boolean).join(' ');
+  const rootClass = cn('yui-card-shell yui-export-card', className);
 
   return (
     <section
@@ -196,10 +197,7 @@ export function ExportSessionCard({
         ) : null}
       </div>
 
-      <div className="yui-storage-privacy yui-privacy-foot yui-export-privacy">
-        <ShieldIcon size={11.5} className="yui-privacy-icon" />
-        <span>{privacyNote}</span>
-      </div>
+      <CardPrivacyNote className="yui-storage-privacy yui-privacy-foot yui-export-privacy" privacyNote={privacyNote} />
     </section>
   );
 }

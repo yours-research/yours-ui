@@ -96,6 +96,7 @@ function compactDistJs(dir) {
         compacted = esbuild.transformSync(src, {
           loader: 'js',
           minify: true,
+          target: 'es2022',
           legalComments: 'none',
         }).code;
       } else {

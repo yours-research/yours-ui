@@ -587,8 +587,7 @@ progress[class*="yui-"]::-webkit-progress-value, progress[class*="yui-"]::-moz-p
   padding: 2px 7px; border-radius: 9999px; background-color: var(--yui-well-bg); border: 1px solid var(--yui-hairline); font-family: var(--font-mono); font-size: 10px; line-height: 14px; font-weight: 500; font-variant-numeric: tabular-nums; color: var(--yui-secondary); white-space: nowrap;
 }
 
-.yui-composer-usage.is-warning,
-.yui-status-badge--amber {
+.yui-composer-usage.is-warning {
   background-color: var(--yui-amber-soft); border-color: transparent; color: var(--yui-amber-ink);
 }
 
@@ -1087,6 +1086,10 @@ progress[class*="yui-"]::-webkit-progress-value, progress[class*="yui-"]::-moz-p
   background-color: var(--yui-cobalt-soft); border-color: transparent; color: var(--yui-cobalt);
 }
 
+.yui-status-badge--amber {
+  background-color: var(--yui-amber-soft); border-color: transparent; color: var(--yui-amber-ink);
+}
+
 .yui-status-badge--danger {
   background-color: var(--yui-danger-soft); border-color: transparent; color: var(--yui-danger);
 }
@@ -1120,7 +1123,7 @@ progress[class*="yui-"]::-webkit-progress-value, progress[class*="yui-"]::-moz-p
 }
 
 .yui-badge {
-  font-family: var(--font-mono); font-size: 10px; padding: 2px 7px; border-radius: 9999px; background-color: var(--yui-stage-bg); border: 1px solid var(--yui-hairline); color: var(--yui-secondary); white-space: nowrap; flex-shrink: 0;
+  display: inline-flex; align-items: center; gap: 4px; font-family: var(--font-mono); font-size: 10px; padding: 2px 7px; border-radius: 9999px; background-color: var(--yui-stage-bg); border: 1px solid var(--yui-hairline); color: var(--yui-secondary); white-space: nowrap; flex-shrink: 0;
 }
 
 .yui-download-card {
@@ -2501,7 +2504,7 @@ textarea,
 }
 
 .yui-perm-domain {
-  display: inline-flex; align-items: center; justify-content: flex-start; gap: 5px; font-family: var(--font-mono); font-size: 11px; font-weight: 500;
+  display: inline-flex; align-items: center; justify-content: flex-start; gap: 5px; font-family: var(--font-mono); font-size: 11px; font-weight: 500; min-width: 0; max-width: 100%;
 }
 
 .yui-perm-tertiary {
@@ -3037,7 +3040,9 @@ textarea,
 .yui-audit-card,
 .yui-sperm-card,
 .yui-handoff-card,
-.yui-confirm-card {
+.yui-confirm-card,
+.yui-sel-card,
+.yui-devcap-card {
   border-radius: 15px; padding: 13px 14px; gap: 10px;
 }
 
@@ -3588,6 +3593,60 @@ textarea,
   }
 }
 
+.yui-confirm-field,
+.yui-confirm-hold-wrap {
+  display: flex; flex-direction: column; gap: 5px;
+}
+
+.yui-sel-box,
+.yui-devcap-meter-box {
+  padding: 8px 10px; gap: 6px;
+}
+
+.yui-sel-quote {
+  margin: 0; padding-block: 2px; padding-inline-start: 10px; border-inline-start: 2.5px solid var(--yui-cobalt); font-size: 12px; line-height: 17px; color: var(--yui-ink); word-break: break-word;
+}
+
+.yui-sel-quote.is-clamped {
+  display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 3; overflow: hidden;
+}
+
+.yui-sel-toggle {
+  display: inline-flex; align-items: center; gap: 4px; padding: 0;
+}
+
+.yui-devcap-card.is-tight {
+  border-inline-start: 2.5px solid var(--yui-amber);
+}
+
+.yui-devcap-card.is-unsupported {
+  border-inline-start: 2.5px solid var(--yui-danger);
+}
+
+.yui-devcap-row {
+  padding: 7px 10px;
+}
+
+.yui-devcap-val-wrap {
+  justify-content: flex-end;
+}
+
+.yui-devcap-seg--over {
+  fill: var(--yui-danger);
+}
+
+.yui-devcap-tiers {
+  gap: 5px;
+}
+
+.yui-devcap-tier-detail {
+  font-family: var(--font-mono); font-size: 9.5px;
+}
+
+.yui-micro-pill:not(.is-active) .yui-devcap-tier-detail {
+  color: var(--yui-secondary);
+}
+
 @media (max-width: 360px) {
   .yui-hw-strip {
     flex-wrap: wrap; row-gap: 4px; padding: 6px 8px;
@@ -3646,7 +3705,9 @@ textarea,
   .yui-audit-card,
   .yui-sperm-card,
   .yui-handoff-card,
-  .yui-confirm-card {
+  .yui-confirm-card,
+  .yui-sel-card,
+  .yui-devcap-card {
     padding: 11px 12px;
   }
 
@@ -3704,6 +3765,8 @@ textarea,
   .yui-handoff-card,
   .yui-card-shell,
   .yui-confirm-card,
+  .yui-sel-card,
+  .yui-devcap-card,
   .yui-well,
   .yui-empty-box,
   .yui-storage-list {
@@ -3803,7 +3866,8 @@ textarea,
     background-color: CanvasText;
   }
 
-  .yui-qec-quote {
+  .yui-qec-quote,
+  .yui-sel-quote {
     border-inline-start-color: Highlight;
   }
 

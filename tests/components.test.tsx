@@ -17,6 +17,7 @@ import {
   ContextBudgetMeter,
   ContextCommandPopover,
   DataTableCard,
+  DeviceCapabilityCard,
   DiffCard,
   EmptyPanelState,
   EmptyState,
@@ -42,6 +43,7 @@ import {
   ModelRosterList,
   NetworkAuditCard,
   OnboardingCard,
+  PageSelectionCard,
   PermissionApprovalCard,
   PermissionCard,
   PromptCapsuleStack,
@@ -3058,6 +3060,7 @@ describe('@yours/ui chat & runtime primitives', () => {
       );
       const holdCard = holdEl.querySelector('[data-slot="confirm-action-card"]') as HTMLElement;
       expect(holdCard.getAttribute('data-tone')).toBe('amber');
+      expect(holdCard.textContent).toContain('Hold 0.4s or Space to confirm');
       const holdBtn = Array.from(holdCard.querySelectorAll('button')).find((b) =>
         b.textContent?.includes('Hold to clear cookies'),
       ) as HTMLButtonElement;
@@ -3097,5 +3100,110 @@ describe('@yours/ui chat & runtime primitives', () => {
     expect(cssSource.slice(cssSource.indexOf('@media (forced-colors: active)'))).toContain(
       '.yui-confirm-card',
     );
+  });
+
+  it('renders PageSelectionCard & DeviceCapabilityCard with Expand/Collapse, Locate/Dismiss, Headroom meter, Tier selection, Re-check, and zero inline styles', async () => {
+    const onLocate = vi.fn();
+    const onDismiss = vi.fn();
+    const onExpandedChange = vi.fn();
+    const onSelectTier = vi.fn();
+    const onRecheck = vi.fn();
+
+    const longExcerpt =
+      'Local-first Chrome MV3 assistants keep tab context, embeddings, and weights inside your Origin Private File System without uploading DOM fragments to external inference servers even under heavy multi-tab research sessions.';
+    const selEl = renderNode(
+      <PageSelectionCard
+        origin="docs.yours.sh"
+        pageTitle="Architecture Spec"
+        locator="§2 · ¶1"
+        tokenEstimate="~48 tok"
+        excerpt={longExcerpt}
+        onExpandedChange={onExpandedChange}
+        onLocate={onLocate}
+        onDismiss={onDismiss}
+      />,
+    );
+
+    const selCard = selEl.querySelector('[data-slot="page-selection-card"]') as HTMLElement;
+    expect(selCard).not.toBeNull();
+    expect(selCard.getAttribute('data-expanded')).toBe('false');
+    expect(selEl.querySelectorAll('[style]').length).toBe(0);
+    expect(selCard.textContent).toContain('docs.yours.sh');
+    expect(selCard.textContent).toContain('§2 · ¶1');
+    expect(selCard.textContent).toContain('~48 tok');
+
+    const quoteEl = selCard.querySelector('[data-slot="page-selection-quote"]') as HTMLElement;
+    expect(quoteEl.classList.contains('is-clamped')).toBe(true);
+
+    const toggleBtn = selCard.querySelector('button[aria-expanded]') as HTMLButtonElement;
+    expect(toggleBtn.textContent).toContain('Expand');
+    act(() => {
+      toggleBtn.click();
+    });
+    expect(selCard.getAttribute('data-expanded')).toBe('true');
+    expect(onExpandedChange).toHaveBeenCalledWith(true);
+    expect(toggleBtn.textContent).toContain('Collapse');
+
+    const locateBtn = Array.from(selCard.querySelectorAll('button')).find((b) =>
+      b.textContent?.includes('Show on page'),
+    ) as HTMLButtonElement;
+    const dismissBtn = Array.from(selCard.querySelectorAll('button')).find((b) =>
+      b.textContent?.includes('Remove'),
+    ) as HTMLButtonElement;
+    act(() => {
+      locateBtn.click();
+      dismissBtn.click();
+    });
+    expect(onLocate).toHaveBeenCalledTimes(1);
+    expect(onDismiss).toHaveBeenCalledTimes(1);
+
+    const devEl = renderNode(
+      <DeviceCapabilityCard
+        status="tight"
+        adapterName="Apple M2 Pro GPU"
+        vramLabel="16.0 GB unified"
+        ramLabel="16 GB"
+        diskLabel="4.8 GB free"
+        headroom={{ usedGb: 8.6, neededGb: 3.4, freeGb: 7.4, totalGb: 16.0 }}
+        selectedTierId="qwen-1.5b"
+        tiers={[
+          { id: 'qwen-1.5b', label: '1.5B Q4', detail: '1.3 GB', recommended: true },
+          { id: 'qwen-4b', label: '4B Q4', detail: '3.4 GB' },
+        ]}
+        onSelectTier={onSelectTier}
+        onRecheck={onRecheck}
+      />,
+    );
+
+    const devCard = devEl.querySelector('[data-slot="device-capability-card"]') as HTMLElement;
+    expect(devCard).not.toBeNull();
+    expect(devCard.getAttribute('data-status')).toBe('tight');
+    expect(devEl.querySelectorAll('[style]').length).toBe(0);
+    expect(devCard.textContent).toContain('Apple M2 Pro GPU');
+    expect(devCard.textContent).toContain('Tight fit');
+    expect(devCard.textContent).toContain('16.0 GB unified');
+    expect(devCard.textContent).toContain('4.8 GB free');
+    expect(devCard.querySelectorAll('svg rect').length).toBe(2);
+
+    const tier4bBtn = Array.from(devCard.querySelectorAll('button')).find((b) =>
+      b.textContent?.includes('4B Q4'),
+    ) as HTMLButtonElement;
+    const recheckBtn = Array.from(devCard.querySelectorAll('button')).find((b) =>
+      b.textContent?.includes('Re-check'),
+    ) as HTMLButtonElement;
+    act(() => {
+      tier4bBtn.click();
+      recheckBtn.click();
+    });
+    expect(onSelectTier).toHaveBeenCalledWith('qwen-4b');
+    expect(onRecheck).toHaveBeenCalledTimes(1);
+
+    const cssSource = await readSourceFile('../src/styles/components.css');
+    expect(cssSource).toContain('.yui-sel-card');
+    expect(cssSource).toContain('.yui-sel-quote');
+    expect(cssSource).toContain('.yui-devcap-card');
+    const forced = cssSource.slice(cssSource.indexOf('@media (forced-colors: active)'));
+    expect(forced).toContain('.yui-sel-card');
+    expect(forced).toContain('.yui-devcap-card');
   });
 });

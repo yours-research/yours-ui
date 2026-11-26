@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState, type KeyboardEvent } from 'react';
 import { GlobeIcon, ShieldIcon, TrashIcon, XIcon } from '../icons/ApertureIcon.js';
-import { CardFooterChrome, CardHeaderChrome } from './CardChrome.js';
+import { CardFooterChrome, CardHeaderChrome, cn } from './CardChrome.js';
 import { SegmentedControl } from './SegmentedControl.js';
 import { StatusBadge } from './StatusBadge.js';
 
@@ -87,7 +87,7 @@ export function SitePermissionsList({
 
   const activeCount = items.filter((item) => item.mode !== 'off').length;
   const badgeText = badge !== undefined ? badge : `${activeCount} active`;
-  const cardClass = ['yui-card-shell', 'yui-sperm-card', className].filter(Boolean).join(' ');
+  const cardClass = cn('yui-card-shell yui-sperm-card', className);
 
   return (
     <section data-slot="site-permissions-list" className={cardClass} aria-label={title}>
