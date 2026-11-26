@@ -20,6 +20,7 @@ import {
   EmptyState,
   ErrorRecoveryBanner,
   ErrorRecoveryCard,
+  ExportSessionCard,
   FloatingComposer,
   FloatingContextSheet,
   FollowUpSuggestions,
@@ -39,6 +40,7 @@ import {
   PermissionApprovalCard,
   PermissionCard,
   PromptCapsuleStack,
+  PromptTemplateList,
   QuotedContextBanner,
   ReasoningTrace,
   ScrollToBottomButton,
@@ -2352,5 +2354,121 @@ describe('@yours/ui chat & runtime primitives', () => {
     const forcedIdx = cssSource.indexOf('@media (forced-colors: active)');
     expect(cssSource.slice(forcedIdx)).toContain('.yui-alm-bar');
     expect(cssSource.slice(forcedIdx)).toContain('.yui-voice-card');
+  });
+
+  it('renders PromptTemplateList (category filter, search, pin toggle, Up/Down/Enter) and ExportSessionCard (format, toggles, copy/download) cleanly without inline styles', async () => {
+    const writeText = vi.fn().mockResolvedValue(undefined);
+    Object.defineProperty(navigator, 'clipboard', {
+      configurable: true,
+      value: { writeText },
+    });
+
+    const onSelectTemplate = vi.fn();
+    const onTogglePin = vi.fn();
+    const onCopyExport = vi.fn();
+    const onDownloadExport = vi.fn();
+
+    const el = renderNode(
+      <div>
+        <PromptTemplateList
+          onSelect={onSelectTemplate}
+          onTogglePin={onTogglePin}
+          items={[
+            {
+              id: 't1',
+              command: '/summarize',
+              title: 'Summarize active tab',
+              description: 'Concise bullets from local DOM prose.',
+              category: 'Page',
+              shortcut: '⌘1',
+            },
+            {
+              id: 't2',
+              command: '/wgsl',
+              title: 'Audit compute shader',
+              description: 'Check barriers and shared memory bank conflicts.',
+              category: 'Code',
+              pinned: true,
+            },
+          ]}
+        />
+        <ExportSessionCard
+          metaLabel="14 turns · 18.4 KB"
+          previewText={'# Session Export\nVerified locally.'}
+          onCopy={onCopyExport}
+          onDownload={onDownloadExport}
+        />
+      </div>,
+    );
+
+    expect(el.querySelectorAll('[style]').length).toBe(0);
+
+    const ptl = el.querySelector('[data-slot="prompt-template-list"]') as HTMLElement;
+    const rows = Array.from(ptl.querySelectorAll('.yui-ptl-row'));
+    // Pinned item sorts first
+    expect(rows[0].getAttribute('data-template-id')).toBe('t2');
+
+    // Category filter pill
+    const tabs = Array.from(ptl.querySelectorAll('[role="tab"]')) as HTMLButtonElement[];
+    act(() => {
+      tabs.find((btn) => btn.textContent === 'Page')?.click();
+    });
+    expect(ptl.querySelectorAll('.yui-ptl-row').length).toBe(1);
+    expect(ptl.querySelector('.yui-ptl-cmd')?.textContent).toBe('/summarize');
+
+    // Reset to All and test roving ArrowDown + Enter + pin click
+    act(() => {
+      tabs.find((btn) => btn.textContent === 'All')?.click();
+    });
+    const firstOpt = ptl.querySelector('.yui-ptl-main') as HTMLButtonElement;
+    act(() => {
+      firstOpt.focus();
+    });
+    act(() => {
+      firstOpt.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowDown', bubbles: true }));
+    });
+    expect(ptl.querySelectorAll('.yui-ptl-row')[1].classList.contains('is-active')).toBe(true);
+
+    act(() => {
+      (ptl.querySelectorAll('.yui-ptl-main')[1] as HTMLButtonElement).click();
+      (ptl.querySelector('.yui-ptl-pin-btn') as HTMLButtonElement).click();
+    });
+    expect(onSelectTemplate).toHaveBeenCalledWith(expect.objectContaining({ id: 't1' }));
+    expect(onTogglePin).toHaveBeenCalledWith('t2');
+
+    const exp = el.querySelector('[data-slot="export-session-card"]') as HTMLElement;
+    expect(exp.getAttribute('data-format')).toBe('markdown');
+    expect(exp.textContent).toContain('Local file · Nothing uploaded');
+
+    const segBtns = Array.from(exp.querySelectorAll('.yui-seg-btn')) as HTMLButtonElement[];
+    const switches = Array.from(exp.querySelectorAll('[role="switch"]')) as HTMLButtonElement[];
+    act(() => {
+      segBtns[1].click(); // JSON
+      switches[0].click(); // toggle tool traces off
+    });
+    expect(exp.getAttribute('data-format')).toBe('json');
+    expect(switches[0].getAttribute('aria-checked')).toBe('false');
+
+    act(() => {
+      (exp.querySelector('.yui-export-copy-btn') as HTMLButtonElement).click();
+      (exp.querySelector('.yui-export-dl-btn') as HTMLButtonElement).click();
+    });
+    expect(writeText).toHaveBeenCalledWith('# Session Export\nVerified locally.');
+    expect(onCopyExport).toHaveBeenCalledWith({
+      format: 'json',
+      includeToolTraces: false,
+      includeCitations: true,
+    });
+    expect(onDownloadExport).toHaveBeenCalledWith({
+      format: 'json',
+      includeToolTraces: false,
+      includeCitations: true,
+    });
+
+    const cssSource = await readSourceFile('../src/styles/components.css');
+    expect(cssSource).toContain('.yui-ptl-card');
+    expect(cssSource).toContain('.yui-export-card');
+    expect(cssSource).toContain('.yui-voice-card-btns');
+    expect(cssSource.slice(cssSource.indexOf('@media (forced-colors: active)'))).toContain('.yui-export-card');
   });
 });

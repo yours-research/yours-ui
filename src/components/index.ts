@@ -136,6 +136,17 @@ export {
   type VoiceSessionCardProps,
 } from './VoiceSessionCard.js';
 export {
+  PromptTemplateList,
+  type PromptTemplateItem,
+  type PromptTemplateListProps,
+} from './PromptTemplateList.js';
+export {
+  ExportSessionCard,
+  type ExportSessionCardProps,
+  type ExportSessionFormat,
+  type ExportSessionOptions,
+} from './ExportSessionCard.js';
+export {
   LocalVaultExportCard,
   SettingsSection,
   SettingsToggleRow,

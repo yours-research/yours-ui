@@ -7140,17 +7140,38 @@ span.yui-citation-pill {
 
 .yui-voice-card-controls {
   display: flex;
-  flex-wrap: wrap;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.yui-voice-card-btns {
+  width: 100%;
+  display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 6px 8px;
+  gap: 6px;
+}
+
+.yui-voice-card-btns-left,
+.yui-voice-card-btns-right {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.yui-voice-ptt-row {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .yui-voice-ptt-hint,
 .yui-voice-ptt-btn {
   display: inline-flex;
   align-items: center;
-  gap: 4px;
+  justify-content: center;
+  gap: 5px;
   font-size: 11px;
   line-height: 15px;
   color: var(--yui-secondary);
@@ -7158,10 +7179,12 @@ span.yui-citation-pill {
 }
 
 .yui-voice-ptt-btn {
-  padding: 3px 7px;
+  width: 100%;
+  box-sizing: border-box;
+  padding: 5px 10px;
   border-radius: 8px;
   border: 1px solid var(--yui-hairline);
-  background-color: var(--yui-chip-bg);
+  background-color: var(--yui-well-bg);
   font-family: var(--font-sans);
   cursor: pointer;
   transition: background-color 140ms ease, color 140ms ease, border-color 140ms ease;
@@ -7178,21 +7201,14 @@ span.yui-citation-pill {
   color: var(--yui-send-fg);
 }
 
-.yui-voice-card-btns {
-  margin-left: auto;
-  display: inline-flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 5px;
-}
-
 .yui-voice-mute-pill {
   display: inline-flex;
   align-items: center;
   gap: 4px;
 }
 
-.yui-voice-privacy {
+.yui-voice-privacy,
+.yui-export-privacy {
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -7206,9 +7222,271 @@ span.yui-citation-pill {
   text-align: center;
 }
 
-.yui-voice-privacy-icon {
+.yui-voice-privacy-icon,
+.yui-privacy-icon {
   color: var(--yui-secondary);
   flex-shrink: 0;
+}
+
+/* ==========================================================================
+ * PromptTemplateList & ExportSessionCard (Milestone 16)
+ * ========================================================================== */
+.yui-ptl-card,
+.yui-export-card {
+  width: 100%;
+  box-sizing: border-box;
+  flex-shrink: 0;
+  background-color: var(--yui-capsule-bg);
+  border: 1px solid var(--yui-capsule-border);
+  border-radius: 15px;
+  padding: 13px 14px;
+  box-shadow: var(--yui-capsule-shadow);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.yui-ptl-head,
+.yui-export-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 8px;
+  min-width: 0;
+}
+
+.yui-ptl-title,
+.yui-export-title {
+  margin: 0;
+  font-size: 13px;
+  line-height: 17px;
+  font-weight: 600;
+  letter-spacing: var(--tracking-tight);
+  color: var(--yui-ink);
+}
+
+.yui-ptl-count,
+.yui-export-meta {
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  line-height: 14px;
+  color: var(--yui-secondary);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.yui-export-sub {
+  margin: 2px 0 0 0;
+  font-size: 11.5px;
+  line-height: 16px;
+  color: var(--yui-secondary);
+}
+
+.yui-ptl-search-wrap {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 8px;
+  border-radius: 9px;
+  border: 1px solid var(--yui-hairline);
+  background-color: var(--yui-well-bg);
+}
+
+.yui-ptl-search-icon {
+  color: var(--yui-secondary);
+  flex-shrink: 0;
+}
+
+.yui-ptl-search {
+  flex: 1;
+  min-width: 0;
+  border: none;
+  background: transparent;
+  color: var(--yui-ink);
+  font-family: var(--font-sans);
+  font-size: 12px;
+  line-height: 16px;
+  outline: none;
+}
+
+.yui-ptl-search::placeholder {
+  color: var(--yui-secondary);
+}
+
+.yui-ptl-cats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+}
+
+.yui-ptl-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  border: 1px solid var(--yui-hairline);
+  border-radius: 11px;
+  overflow: hidden;
+  background-color: var(--yui-well-bg);
+}
+
+.yui-ptl-row {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding-right: 6px;
+  min-width: 0;
+  transition: background-color 140ms ease;
+}
+
+.yui-ptl-row + .yui-ptl-row {
+  border-top: 1px solid var(--yui-hairline);
+}
+
+.yui-ptl-row.is-active,
+.yui-ptl-row:hover {
+  background-color: var(--yui-hover-bg);
+}
+
+.yui-ptl-main {
+  flex: 1;
+  min-width: 0;
+  border: none;
+  background: transparent;
+  padding: 8px 6px 8px 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  text-align: left;
+  cursor: pointer;
+  font-family: var(--font-sans);
+}
+
+.yui-ptl-main-top {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+  flex-wrap: wrap;
+}
+
+.yui-ptl-cmd {
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  line-height: 14px;
+  font-weight: 600;
+  color: var(--yui-cobalt);
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.yui-ptl-item-title {
+  font-size: 12px;
+  line-height: 16px;
+  font-weight: 500;
+  color: var(--yui-ink);
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  flex: 1;
+}
+
+.yui-ptl-kbd {
+  flex-shrink: 0;
+}
+
+.yui-ptl-desc {
+  font-size: 11px;
+  line-height: 15px;
+  color: var(--yui-secondary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.yui-ptl-pin-btn.is-pinned {
+  color: var(--yui-cobalt);
+}
+
+.yui-ptl-empty {
+  padding: 12px 10px;
+  border-radius: 10px;
+  border: 1px dashed var(--yui-hairline);
+  font-size: 11.5px;
+  color: var(--yui-secondary);
+  text-align: center;
+}
+
+.yui-export-toggles {
+  display: flex;
+  flex-direction: column;
+  border: 1px solid var(--yui-hairline);
+  border-radius: 10px;
+  background-color: var(--yui-well-bg);
+  overflow: hidden;
+}
+
+.yui-export-toggle-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 8px 10px;
+}
+
+.yui-export-toggle-row + .yui-export-toggle-row {
+  border-top: 1px solid var(--yui-hairline);
+}
+
+.yui-export-toggle-label {
+  font-size: 12px;
+  line-height: 16px;
+  font-weight: 500;
+  color: var(--yui-ink);
+}
+
+.yui-export-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.yui-export-copy-btn,
+.yui-export-dl-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+}
+
+.yui-alm-strip {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 9px 12px;
+  border-radius: 12px;
+  border: 1px solid var(--yui-capsule-border);
+  background-color: var(--yui-capsule-bg);
+  box-shadow: var(--yui-capsule-shadow);
+}
+
+.yui-alm-pair {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  min-width: 0;
+}
+
+.yui-alm-pair-label {
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  line-height: 14px;
+  color: var(--yui-secondary);
+  white-space: nowrap;
 }
 
 .yui-icon-btn:focus-visible,
@@ -7221,7 +7499,8 @@ span.yui-citation-pill {
 .yui-recovery-toggle:focus-visible,
 .yui-recovery-copy:focus-visible,
 .yui-notice-action:focus-visible,
-.yui-voice-ptt-btn:focus-visible {
+.yui-voice-ptt-btn:focus-visible,
+.yui-ptl-main:focus-visible {
   outline: 2px solid var(--focus-ring);
   outline-offset: 2px;
 }
@@ -7309,6 +7588,7 @@ span.yui-citation-pill {
   .yui-alm-bar,
   .yui-alm.is-animated .yui-alm-bar,
   .yui-composer-cmd-btn,
+  .yui-ptl-row,
   .yui-check-progress-track::-webkit-progress-value {
     transition: none;
     animation: none;
@@ -7344,7 +7624,13 @@ span.yui-citation-pill {
   .yui-fn-list,
   .yui-notice,
   .yui-voice-card,
-  .yui-voice-transcript {
+  .yui-voice-transcript,
+  .yui-ptl-card,
+  .yui-ptl-search-wrap,
+  .yui-ptl-list,
+  .yui-export-card,
+  .yui-export-toggles,
+  .yui-alm-strip {
     border: 1px solid CanvasText;
   }
 
@@ -7389,6 +7675,7 @@ span.yui-citation-pill {
     color: GrayText;
   }
 
+  .yui-ptl-row.is-active .yui-ptl-main,
   .yui-seg-btn.is-active,
   .yui-sr-action-btn.is-active,
   .yui-tabctx-mute-btn.is-muted,
@@ -7496,6 +7783,8 @@ span.yui-citation-pill {
   .yui-notice-action:focus-visible,
   .yui-voice-ptt-btn:focus-visible,
   .yui-composer-cmd-btn:focus-visible,
+  .yui-ptl-main:focus-visible,
+  .yui-ptl-search:focus-visible,
   .yui-model-radio-btn:focus-visible,
   .yui-tabctx-main-btn:focus-visible,
   .yui-tabctx-mute-btn:focus-visible {

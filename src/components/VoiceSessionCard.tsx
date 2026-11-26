@@ -148,58 +148,64 @@ export function VoiceSessionCard({
       </div>
 
       <div className="yui-voice-card-controls">
-        {onPushToTalk ? (
-          <button
-            type="button"
-            className={pushToTalkActive ? 'yui-voice-ptt-btn is-active' : 'yui-voice-ptt-btn'}
-            aria-pressed={pushToTalkActive}
-            onClick={onPushToTalk}
-          >
-            <span>Hold</span>
-            <KbdHint keys={pushToTalkKey} size="xs" />
-            <span>to talk</span>
-          </button>
-        ) : (
-          <span className="yui-voice-ptt-hint">
-            <span>Hold</span>
-            <KbdHint keys={pushToTalkKey} size="xs" />
-            <span>to talk</span>
-          </span>
-        )}
-
         <div className="yui-voice-card-btns">
-          {onToggleBargeIn ? (
+          <div className="yui-voice-card-btns-left">
+            {onToggleBargeIn ? (
+              <button
+                type="button"
+                className={bargeInEnabled ? 'yui-micro-pill is-active' : 'yui-micro-pill'}
+                aria-pressed={bargeInEnabled}
+                onClick={onToggleBargeIn}
+              >
+                {bargeInLabel}
+              </button>
+            ) : null}
+          </div>
+          <div className="yui-voice-card-btns-right">
+            {onToggleMute ? (
+              <button
+                type="button"
+                className={muted ? 'yui-micro-pill is-active' : 'yui-micro-pill yui-voice-mute-pill'}
+                aria-pressed={muted}
+                onClick={onToggleMute}
+              >
+                <MicIcon size={11.5} />
+                <span>{muted ? 'Muted' : 'Mute'}</span>
+              </button>
+            ) : null}
+            {onEndSession ? (
+              <button
+                type="button"
+                className="yui-micro-pill yui-voice-end-btn"
+                aria-label={endLabel === 'End' ? 'End voice session' : endLabel}
+                onClick={onEndSession}
+              >
+                <XIcon size={11} />
+                <span>{endLabel}</span>
+              </button>
+            ) : null}
+          </div>
+        </div>
+
+        <div className="yui-voice-ptt-row">
+          {onPushToTalk ? (
             <button
               type="button"
-              className={bargeInEnabled ? 'yui-micro-pill is-active' : 'yui-micro-pill'}
-              aria-pressed={bargeInEnabled}
-              onClick={onToggleBargeIn}
+              className={pushToTalkActive ? 'yui-voice-ptt-btn is-active' : 'yui-voice-ptt-btn'}
+              aria-pressed={pushToTalkActive}
+              onClick={onPushToTalk}
             >
-              {bargeInLabel}
+              <span>Hold</span>
+              <KbdHint keys={pushToTalkKey} size="xs" />
+              <span>to talk</span>
             </button>
-          ) : null}
-          {onToggleMute ? (
-            <button
-              type="button"
-              className={muted ? 'yui-micro-pill is-active' : 'yui-micro-pill yui-voice-mute-pill'}
-              aria-pressed={muted}
-              onClick={onToggleMute}
-            >
-              <MicIcon size={11.5} />
-              <span>{muted ? 'Muted' : 'Mute'}</span>
-            </button>
-          ) : null}
-          {onEndSession ? (
-            <button
-              type="button"
-              className="yui-micro-pill yui-voice-end-btn"
-              aria-label={endLabel === 'End' ? 'End voice session' : endLabel}
-              onClick={onEndSession}
-            >
-              <XIcon size={11} />
-              <span>{endLabel}</span>
-            </button>
-          ) : null}
+          ) : (
+            <span className="yui-voice-ptt-hint">
+              <span>Hold</span>
+              <KbdHint keys={pushToTalkKey} size="xs" />
+              <span>to talk</span>
+            </span>
+          )}
         </div>
       </div>
 
