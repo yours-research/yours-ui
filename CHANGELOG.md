@@ -3,7 +3,13 @@
 All notable milestones for **`@yours/ui`** are documented here.
 The library targets Chrome MV3 side panels (`340px–440px`), maintains zero runtime dependencies, zero JSX inline `style` attributes, and zero `dangerouslySetInnerHTML`.
 
-## Unreleased / Milestone 28 (PR #31)
+## Unreleased / Milestone 29 (PR #32)
+
+- **Dark Overview Canvas Seam Fix (`scripts/visual-specimen.mjs`):** Sized `.yui-spec-grid` to `width: max-content; min-width: 100%; min-height: 100vh;` and applied matching dark canvas styling on `:has([data-theme="dark"])`, eliminating the white canvas seam behind the right-most columns in `.visual/specimen-dark-overview.png`.
+- **Speculative Speed & Hardware Telemetry Chips:** Extended `SpeedMetricsSummary` (`ActionBar`: `speedupMultiplier`, `acceptedTokPerStep`, `vramDeltaLabel`) and `HardwareStatusStrip` (`speedupLabel`, `acceptedTokLabel`, `vramDeltaLabel`, `telemetryChips`) with compact wrapping `.yui-telem-chip` pills, forced-colors styling, and left-aligned wrapped `ActionBar` action buttons (`.yui-action-row .yui-action-group`).
+- **Narrow-Width Polish (`320px` / `340px`):** Tightened `TabContextList` (`.yui-tabctx-row`, `.yui-tabctx-mute-btn`) and `CompareTable` (`.yui-table-col-head`, `.yui-table-row`, `.yui-table-cell-val`) under `@container (max-width: 340px)`, expanded the Playwright `320px` audit to cover `chat`, `runtime`, `drawers`, and `genui`, and verified `67/67` unit/export tests (`76.01 KB` JS gzip / `18.36 KB` CSS gzip).
+
+## Milestone 28 (PR #31)
 
 - **MV3 Bundle Headroom Reclamation:** Consolidated compatible component modules (`GenUiCards`, `ChatMessagePrimitives`, `InlineToolStatus`, `ThreadHistoryList`, `FeedbackPrimitives`, `InlineCitationPopover`) and deduplicated `tokens.css` / `components.css` rules while preserving every public export and token ordering (`dist/` JS `196.28 KB` raw / `75.66 KB` gzip across `62` ESM modules; `dist/` CSS `109.79 KB` raw / `18.20 KB` gzip across `3` files).
 - **Clean-Room Inline `WebSearchSourcesStrip` & `SourcesDrawer` (`variant="inline"`):** Added borderless inline web-search source disclosure strip matching `InlineToolStatus` and `ToolTraceList`: overlapping domain favicons with CSS `.is-hidden` broken-image monogram fallback, `"Searched N sites"` disclosure trigger, responsive `@container (max-width: 340px)` single-column reflow, safe `https?:` links (`noopener noreferrer`), `+N more` reveal, zero runtime deps, and zero inline `style=`.

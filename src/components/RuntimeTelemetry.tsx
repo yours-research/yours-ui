@@ -9,6 +9,14 @@ export interface HardwareStatusStripProps {
   memoryLabel?: string;
   status?: HardwareTierStatus;
   sha256Verified?: boolean;
+  /** Speculative decoding speedup multiplier or label (e.g. `1.58` or `"1.58x spec"`). */
+  speedupLabel?: string | number;
+  /** Accepted tokens per speculative step (e.g. `3.4` or `"3.4 tok/step"`). */
+  acceptedTokLabel?: string | number;
+  /** Quantized VRAM footprint delta label (e.g. `"-254 MiB"`). */
+  vramDeltaLabel?: string;
+  /** Additional compact telemetry pill labels rendered at the trailing edge. */
+  telemetryChips?: readonly string[];
   className?: string;
 }
 
@@ -19,9 +27,17 @@ const HARDWARE_TONE: Record<HardwareTierStatus, StatusBadgeTone> = {
   unsupported: 'danger',
 };
 
+function formatSpecChip(value: string | number | undefined, suffix: string, digits: number): string | undefined {
+  if (typeof value === 'number') {
+    return Number.isFinite(value) ? `${value.toFixed(digits)}${suffix}` : undefined;
+  }
+  return value || undefined;
+}
+
 /**
  * Compact monochrome hardware readiness strip displaying WebGPU probe tier,
- * adapter/VRAM info, and OPFS SHA-256 verification status for `@yours/models`.
+ * adapter/VRAM info, optional speculative/quantized telemetry pills, and OPFS
+ * SHA-256 verification status for `@yours/models`.
  */
 export function HardwareStatusStrip({
   tierLabel,
@@ -29,9 +45,15 @@ export function HardwareStatusStrip({
   memoryLabel,
   status = 'ready',
   sha256Verified = false,
+  speedupLabel,
+  acceptedTokLabel,
+  vramDeltaLabel,
+  telemetryChips,
   className,
 }: HardwareStatusStripProps) {
   const stripClass = ['yui-hw-strip', className].filter(Boolean).join(' ');
+  const speedupText = formatSpecChip(speedupLabel, 'x', 2);
+  const acceptedText = formatSpecChip(acceptedTokLabel, ' tok/step', 1);
 
   return (
     <div data-slot="hardware-status-strip" data-status={status} className={stripClass}>
@@ -44,6 +66,16 @@ export function HardwareStatusStrip({
       </div>
       <div className="yui-hw-right">
         {memoryLabel ? <span className="yui-hw-metric">{memoryLabel}</span> : null}
+        {speedupText ? <span className="yui-telem-chip is-spec">{speedupText}</span> : null}
+        {acceptedText ? <span className="yui-telem-chip">{acceptedText}</span> : null}
+        {vramDeltaLabel ? <span className="yui-telem-chip">{vramDeltaLabel}</span> : null}
+        {telemetryChips?.map((chip, idx) =>
+          chip ? (
+            <span key={`${chip}-${idx}`} className="yui-telem-chip">
+              {chip}
+            </span>
+          ) : null,
+        )}
         {sha256Verified ? (
           <span className="yui-hw-sha" title="SHA-256 checksum verified">
             <ShieldIcon size={11} />

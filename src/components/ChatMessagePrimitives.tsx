@@ -340,6 +340,12 @@ export interface SpeedMetricsSummary {
   tokensPerSec?: number;
   ttftMs?: number;
   outputTokens?: number;
+  /** Speculative decoding speedup multiplier (e.g. `1.58` -> `1.58x`). */
+  speedupMultiplier?: number;
+  /** Mean accepted tokens per verify step (e.g. `3.4` -> `3.4 tok/step`). */
+  acceptedTokPerStep?: number;
+  /** Quantized VRAM footprint delta label (e.g. `"-254 MiB"`). */
+  vramDeltaLabel?: string;
 }
 
 export interface ActionBarProps {
@@ -386,6 +392,37 @@ export function ActionBar({
   if (speedMetrics?.outputTokens !== undefined) {
     parts.push(`${speedMetrics.outputTokens} tok`);
   }
+
+  const chips: { label: string; spec?: boolean }[] = [];
+  if (
+    speedMetrics?.speedupMultiplier !== undefined &&
+    Number.isFinite(speedMetrics.speedupMultiplier)
+  ) {
+    chips.push({ label: `${speedMetrics.speedupMultiplier.toFixed(2)}x`, spec: true });
+  }
+  if (
+    speedMetrics?.acceptedTokPerStep !== undefined &&
+    Number.isFinite(speedMetrics.acceptedTokPerStep)
+  ) {
+    chips.push({ label: `${speedMetrics.acceptedTokPerStep.toFixed(1)} tok/step` });
+  }
+  if (speedMetrics?.vramDeltaLabel) {
+    chips.push({ label: speedMetrics.vramDeltaLabel });
+  }
+
+  const telemetryNode =
+    chips.length > 0 ? (
+      <div className="yui-speed-cluster" data-slot="speed-telemetry">
+        {parts.length > 0 ? <span className="yui-speed-readout">{parts.join(' · ')}</span> : null}
+        {chips.map((chip) => (
+          <span key={chip.label} className={chip.spec ? 'yui-telem-chip is-spec' : 'yui-telem-chip'}>
+            {chip.label}
+          </span>
+        ))}
+      </div>
+    ) : parts.length > 0 ? (
+      <span className="yui-speed-readout">{parts.join(' · ')}</span>
+    ) : null;
 
   return (
     <div className="yui-action-row">
@@ -454,7 +491,7 @@ export function ActionBar({
         ) : null}
       </div>
 
-      {rightSlot ?? (parts.length > 0 ? <span className="yui-speed-readout">{parts.join(' · ')}</span> : null)}
+      {rightSlot ?? telemetryNode}
     </div>
   );
 }
