@@ -162,6 +162,8 @@
   right: 0;
   pointer-events: none;
   z-index: 4;
+  opacity: 0;
+  transition: opacity 160ms ease;
 }
 
 .yui-scroll-wrap--fade::before {
@@ -174,6 +176,14 @@
   bottom: 0;
   height: 18px;
   background: linear-gradient(to top, var(--yui-stage-bg) 16%, transparent 100%);
+}
+
+.yui-scroll-wrap--fade.yui-scroll-wrap--fade-top::before {
+  opacity: 1;
+}
+
+.yui-scroll-wrap--fade.yui-scroll-wrap--fade-bottom::after {
+  opacity: 1;
 }
 
 .yui-scroll-stage {
@@ -3739,6 +3749,279 @@ span.yui-citation-pill {
   background-color: var(--yui-chip-bg);
 }
 
+/* ==========================================================================
+ * 340px Tight-Width Guards & SettingsSection / LocalVaultExportCard
+ * ========================================================================== */
+@media (max-width: 360px) {
+  .yui-hw-strip {
+    flex-wrap: wrap;
+    row-gap: 4px;
+    padding: 6px 8px;
+  }
+
+  .yui-hw-adapter {
+    max-width: 96px;
+  }
+
+  .yui-dl-bar-card {
+    padding: 9px 10px;
+  }
+
+  .yui-dl-foot {
+    flex-wrap: wrap;
+    row-gap: 6px;
+  }
+
+  .yui-voice-bar {
+    flex-wrap: wrap;
+    border-radius: 14px;
+    padding: 6px 8px;
+    row-gap: 5px;
+  }
+
+  .yui-voice-actions {
+    margin-left: auto;
+  }
+}
+
+.yui-settings-card,
+.yui-vault-card {
+  width: 100%;
+  box-sizing: border-box;
+  flex-shrink: 0;
+  background-color: var(--yui-capsule-bg);
+  border: 1px solid var(--yui-capsule-border);
+  border-radius: 14px;
+  box-shadow: var(--yui-capsule-shadow);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.yui-settings-card .yui-genui-title,
+.yui-vault-card .yui-genui-title,
+.yui-settings-card .yui-genui-muted,
+.yui-vault-card .yui-genui-muted {
+  margin: 0;
+}
+
+.yui-hw-strip,
+.yui-dl-bar-card,
+.yui-mem-card {
+  flex-shrink: 0;
+}
+
+.yui-settings-head {
+  padding: 11px 13px 9px 13px;
+  border-bottom: 1px solid var(--yui-hairline);
+}
+
+.yui-settings-list {
+  display: flex;
+  flex-direction: column;
+}
+
+.yui-setting-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 9px 13px;
+  min-width: 0;
+}
+
+.yui-setting-row + .yui-setting-row {
+  border-top: 1px solid var(--yui-hairline);
+}
+
+.yui-setting-row.is-disabled {
+  opacity: 0.52;
+}
+
+.yui-setting-copy {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.yui-setting-title-row {
+  display: inline-flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
+  min-width: 0;
+}
+
+.yui-setting-title {
+  font-size: 12.5px;
+  line-height: 16px;
+  font-weight: 500;
+  color: var(--yui-ink);
+}
+
+.yui-setting-desc {
+  margin: 0;
+  font-size: 11px;
+  line-height: 15px;
+  color: var(--yui-muted);
+}
+
+.yui-switch {
+  position: relative;
+  width: 32px;
+  height: 18px;
+  padding: 2px;
+  border-radius: 9999px;
+  border: 1px solid var(--yui-strong);
+  background-color: var(--yui-chip-bg);
+  cursor: pointer;
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  transition: background-color 150ms ease, border-color 150ms ease;
+}
+
+.yui-switch.is-checked {
+  background-color: var(--yui-send-bg);
+  border-color: var(--yui-send-bg);
+}
+
+.yui-switch:focus-visible {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: 2px;
+}
+
+.yui-switch:disabled {
+  cursor: default;
+}
+
+.yui-switch-thumb {
+  width: 12px;
+  height: 12px;
+  border-radius: 9999px;
+  background-color: var(--yui-ink);
+  transform: translateX(0);
+  transition: transform 160ms var(--yui-spring), background-color 150ms ease;
+}
+
+.yui-switch.is-checked .yui-switch-thumb {
+  background-color: var(--yui-send-fg);
+  transform: translateX(14px);
+}
+
+.yui-settings-foot {
+  padding: 8px 13px;
+  border-top: 1px solid var(--yui-hairline);
+  background-color: var(--yui-stage-bg);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.yui-vault-card {
+  padding: 12px 13px;
+  gap: 10px;
+}
+
+.yui-vault-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.yui-vault-field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.yui-vault-label {
+  font-size: 11px;
+  line-height: 14px;
+  font-weight: 500;
+  color: var(--yui-secondary);
+}
+
+.yui-vault-input {
+  width: 100%;
+  box-sizing: border-box;
+  border: 1px solid var(--yui-strong);
+  border-radius: 9px;
+  background-color: var(--yui-stage-bg);
+  color: var(--yui-ink);
+  padding: 7px 10px;
+  font-family: var(--font-mono);
+  font-size: 11.5px;
+  line-height: 15px;
+  outline: none;
+  transition: border-color 140ms ease;
+}
+
+.yui-vault-input::placeholder {
+  color: var(--yui-muted);
+  font-family: var(--font-sans);
+}
+
+.yui-vault-input:focus {
+  border-color: var(--yui-cobalt);
+  box-shadow: 0 0 0 2px var(--focus-ring);
+}
+
+.yui-vault-feedback {
+  font-size: 11px;
+  line-height: 15px;
+  color: var(--yui-green);
+}
+
+.yui-vault-feedback--error {
+  color: var(--yui-danger);
+}
+
+.yui-vault-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.yui-vault-danger-zone {
+  padding-top: 8px;
+  border-top: 1px solid var(--yui-hairline);
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+}
+
+.yui-vault-confirm-row {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.yui-vault-confirm-copy {
+  font-size: 11px;
+  line-height: 14px;
+  font-weight: 500;
+  color: var(--yui-danger);
+}
+
+.yui-micro-pill--danger {
+  color: var(--yui-danger);
+  border-color: var(--yui-danger-soft);
+  background-color: var(--yui-danger-soft);
+}
+
+.yui-micro-pill--danger:hover:not(:disabled) {
+  border-color: var(--yui-danger);
+  background-color: var(--yui-danger-soft);
+}
+
 @media (prefers-reduced-motion: reduce) {
   .yui-hook-rail-layer,
   .yui-hook-row,
@@ -3755,6 +4038,10 @@ span.yui-citation-pill {
   .yui-mem-card,
   .yui-dl-progress::-webkit-progress-value,
   .yui-vm-bar,
+  .yui-scroll-wrap--fade::before,
+  .yui-scroll-wrap--fade::after,
+  .yui-switch,
+  .yui-switch-thumb,
   .yui-cmd-popover,
   .yui-cmd-item,
   .yui-seg-btn,

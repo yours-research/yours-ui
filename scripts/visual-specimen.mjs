@@ -53,6 +53,7 @@ import {
   HookSidebarList,
   InlineCitationPill,
   InlineCitationPopover,
+  LocalVaultExportCard,
   MatrixOrb,
   MemoryInspectorList,
   MetricStripCard,
@@ -69,6 +70,8 @@ import {
   QuotedContextBanner,
   ReasoningTrace,
   SegmentedControl,
+  SettingsSection,
+  SettingsToggleRow,
   SidePanelShell,
   SourcesDrawer,
   StatusBadge,
@@ -478,19 +481,21 @@ function GenUiShowcasePanel({ theme }: { theme: 'light' | 'dark' }) {
 
 function SheetAndCitationPanel({ theme }: { theme: 'light' | 'dark' }) {
   const [draft, setDraft] = useState('');
+  const [sheetOpen, setSheetOpen] = useState(true);
 
   return (
     <SidePanelShell
       theme={theme}
-      veilOpen
+      veilOpen={sheetOpen}
+      onVeilClick={() => setSheetOpen(false)}
       notch={<TopNotch items={NOTCH_ITEMS} expandedId={null} />}
       sheet={
         <FloatingContextSheet
-          open
+          open={sheetOpen}
           title="Context ingestion queue"
           subtitle="3 local sources verified"
           badge="OPFS"
-          onClose={() => {}}
+          onClose={() => setSheetOpen(false)}
           footer={
             <>
               <StatusBadge tone="accent" dot>24.8 KB ready</StatusBadge>
@@ -640,6 +645,81 @@ function RuntimeAndMemoryPanel({ theme }: { theme: 'light' | 'dark' }) {
   );
 }
 
+function SettingsAndVaultPanel({ theme }: { theme: 'light' | 'dark' }) {
+  const [systemTheme, setSystemTheme] = useState(true);
+  const [gpuPacing, setGpuPacing] = useState(true);
+  const [thinkingMode, setThinkingMode] = useState(true);
+  const [netTools, setNetTools] = useState(false);
+
+  return (
+    <SidePanelShell
+      theme={theme}
+      notch={<TopNotch items={NOTCH_ITEMS} expandedId={null} />}
+      footer={
+        <FloatingComposer
+          value=""
+          onChange={() => {}}
+          onSubmit={() => {}}
+          leftSlot={<StatusBadge tone="local" dot>OPFS encrypted</StatusBadge>}
+        />
+      }
+    >
+      <SettingsSection
+        title="Local preferences"
+        subtitle="Zero telemetry leaves this extension"
+        badge="v1.0"
+        footer={
+          <>
+            <StatusBadge tone="local" dot>
+              Zero remote calls
+            </StatusBadge>
+            <span className="yui-mem-time">MV3 CSP strict</span>
+          </>
+        }
+      >
+        <SettingsToggleRow
+          label="System appearance"
+          description="Follow Cotton Paper & Obsidian Dark"
+          checked={systemTheme}
+          onCheckedChange={setSystemTheme}
+        />
+        <SettingsToggleRow
+          label="GPU max pacing"
+          description="Saturate WGSL compute queues for lower TTFT"
+          badge="FP16"
+          badgeTone="local"
+          checked={gpuPacing}
+          onCheckedChange={setGpuPacing}
+        />
+        <SettingsToggleRow
+          label="Thinking trace"
+          description="Stream collapsible reasoning tokens before final copy"
+          shortcut={['⌘', 'T']}
+          checked={thinkingMode}
+          onCheckedChange={setThinkingMode}
+        />
+        <SettingsToggleRow
+          label="Network fetch tool"
+          description="Locked off while private vault data is mounted"
+          badge="Strict"
+          badgeTone="amber"
+          checked={netTools}
+          disabled
+          onCheckedChange={setNetTools}
+        />
+      </SettingsSection>
+
+      <LocalVaultExportCard
+        recordCountLabel="148 records"
+        statusMessage="Last AES-GCM snapshot verified 4m ago"
+        onExportEncrypted={() => {}}
+        onImportEncrypted={() => {}}
+        onWipeAll={() => {}}
+      />
+    </SidePanelShell>
+  );
+}
+
 function SpecimenApp() {
   const params = new URLSearchParams(window.location.search);
   const mode = params.get('mode') || 'gallery';
@@ -656,6 +736,7 @@ function SpecimenApp() {
         {panel === 'live' ? <LiveStreamPopoverPanel theme={theme} /> : null}
         {panel === 'sheet' ? <SheetAndCitationPanel theme={theme} /> : null}
         {panel === 'runtime' ? <RuntimeAndMemoryPanel theme={theme} /> : null}
+        {panel === 'settings' ? <SettingsAndVaultPanel theme={theme} /> : null}
         {panel === 'genui' ? <GenUiShowcasePanel theme={theme} /> : null}
       </div>
     );
@@ -669,6 +750,7 @@ function SpecimenApp() {
       <div className="yui-spec-frame"><ActiveChatPanel theme={theme} /></div>
       <div className="yui-spec-frame"><SheetAndCitationPanel theme={theme} /></div>
       <div className="yui-spec-frame"><RuntimeAndMemoryPanel theme={theme} /></div>
+      <div className="yui-spec-frame"><SettingsAndVaultPanel theme={theme} /></div>
       <div className="yui-spec-frame-auto"><GenUiShowcasePanel theme={theme} /></div>
     </div>
   );
@@ -870,7 +952,7 @@ async function main() {
       }
     };
 
-    const singlePanels = ['resting', 'notch', 'live', 'chat', 'sheet', 'runtime', 'genui'];
+    const singlePanels = ['resting', 'notch', 'live', 'chat', 'sheet', 'runtime', 'settings', 'genui'];
     for (const theme of ['light', 'dark']) {
       await page.setViewportSize({ width: 380, height: 828 });
       for (const panel of singlePanels) {
@@ -884,9 +966,24 @@ async function main() {
         }
 
         if (panel === 'chat') {
-          const clearance = await page.evaluate(() => {
+          const fadeAtTop = await page.evaluate(() => {
+            const wrap = document.querySelector('.yui-scroll-wrap');
+            const stage = document.querySelector('.yui-scroll-stage');
+            return {
+              scrollTop: stage ? Math.round(stage.scrollTop) : -1,
+              top: wrap?.getAttribute('data-fade-top'),
+              bottom: wrap?.getAttribute('data-fade-bottom'),
+            };
+          });
+          if (fadeAtTop.top !== 'false' || fadeAtTop.bottom !== 'true') {
+            throw new Error(`380px chat initial fade check failed (${theme}): ${JSON.stringify(fadeAtTop)}`);
+          }
+
+          const clearance = await page.evaluate(async () => {
             const stage = document.querySelector('.yui-scroll-stage');
             if (stage) stage.scrollTop = stage.scrollHeight;
+            await new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r)));
+            const wrap = document.querySelector('.yui-scroll-wrap');
             const actionRow = Array.from(document.querySelectorAll('.yui-action-row')).at(-1);
             const composer = document.querySelector('.yui-composer');
             if (!stage || !actionRow || !composer) return null;
@@ -897,17 +994,27 @@ async function main() {
               actionBottom: Math.round(ar.bottom),
               stageBottom: Math.round(sr.bottom),
               composerTop: Math.round(cr.top),
+              fadeTop: wrap?.getAttribute('data-fade-top'),
+              fadeBottom: wrap?.getAttribute('data-fade-bottom'),
             };
           });
           if (
             !clearance ||
             clearance.actionBottom > clearance.stageBottom + 1 ||
-            clearance.actionBottom > clearance.composerTop - 12
+            clearance.actionBottom > clearance.composerTop - 12 ||
+            clearance.fadeTop !== 'true' ||
+            clearance.fadeBottom !== 'false'
           ) {
             throw new Error(
-              `380px chat clearance failed (${theme}): ${JSON.stringify(clearance)}`,
+              `380px chat clearance/fade failed (${theme}): ${JSON.stringify(clearance)}`,
             );
           }
+          // Restore scrollTop=0 for clean 380px initial-state chat screenshot
+          await page.evaluate(async () => {
+            const stage = document.querySelector('.yui-scroll-stage');
+            if (stage) stage.scrollTop = 0;
+            await new Promise((r) => requestAnimationFrame(r));
+          });
         }
 
         const audit = await page.evaluate(() => {
@@ -929,6 +1036,71 @@ async function main() {
         const outPath = path.join(OUT_DIR, `specimen-${theme}-${panel}.png`);
         await page.screenshot({ path: outPath, fullPage: panel === 'genui' });
         outputs.push(outPath);
+
+        // Live interactive WAAPI & state checks (post-screenshot so baseline PNGs stay pure)
+        if (panel === 'notch') {
+          await page.click('.yui-notch-drawer .yui-seg-btn:nth-of-type(1)');
+          await page.waitForTimeout(80);
+          const maxLeft = await page.evaluate(() => {
+            const thumb = document.querySelector('.yui-notch-drawer .yui-seg-thumb');
+            return thumb ? thumb.getBoundingClientRect().left : -1;
+          });
+          await page.click('.yui-notch-drawer .yui-seg-btn:nth-of-type(3)');
+          await page.waitForTimeout(360);
+          const smoothResult = await page.evaluate(() => {
+            const seg = document.querySelector('.yui-notch-drawer [data-slot="segmented-control"]');
+            const thumb = document.querySelector('.yui-notch-drawer .yui-seg-thumb');
+            const root = document.getElementById('specimen-root');
+            const nonEmptyStyles = root
+              ? Array.from(root.querySelectorAll('[style]')).filter(
+                  (n) => (n.getAttribute('style') || '').trim().length > 0,
+                )
+              : [];
+            return {
+              mode: seg?.getAttribute('data-thumb'),
+              left: thumb ? thumb.getBoundingClientRect().left : -1,
+              styles: nonEmptyStyles.length,
+            };
+          });
+          if (
+            smoothResult.mode !== 'animated' ||
+            smoothResult.styles !== 0 ||
+            !(smoothResult.left > maxLeft + 20)
+          ) {
+            throw new Error(
+              `SegmentedControl interactive WAAPI glide failed (${theme}): maxLeft=${maxLeft}, smooth=${JSON.stringify(smoothResult)}`,
+            );
+          }
+        }
+
+        if (panel === 'sheet') {
+          await page.click('.yui-ctx-sheet [aria-label="Close sheet"]');
+          await page.waitForTimeout(80);
+          const sheetAfterClose = await page.locator('[data-slot="floating-context-sheet"]').count();
+          await page.click('.yui-cite-wrap button.yui-citation-pill');
+          const reopenedCount = await page.locator('.yui-cite-card').count();
+          await page.click('.yui-cite-wrap button.yui-citation-pill');
+          const closedCount = await page.locator('.yui-cite-card').count();
+          if (sheetAfterClose !== 0 || reopenedCount !== 1 || closedCount !== 0) {
+            throw new Error(
+              `Sheet close / InlineCitationPopover toggle failed (${theme}): sheet=${sheetAfterClose}, reopened=${reopenedCount}, closed=${closedCount}`,
+            );
+          }
+        }
+
+        if (panel === 'runtime') {
+          await page.click('.yui-mem-filter .yui-seg-btn:nth-of-type(2)');
+          await page.waitForTimeout(80);
+          const profileCount = await page.locator('[data-slot="memory-record-card"]').count();
+          await page.click('.yui-mem-filter .yui-seg-btn:nth-of-type(1)');
+          await page.waitForTimeout(80);
+          const allCount = await page.locator('[data-slot="memory-record-card"]').count();
+          if (profileCount !== 1 || allCount !== 3) {
+            throw new Error(
+              `MemoryInspectorList filter check failed (${theme}): profile=${profileCount}, all=${allCount}`,
+            );
+          }
+        }
 
         // Capture TopNotch intermediate hover-grow (272px x 52px) state directly over resting
         if (panel === 'resting') {
@@ -952,16 +1124,17 @@ async function main() {
 
       // Narrow 340px stress pass across interactive & dense panels
       await page.setViewportSize({ width: 340, height: 828 });
-      for (const narrowPanel of ['resting', 'live', 'chat', 'sheet', 'runtime', 'genui']) {
+      for (const narrowPanel of ['resting', 'live', 'chat', 'sheet', 'runtime', 'settings', 'genui']) {
         await page.goto(`${baseUrl}/?mode=single&theme=${theme}&panel=${narrowPanel}&narrow=1`, {
           waitUntil: 'networkidle',
         });
         await waitForSpecimen(`340/${theme}/${narrowPanel}`);
 
         if (narrowPanel === 'chat') {
-          const narrowClearance = await page.evaluate(() => {
+          const narrowClearance = await page.evaluate(async () => {
             const stage = document.querySelector('.yui-scroll-stage');
             if (stage) stage.scrollTop = stage.scrollHeight;
+            await new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r)));
             const actionRow = Array.from(document.querySelectorAll('.yui-action-row')).at(-1);
             const composer = document.querySelector('.yui-composer');
             if (!stage || !actionRow || !composer) return null;
@@ -985,6 +1158,31 @@ async function main() {
           }
         }
 
+        if (narrowPanel === 'runtime') {
+          const runtimeBounds = await page.evaluate(() => {
+            const selectors = [
+              '[data-slot="hardware-status-strip"]',
+              '[data-slot="model-download-progress-bar"]',
+              '[data-slot="voice-session-bar"]',
+              '[data-slot="memory-inspector-list"]',
+            ];
+            return selectors.map((selector) => {
+              const el = document.querySelector(selector);
+              if (!el) return { selector, missing: true };
+              const rect = el.getBoundingClientRect();
+              return {
+                selector,
+                right: Math.round(rect.right),
+                scrollOverflow: el.scrollWidth > el.clientWidth + 1,
+              };
+            });
+          });
+          const bad = runtimeBounds.find((b) => b.missing || b.right > 332 || b.scrollOverflow);
+          if (bad) {
+            throw new Error(`340px runtime bounds failed (${theme}): ${JSON.stringify(runtimeBounds)}`);
+          }
+        }
+
         const narrowAudit = await page.evaluate(() => {
           const root = document.getElementById('specimen-root');
           const inlineStyleCount = root ? root.querySelectorAll('[style]').length : -1;
@@ -1001,10 +1199,15 @@ async function main() {
           await page.screenshot({ path: narrowPath });
           outputs.push(narrowPath);
         }
+        if (narrowPanel === 'runtime') {
+          const runtimeNarrowPath = path.join(OUT_DIR, `specimen-${theme}-runtime-narrow340.png`);
+          await page.screenshot({ path: runtimeNarrowPath });
+          outputs.push(runtimeNarrowPath);
+        }
       }
 
-      // Overview 7-up comparison sheet
-      await page.setViewportSize({ width: 2848, height: 900 });
+      // Overview 8-up comparison sheet
+      await page.setViewportSize({ width: 3252, height: 900 });
       await page.goto(`${baseUrl}/?mode=gallery&theme=${theme}`, { waitUntil: 'networkidle' });
       const overviewPath = path.join(OUT_DIR, `specimen-${theme}-overview.png`);
       await page.screenshot({ path: overviewPath, fullPage: true });
