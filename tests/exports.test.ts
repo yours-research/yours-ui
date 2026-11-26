@@ -138,6 +138,10 @@ describe('@yours/ui built ESM & CSS exports smoke test', () => {
     expect(typeof componentsMod.VoiceSessionCard).toBe('function');
     expect(typeof componentsMod.PromptTemplateList).toBe('function');
     expect(typeof componentsMod.ExportSessionCard).toBe('function');
+    expect(typeof componentsMod.FindInThreadBar).toBe('function');
+    expect(typeof componentsMod.StorageQuotaCard).toBe('function');
+    expect(typeof rootMod.FindInThreadBar).toBe('function');
+    expect(typeof rootMod.StorageQuotaCard).toBe('function');
     expect(typeof genuiMod.CompareTable).toBe('function');
     expect(typeof genuiMod.MetricStripCard).toBe('function');
     expect(typeof genuiMod.TimelineCard).toBe('function');
@@ -198,7 +202,7 @@ describe('@yours/ui built ESM & CSS exports smoke test', () => {
         "import { MicIcon, YoursMark } from '@yours/ui/icons';",
         "import { SidePanelShell, TopNotch } from '@yours/ui/layout';",
         "import { ErrorRecoveryCard, FloatingComposer, InlineNotice } from '@yours/ui/components';",
-        "import { PromptTemplateList, ExportSessionCard } from '@yours/ui/components';",
+        "import { PromptTemplateList, ExportSessionCard, FindInThreadBar, StorageQuotaCard } from '@yours/ui/components';",
         "import { CompareTable, MetricStripCard, QuoteExcerptCard, TimelineCard } from '@yours/ui/genui';",
         '',
         'export function ConsumerExample(props: FloatingComposerProps) {',
@@ -216,6 +220,8 @@ describe('@yours/ui built ESM & CSS exports smoke test', () => {
         '      <ErrorRecoveryCard title="Err" diagnosis="Diag" onRetry={() => {}} />',
         '      <PromptTemplateList items={[{ id: "p1", command: "/sum", title: "Summarize" }]} onSelect={() => {}} />',
         '      <ExportSessionCard metaLabel="4 turns" onCopy={() => {}} onDownload={() => {}} />',
+        '      <FindInThreadBar query="local" totalMatches={3} currentMatch={1} onPrev={() => {}} onNext={() => {}} />',
+        '      <StorageQuotaCard usedLabel="2.6 GB" quotaLabel="12.0 GB" entries={[{ id: "w", label: "Weights", sizeLabel: "2.4 GB", percent: 20 }]} />',
         '      <MetricStripCard label="VRAM" primaryValue="2.4 GB" values={[2.1, 2.3, 2.4]} />',
         '      <CompareTable title="Bench" leftColumnTitle="A" rightColumnTitle="B" rows={[{ feature: "Speed", leftValue: "44", rightValue: "39" }]} />',
         '      <TimelineCard title="Plan" steps={[{ id: "s1", label: "Step 1", status: "done" }]} />',

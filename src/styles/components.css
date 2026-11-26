@@ -1909,7 +1909,7 @@
 .yui-status-badge--local {
   background-color: var(--yui-green-soft);
   border-color: transparent;
-  color: var(--yui-green);
+  color: var(--yui-green-ink);
 }
 
 .yui-status-badge--accent {
@@ -2008,7 +2008,7 @@
 .yui-badge--ready {
   background-color: var(--yui-green-soft);
   border-color: transparent;
-  color: var(--yui-green);
+  color: var(--yui-green-ink);
 }
 
 .yui-download-card {
@@ -3686,7 +3686,7 @@ span.yui-citation-pill {
   font-size: 10px;
   line-height: 13px;
   font-weight: 600;
-  color: var(--yui-green);
+  color: var(--yui-green-ink);
   background-color: var(--yui-green-soft);
   border-radius: 9999px;
   padding: 2px 6px;
@@ -4185,7 +4185,7 @@ span.yui-citation-pill {
   gap: 5px;
   font-size: 11px;
   line-height: 15px;
-  color: var(--yui-green);
+  color: var(--yui-green-ink);
 }
 
 [data-theme="dark"] .yui-vault-feedback {
@@ -4588,6 +4588,10 @@ span.yui-citation-pill {
 }
 
 .yui-shortcut-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 8px;
   padding: 11px 13px 9px 13px;
   border-bottom: 1px solid var(--yui-hairline);
 }
@@ -7235,7 +7239,8 @@ span.yui-citation-pill {
  * PromptTemplateList & ExportSessionCard (Milestone 16)
  * ========================================================================== */
 .yui-ptl-card,
-.yui-export-card {
+.yui-export-card,
+.yui-storage-card {
   width: 100%;
   box-sizing: border-box;
   flex-shrink: 0;
@@ -7670,6 +7675,364 @@ span.yui-citation-pill {
   color: var(--yui-ink);
 }
 
+/* ==========================================================================
+ * FindInThreadBar & StorageQuotaCard (Milestone 19)
+ * ========================================================================== */
+.yui-find-bar {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  width: 100%;
+  box-sizing: border-box;
+  padding: 5px 6px 5px 9px;
+  background-color: var(--yui-capsule-bg);
+  border: 1px solid var(--yui-capsule-border);
+  border-radius: 12px;
+  box-shadow: var(--yui-capsule-shadow);
+  min-width: 0;
+}
+
+.yui-find-input-wrap {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.yui-find-icon {
+  color: var(--yui-secondary);
+  flex-shrink: 0;
+}
+
+.yui-find-input {
+  width: 100%;
+  min-width: 0;
+  border: none;
+  background: transparent;
+  padding: 2px 0;
+  margin: 0;
+  font-family: var(--font-sans);
+  font-size: 12.5px;
+  line-height: 18px;
+  color: var(--yui-ink);
+  outline: none;
+}
+
+.yui-find-input::placeholder {
+  color: var(--yui-secondary);
+  opacity: 0.78;
+}
+
+.yui-find-input::-webkit-search-cancel-button {
+  -webkit-appearance: none;
+  appearance: none;
+}
+
+.yui-find-count {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  line-height: 14px;
+  font-variant-numeric: tabular-nums;
+  color: var(--yui-secondary);
+  white-space: nowrap;
+  flex-shrink: 0;
+  padding: 0 2px;
+}
+
+.yui-find-count.is-empty {
+  color: var(--yui-danger-ink);
+}
+
+.yui-find-actions {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  flex-shrink: 0;
+}
+
+.yui-find-case-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 22px;
+  min-width: 24px;
+  padding: 0 5px;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--yui-secondary);
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  font-weight: 600;
+  line-height: 1;
+  cursor: pointer;
+  transition: background-color 140ms var(--ease-tactile), color 140ms var(--ease-tactile),
+    border-color 140ms var(--ease-tactile);
+}
+
+.yui-find-case-btn:hover {
+  background-color: var(--yui-hover-bg);
+  color: var(--yui-ink);
+}
+
+.yui-find-case-btn.is-active {
+  background-color: var(--yui-cobalt-soft);
+  border-color: var(--yui-cobalt);
+  color: var(--yui-cobalt);
+}
+
+.yui-find-nav-btn,
+.yui-find-close-btn {
+  width: 22px;
+  height: 22px;
+}
+
+.yui-find-nav-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.yui-storage-card {
+  color: var(--yui-ink);
+}
+
+.yui-storage-card .yui-genui-title,
+.yui-storage-card .yui-genui-muted {
+  margin: 0;
+}
+
+.yui-storage-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 8px;
+  min-width: 0;
+}
+
+.yui-storage-quota-readout {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  line-height: 16px;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.yui-storage-used {
+  color: var(--yui-ink);
+  font-weight: 600;
+}
+
+.yui-storage-total {
+  color: var(--yui-secondary);
+}
+
+.yui-storage-bar {
+  width: 100%;
+  height: 6px;
+  border-radius: 999px;
+  background-color: var(--yui-chip-bg);
+  overflow: hidden;
+  border: 1px solid var(--yui-hairline);
+  box-sizing: border-box;
+}
+
+.yui-storage-bar-svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.yui-storage-seg {
+  transition: width 180ms var(--ease-tactile), x 180ms var(--ease-tactile);
+}
+
+.yui-storage-seg--weights {
+  fill: var(--yui-cobalt);
+}
+
+.yui-storage-seg--vault {
+  fill: var(--yui-green);
+}
+
+.yui-storage-seg--history {
+  fill: var(--yui-amber);
+}
+
+.yui-storage-seg--other {
+  fill: var(--yui-secondary);
+}
+
+.yui-storage-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  border: 1px solid var(--yui-hairline);
+  border-radius: 10px;
+  background-color: var(--yui-well-bg);
+  overflow: hidden;
+}
+
+.yui-storage-row {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  padding: 8px 10px;
+}
+
+.yui-storage-row + .yui-storage-row {
+  border-top: 1px solid var(--yui-hairline);
+}
+
+.yui-storage-row-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  min-width: 0;
+}
+
+.yui-storage-row-title-wrap {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+  flex: 1 1 auto;
+  flex-wrap: wrap;
+}
+
+.yui-storage-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 999px;
+  flex-shrink: 0;
+}
+
+.yui-storage-dot--weights {
+  background-color: var(--yui-cobalt);
+}
+
+.yui-storage-dot--vault {
+  background-color: var(--yui-green);
+}
+
+.yui-storage-dot--history {
+  background-color: var(--yui-amber);
+}
+
+.yui-storage-dot--other {
+  background-color: var(--yui-secondary);
+}
+
+.yui-storage-row-label {
+  font-size: 12.5px;
+  line-height: 16px;
+  font-weight: 500;
+  color: var(--yui-ink);
+  min-width: 0;
+}
+
+.yui-storage-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  padding: 1px 6px;
+  border-radius: 999px;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  line-height: 14px;
+  color: var(--yui-secondary);
+  background-color: var(--yui-chip-bg);
+  border: 1px solid var(--yui-hairline);
+}
+
+.yui-storage-status.is-verified {
+  color: var(--yui-green-ink);
+  background-color: var(--yui-green-soft);
+  border-color: transparent;
+}
+
+.yui-storage-row-size {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  line-height: 16px;
+  font-variant-numeric: tabular-nums;
+  color: var(--yui-ink);
+  font-weight: 500;
+  flex-shrink: 0;
+}
+
+.yui-storage-row-sub {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px 8px;
+  flex-wrap: wrap;
+  padding-left: 13px;
+}
+
+.yui-storage-row-detail {
+  font-size: 11px;
+  line-height: 15px;
+  color: var(--yui-secondary);
+  min-width: 0;
+}
+
+.yui-storage-row-actions {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  flex-wrap: wrap;
+}
+
+.yui-storage-clear-btn:hover {
+  color: var(--yui-danger-ink);
+}
+
+.yui-storage-foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  flex-wrap: wrap;
+  padding-top: 8px;
+  border-top: 1px solid var(--yui-hairline);
+}
+
+.yui-storage-privacy {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  line-height: 14px;
+  color: var(--yui-secondary);
+}
+
+@media (max-width: 360px) {
+  .yui-find-bar {
+    gap: 3px;
+    padding: 4px 5px 4px 8px;
+  }
+
+  .yui-find-count {
+    font-size: 10.5px;
+  }
+
+  .yui-storage-card {
+    padding: 11px 12px;
+  }
+
+  .yui-storage-row {
+    padding: 7px 9px;
+  }
+}
+
+.yui-find-case-btn:focus-visible,
+.yui-find-input:focus-visible,
 .yui-icon-btn:focus-visible,
 .yui-pill-btn:focus-visible,
 .yui-seg-btn:focus-visible,
@@ -7772,6 +8135,8 @@ span.yui-citation-pill {
   .yui-alm.is-animated .yui-alm-bar,
   .yui-composer-cmd-btn,
   .yui-ptl-row,
+  .yui-find-case-btn,
+  .yui-storage-seg,
   .yui-check-progress-track::-webkit-progress-value {
     transition: none;
     animation: none;
@@ -7814,7 +8179,11 @@ span.yui-citation-pill {
   .yui-export-card,
   .yui-export-toggles,
   .yui-alm-strip,
-  .yui-genui-card {
+  .yui-genui-card,
+  .yui-find-bar,
+  .yui-storage-card,
+  .yui-storage-bar,
+  .yui-storage-list {
     border: 1px solid CanvasText;
   }
 
@@ -7995,8 +8364,25 @@ span.yui-citation-pill {
   .yui-qec-link:focus-visible,
   .yui-model-radio-btn:focus-visible,
   .yui-tabctx-main-btn:focus-visible,
-  .yui-tabctx-mute-btn:focus-visible {
+  .yui-tabctx-mute-btn:focus-visible,
+  .yui-find-case-btn:focus-visible,
+  .yui-find-input:focus-visible,
+  .yui-storage-action-btn:focus-visible,
+  .yui-storage-clear-btn:focus-visible,
+  .yui-storage-clear-all:focus-visible {
     outline: 2px solid Highlight;
     outline-offset: 2px;
+  }
+
+  .yui-find-case-btn.is-active,
+  .yui-storage-status.is-verified {
+    border: 1px solid Highlight;
+    background-color: Highlight;
+    color: HighlightText;
+    forced-color-adjust: none;
+  }
+
+  .yui-storage-seg {
+    fill: Highlight;
   }
 }

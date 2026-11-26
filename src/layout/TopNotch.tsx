@@ -2,7 +2,7 @@ import { useEffect, useRef, type ReactNode } from 'react';
 import { ApertureIcon } from '../icons/ApertureIcon.js';
 import type { ApertureIconName } from '../icons/iconData.js';
 import { NotchEar } from '../icons/NotchEar.js';
-import { useFocusTrap } from '../utils/focusTrap.js';
+import { useFocusTrap } from '../utils/focus.js';
 
 export interface TopNotchItem {
   id: string;

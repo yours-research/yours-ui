@@ -3,14 +3,15 @@
 All notable milestones for **`@yours/ui`** are documented here.
 The library targets Chrome MV3 side panels (`340px–440px`), maintains zero runtime dependencies, zero JSX inline `style` attributes, and zero `dangerouslySetInnerHTML`.
 
-## Unreleased / Milestone 18 (PR #21)
+## Unreleased / Milestone 19 (PR #22)
 
-- Fixed `CompareTable` and `.yui-genui-card` dark-mode ink inheritance so non-emphasized table values (`$200`, `$250`), checked checklist items, secondary key-value labels, and metric deltas maintain full WCAG AA contrast against dark surfaces.
-- Compacted published `dist/` bundles (compact icon path JSON in `generate-icons.mjs`, comment-stripped AST printing on JS + CSS minification in `copy-assets.mjs` while keeping full `.d.ts` comments) down to `80.77 KB` JS gzip (`<= 86.00 KB` guard) and `17.96 KB` CSS gzip (`<= 20.50 KB` guard).
-- Tightened `PromptTemplateList` narrow-viewport (`<= 360px`) spacing for improved row legibility at `340px`.
-- Added automated Light & Dark WCAG AA contrast assertions across all 10 `@yours/ui/genui` cards in `scripts/visual-specimen.mjs`.
+- Added **`FindInThreadBar`** (`src/components/FindInThreadBar.tsx`) and **`StorageQuotaCard`** (`src/components/StorageQuotaCard.tsx`) exported from `@yours/ui/components` and `@yours/ui`, featuring `tabular-nums` match readouts, `Aa` case-sensitivity toggle, zero-inline-style SVG segmented capacity bars, `Verify SHA-256`/`Clear` controls, `100% local browser storage` privacy footers, and `@media (forced-colors: active)` + `340px` support.
+- Consolidated overlay focus management into **`src/utils/focus.ts`** (`< 0.5 KB` gzip) across `CommandPalette`, `ShortcutSheet` (optional `open`/`onClose` dialog mode), `FloatingContextSheet`, and `TopNotch` with `Tab`/`Shift+Tab` containment and trigger focus restoration on `Escape` or veil click.
+- Expanded Light & Dark WCAG AA contrast assertions across all specimen panels (`voice`, `templates`, `recovery`, `onboarding`, `budget`, `drawers`, `trace`, `diff`, `palette`, `data`, `shortcuts`, `welcome`, `storage`, and all 10 GenUI cards), upgrading `--yui-muted`/`--text-muted` tokens (`#6F6D68` Light / `#8C8A84` Dark) and green ink pills (`--yui-green-ink`) to clear `>= 4.5:1`.
 
 ## Milestone History (`v0.1.0`)
+
+- **Milestone 18 (PR #21):** Fixed `CompareTable` and `.yui-genui-card` dark-mode ink inheritance, compacted published `dist/` JS (`80.77 KB` gzip) and CSS (`17.96 KB` gzip) bundles, tightened `PromptTemplateList` `340px` spacing, and added 10-card GenUI Light/Dark WCAG AA audits.
 
 - **Milestone 17 (PR #20):** Fixed `ExportSessionCard` `340px` header layout, added `TimelineCard` & `QuoteExcerptCard` to `@yours/ui/genui`, extracted shared `useCopyFeedback` hook (`src/utils/clipboard.ts`), and added `400px` & `340px` Light/Dark `genui` checks in `scripts/visual-specimen.mjs`.
 

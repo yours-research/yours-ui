@@ -26,7 +26,7 @@
   /* Ink & Hierarchy */
   --text-primary: #141413;
   --text-secondary: #5C5B57;
-  --text-muted: #8E8C86;
+  --text-muted: #6F6D68;
 
   /* Monochrome Primary Control (Send / Primary Capsule) */
   --control-primary-bg: #141413;
@@ -58,7 +58,7 @@
   --yui-ink: #141413;
   --yui-secondary: #5C5B57;
   --yui-hover-ink: #3A3936;
-  --yui-muted: #8E8C86;
+  --yui-muted: #6F6D68;
   --yui-hairline: rgba(20, 20, 19, 0.08);
   --yui-strong: rgba(20, 20, 19, 0.16);
   --yui-cobalt: #1D4ED8;
@@ -159,7 +159,7 @@
 
     --text-primary: #F4F3EF;
     --text-secondary: #A1A09A;
-    --text-muted: #6E6D68;
+    --text-muted: #8C8A84;
 
     --control-primary-bg: #F4F3EF;
     --control-primary-fg: #111113;
@@ -187,7 +187,7 @@
     --yui-ink: #F4F3EF;
     --yui-secondary: #A1A09A;
     --yui-hover-ink: #D4D3CE;
-    --yui-muted: #6E6D68;
+    --yui-muted: #8C8A84;
     --yui-hairline: rgba(255, 255, 255, 0.08);
     --yui-strong: rgba(255, 255, 255, 0.15);
     --yui-cobalt: #60A5FA;
@@ -238,7 +238,7 @@
 
   --text-primary: #141413;
   --text-secondary: #5C5B57;
-  --text-muted: #8E8C86;
+  --text-muted: #6F6D68;
 
   --control-primary-bg: #141413;
   --control-primary-fg: #FAF8F5;
@@ -266,7 +266,7 @@
   --yui-ink: #141413;
   --yui-secondary: #5C5B57;
   --yui-hover-ink: #3A3936;
-  --yui-muted: #8E8C86;
+  --yui-muted: #6F6D68;
   --yui-hairline: rgba(20, 20, 19, 0.08);
   --yui-strong: rgba(20, 20, 19, 0.16);
   --yui-cobalt: #1D4ED8;
@@ -316,7 +316,7 @@
 
   --text-primary: #F4F3EF;
   --text-secondary: #A1A09A;
-  --text-muted: #6E6D68;
+  --text-muted: #8C8A84;
 
   --control-primary-bg: #F4F3EF;
   --control-primary-fg: #111113;
@@ -344,7 +344,7 @@
   --yui-ink: #F4F3EF;
   --yui-secondary: #A1A09A;
   --yui-hover-ink: #D4D3CE;
-  --yui-muted: #6E6D68;
+  --yui-muted: #8C8A84;
   --yui-hairline: rgba(255, 255, 255, 0.08);
   --yui-strong: rgba(255, 255, 255, 0.15);
   --yui-cobalt: #60A5FA;

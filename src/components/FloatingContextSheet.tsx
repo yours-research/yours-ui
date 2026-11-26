@@ -1,6 +1,6 @@
 import { useEffect, useRef, type ReactNode } from 'react';
 import { XIcon } from '../icons/ApertureIcon.js';
-import { useFocusTrap } from '../utils/focusTrap.js';
+import { useFocusTrap } from '../utils/focus.js';
 
 export interface FloatingContextSheetProps {
   open: boolean;
@@ -55,6 +55,7 @@ export function FloatingContextSheet({
       ref={sheetRef}
       data-slot="floating-context-sheet"
       role="dialog"
+      aria-modal="true"
       aria-label={title}
       className={sheetClass}
     >

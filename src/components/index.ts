@@ -244,3 +244,14 @@ export {
   type InlineNoticeProps,
   type InlineNoticeTone,
 } from './InlineNotice.js';
+export {
+  FindInThreadBar,
+  type FindInThreadBarProps,
+} from './FindInThreadBar.js';
+export {
+  StorageQuotaCard,
+  type StorageEntryStatus,
+  type StorageEntryTone,
+  type StorageQuotaCardProps,
+  type StorageQuotaEntry,
+} from './StorageQuotaCard.js';
