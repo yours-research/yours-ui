@@ -8,6 +8,7 @@ export interface SidePanelShellProps {
   onVeilClick?: () => void;
   sheet?: ReactNode;
   footer?: ReactNode;
+  scrollEdgeFade?: boolean;
   children?: ReactNode;
   className?: string;
 }
@@ -25,6 +26,7 @@ export function SidePanelShell({
   onVeilClick,
   sheet,
   footer,
+  scrollEdgeFade = true,
   children,
   className,
 }: SidePanelShellProps) {
@@ -32,6 +34,9 @@ export function SidePanelShell({
   const shellClassName = ['yui-shell', bleed ? 'yui-shell--bleed' : '', className]
     .filter(Boolean)
     .join(' ');
+  const scrollWrapClassName = scrollEdgeFade
+    ? 'yui-scroll-wrap yui-scroll-wrap--fade'
+    : 'yui-scroll-wrap';
   return (
     <div
       className={shellClassName}
@@ -44,7 +49,9 @@ export function SidePanelShell({
           onClick={veilOpen ? onVeilClick : undefined}
         />
         {notch}
-        <div className="yui-scroll-stage">{children}</div>
+        <div className={scrollWrapClassName}>
+          <div className="yui-scroll-stage">{children}</div>
+        </div>
         {sheet ? <div className="yui-sheet-region">{sheet}</div> : null}
         {footer ? <div className="yui-composer-region">{footer}</div> : null}
       </div>

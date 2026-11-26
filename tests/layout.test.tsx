@@ -717,4 +717,25 @@ describe('@yours/ui layout & TopNotch primitives', () => {
     expect(onSelectTab).toHaveBeenCalledTimes(1);
     expect(onSelectTab).toHaveBeenCalledWith('qwen');
   });
+
+  it('renders soft scroll-stage edge fade wrapper on SidePanelShell by default and supports disabling it', async () => {
+    const el = renderNode(
+      <SidePanelShell>
+        <div>Scrollable turn</div>
+      </SidePanelShell>,
+    );
+    expect(el.querySelector('.yui-scroll-wrap.yui-scroll-wrap--fade')).toBeTruthy();
+
+    rerenderNode(
+      <SidePanelShell scrollEdgeFade={false}>
+        <div>Scrollable turn</div>
+      </SidePanelShell>,
+    );
+    expect(el.querySelector('.yui-scroll-wrap')).toBeTruthy();
+    expect(el.querySelector('.yui-scroll-wrap--fade')).toBeNull();
+
+    const cssSource = await readStyleFile('../src/styles/components.css');
+    expect(cssSource).toContain('.yui-scroll-wrap--fade::before');
+    expect(cssSource).toContain('.yui-scroll-wrap--fade::after');
+  });
 });

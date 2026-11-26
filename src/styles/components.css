@@ -145,6 +145,37 @@
   pointer-events: auto;
 }
 
+.yui-scroll-wrap {
+  position: relative;
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.yui-scroll-wrap--fade::before,
+.yui-scroll-wrap--fade::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  pointer-events: none;
+  z-index: 4;
+}
+
+.yui-scroll-wrap--fade::before {
+  top: 0;
+  height: 28px;
+  background: linear-gradient(to bottom, var(--yui-stage-bg) 20%, transparent 100%);
+}
+
+.yui-scroll-wrap--fade::after {
+  bottom: 0;
+  height: 18px;
+  background: linear-gradient(to top, var(--yui-stage-bg) 16%, transparent 100%);
+}
+
 .yui-scroll-stage {
   flex: 1;
   min-height: 0;
@@ -3229,6 +3260,485 @@ span.yui-citation-pill {
   text-decoration: none;
 }
 
+/* ==========================================================================
+ * MemoryInspector, HardwareStatusStrip, ModelDownloadProgressBar & VoiceSessionBar
+ * ========================================================================== */
+.yui-mem-inspector {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  width: 100%;
+  min-width: 0;
+}
+
+.yui-mem-filter .yui-seg {
+  padding: 2px;
+}
+
+.yui-mem-filter .yui-seg-btn {
+  padding: 4px 5px;
+  font-size: 10.5px;
+  line-height: 14px;
+}
+
+.yui-mem-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: 100%;
+  min-width: 0;
+}
+
+.yui-mem-card {
+  width: 100%;
+  box-sizing: border-box;
+  background-color: var(--yui-capsule-bg);
+  border: 1px solid var(--yui-capsule-border);
+  border-radius: 12px;
+  padding: 10px 12px;
+  box-shadow: var(--yui-capsule-shadow);
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  transition: opacity 150ms ease, border-color 140ms ease;
+}
+
+.yui-mem-card.is-forgotten {
+  opacity: 0.68;
+  background-color: var(--yui-stage-bg);
+}
+
+.yui-mem-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  min-width: 0;
+}
+
+.yui-mem-meta-row {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+  flex-shrink: 1;
+}
+
+.yui-mem-domain {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  line-height: 13px;
+  color: var(--yui-secondary);
+  background-color: var(--yui-chip-bg);
+  border: 1px solid var(--yui-hairline);
+  border-radius: 5px;
+  padding: 1px 5px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 118px;
+}
+
+.yui-mem-time,
+.yui-mem-meta {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  line-height: 13px;
+  color: var(--yui-muted);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.yui-mem-summary {
+  margin: 0;
+  font-size: 12.5px;
+  line-height: 1.45;
+  color: var(--yui-ink);
+  word-break: break-word;
+}
+
+.yui-mem-card.is-forgotten .yui-mem-summary {
+  text-decoration: line-through;
+  color: var(--yui-muted);
+}
+
+.yui-mem-summary-btn {
+  appearance: none;
+  border: none;
+  background: transparent;
+  padding: 0;
+  margin: 0;
+  text-align: left;
+  font-family: var(--font-sans);
+  font-size: 12.5px;
+  line-height: 1.45;
+  color: var(--yui-ink);
+  cursor: pointer;
+  word-break: break-word;
+}
+
+.yui-mem-summary-btn:hover {
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.yui-mem-summary-btn:focus-visible {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+.yui-mem-detail {
+  margin: 0;
+  font-size: 11.5px;
+  line-height: 1.4;
+  color: var(--yui-secondary);
+}
+
+.yui-mem-foot {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+  padding-top: 2px;
+}
+
+.yui-hw-strip {
+  width: 100%;
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+  min-width: 0;
+  padding: 6px 9px;
+  background-color: var(--yui-capsule-bg);
+  border: 1px solid var(--yui-capsule-border);
+  border-radius: 11px;
+  box-shadow: var(--yui-capsule-shadow);
+}
+
+.yui-hw-left,
+.yui-hw-right {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  min-width: 0;
+}
+
+.yui-hw-strip .yui-status-badge {
+  padding: 2px 6px;
+  font-size: 10.5px;
+}
+
+.yui-hw-right {
+  flex-shrink: 0;
+}
+
+.yui-hw-icon {
+  color: var(--yui-secondary);
+  flex-shrink: 0;
+}
+
+.yui-hw-adapter {
+  font-size: 11px;
+  line-height: 14px;
+  font-weight: 500;
+  color: var(--yui-secondary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.yui-hw-metric {
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  line-height: 14px;
+  color: var(--yui-muted);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.yui-hw-sha {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  line-height: 13px;
+  font-weight: 600;
+  color: var(--yui-green);
+  background-color: var(--yui-green-soft);
+  border-radius: 9999px;
+  padding: 2px 6px;
+  white-space: nowrap;
+}
+
+.yui-dl-bar-card {
+  width: 100%;
+  box-sizing: border-box;
+  background-color: var(--yui-capsule-bg);
+  border: 1px solid var(--yui-capsule-border);
+  border-radius: 13px;
+  padding: 11px 13px;
+  box-shadow: var(--yui-capsule-shadow);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.yui-dl-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  min-width: 0;
+}
+
+.yui-dl-title-wrap {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+}
+
+.yui-dl-title {
+  font-size: 12.5px;
+  line-height: 16px;
+  font-weight: 600;
+  color: var(--yui-ink);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.yui-dl-pct {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  line-height: 14px;
+  font-weight: 600;
+  color: var(--yui-ink);
+  font-variant-numeric: tabular-nums;
+  min-width: 32px;
+  text-align: right;
+}
+
+.yui-dl-progress {
+  appearance: none;
+  -webkit-appearance: none;
+  width: 100%;
+  height: 5px;
+  border: none;
+  border-radius: 9999px;
+  overflow: hidden;
+  background-color: var(--yui-chip-bg);
+}
+
+.yui-dl-progress::-webkit-progress-bar {
+  background-color: var(--yui-chip-bg);
+  border-radius: 9999px;
+}
+
+.yui-dl-progress::-webkit-progress-value {
+  background-color: var(--yui-ink);
+  border-radius: 9999px;
+  transition: width 180ms var(--yui-spring);
+}
+
+.yui-dl-progress::-moz-progress-bar {
+  background-color: var(--yui-ink);
+  border-radius: 9999px;
+}
+
+.yui-dl-bar-card.is-ready .yui-dl-progress::-webkit-progress-value {
+  background-color: var(--yui-green);
+}
+
+.yui-dl-bar-card.is-ready .yui-dl-progress::-moz-progress-bar {
+  background-color: var(--yui-green);
+}
+
+.yui-dl-bar-card.is-paused .yui-dl-progress::-webkit-progress-value {
+  background-color: var(--yui-muted);
+}
+
+.yui-dl-bar-card.is-paused .yui-dl-progress::-moz-progress-bar {
+  background-color: var(--yui-muted);
+}
+
+.yui-dl-bar-card.is-error .yui-dl-progress::-webkit-progress-value {
+  background-color: var(--yui-danger);
+}
+
+.yui-dl-bar-card.is-error .yui-dl-progress::-moz-progress-bar {
+  background-color: var(--yui-danger);
+}
+
+.yui-dl-foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  min-width: 0;
+}
+
+.yui-dl-telemetry {
+  display: inline-flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  line-height: 14px;
+  color: var(--yui-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.yui-voice-bar {
+  width: 100%;
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+  min-width: 0;
+  padding: 6px 8px 6px 10px;
+  background-color: var(--yui-capsule-bg);
+  border: 1px solid var(--yui-capsule-border);
+  border-radius: 9999px;
+  box-shadow: var(--yui-capsule-shadow);
+}
+
+.yui-voice-left {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+}
+
+.yui-voice-meter {
+  display: inline-flex;
+  align-items: center;
+  gap: 2.5px;
+  height: 14px;
+  flex-shrink: 0;
+}
+
+@keyframes yuiVoicePulse {
+  0%,
+  100% {
+    transform: scaleY(0.76);
+  }
+  50% {
+    transform: scaleY(1.18);
+  }
+}
+
+.yui-vm-bar {
+  width: 2.5px;
+  border-radius: 9999px;
+  background-color: var(--yui-secondary);
+  transform-origin: center;
+  transition: height 120ms ease, background-color 140ms ease;
+}
+
+.yui-vm-bar--0 {
+  height: 4px;
+}
+
+.yui-vm-bar--1 {
+  height: 6px;
+}
+
+.yui-vm-bar--2 {
+  height: 9px;
+}
+
+.yui-vm-bar--3 {
+  height: 11px;
+}
+
+.yui-vm-bar--4 {
+  height: 14px;
+}
+
+.yui-voice-bar.is-speech-detected .yui-vm-bar {
+  background-color: var(--yui-ink);
+  animation: yuiVoicePulse 520ms ease-in-out infinite;
+}
+
+.yui-voice-bar.is-speaking .yui-vm-bar {
+  background-color: var(--yui-cobalt);
+  animation: yuiVoicePulse 640ms ease-in-out infinite;
+}
+
+.yui-voice-bar.is-transcribing .yui-vm-bar {
+  background-color: var(--yui-ink);
+  animation: yuiVoicePulse 760ms ease-in-out infinite;
+}
+
+.yui-voice-bar.is-listening .yui-vm-bar {
+  background-color: var(--yui-green);
+}
+
+.yui-voice-meter .yui-vm-bar:nth-child(2) {
+  animation-delay: 80ms;
+}
+
+.yui-voice-meter .yui-vm-bar:nth-child(3) {
+  animation-delay: 160ms;
+}
+
+.yui-voice-meter .yui-vm-bar:nth-child(4) {
+  animation-delay: 240ms;
+}
+
+.yui-voice-meter .yui-vm-bar:nth-child(5) {
+  animation-delay: 120ms;
+}
+
+.yui-voice-label {
+  font-size: 11.5px;
+  line-height: 14px;
+  font-weight: 500;
+  color: var(--yui-ink);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.yui-voice-time {
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  line-height: 14px;
+  color: var(--yui-muted);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.yui-voice-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  flex-shrink: 0;
+}
+
+.yui-voice-actions .yui-micro-pill {
+  padding: 3px 7px;
+  font-size: 10.5px;
+}
+
+.yui-micro-pill.is-active {
+  background-color: var(--yui-send-bg);
+  border-color: var(--yui-send-bg);
+  color: var(--yui-send-fg);
+}
+
+.yui-icon-btn.is-active {
+  color: var(--yui-ink);
+  background-color: var(--yui-chip-bg);
+}
+
 @media (prefers-reduced-motion: reduce) {
   .yui-hook-rail-layer,
   .yui-hook-row,
@@ -3242,6 +3752,9 @@ span.yui-citation-pill {
   .yui-disclosure,
   .yui-ctx-sheet,
   .yui-cite-card,
+  .yui-mem-card,
+  .yui-dl-progress::-webkit-progress-value,
+  .yui-vm-bar,
   .yui-cmd-popover,
   .yui-cmd-item,
   .yui-seg-btn,
