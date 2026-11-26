@@ -35,6 +35,7 @@ import { useState } from 'react';
 import { createRoot } from 'react-dom/client';
 import {
   ActionBar,
+  ArtifactPreviewCard,
   AssistantMessage,
   AttachIcon,
   AttachmentStrip,
@@ -43,6 +44,7 @@ import {
   ChoicePromptCard,
   CompareTable,
   ContextCommandPopover,
+  DataTableCard,
   DraftCard,
   EmptyState,
   EntitySummaryCard,
@@ -650,6 +652,7 @@ function SettingsAndVaultPanel({ theme }: { theme: 'light' | 'dark' }) {
   const [gpuPacing, setGpuPacing] = useState(true);
   const [thinkingMode, setThinkingMode] = useState(true);
   const [netTools, setNetTools] = useState(false);
+  const [pickedFile, setPickedFile] = useState<string | null>(null);
 
   return (
     <SidePanelShell
@@ -711,10 +714,72 @@ function SettingsAndVaultPanel({ theme }: { theme: 'light' | 'dark' }) {
 
       <LocalVaultExportCard
         recordCountLabel="148 records"
+        selectedFileName={pickedFile}
         statusMessage="Last AES-GCM snapshot verified 4m ago"
+        onImportFile={(file) => setPickedFile(file.name)}
         onExportEncrypted={() => {}}
         onImportEncrypted={() => {}}
         onWipeAll={() => {}}
+      />
+    </SidePanelShell>
+  );
+}
+
+function DataAndArtifactPanel({ theme }: { theme: 'light' | 'dark' }) {
+  const [expanded, setExpanded] = useState(true);
+
+  return (
+    <SidePanelShell
+      theme={theme}
+      notch={<TopNotch items={NOTCH_ITEMS} expandedId={null} />}
+      footer={
+        <FloatingComposer
+          value=""
+          onChange={() => {}}
+          onSubmit={() => {}}
+          leftSlot={<StatusBadge tone="local" dot>Verified matrix</StatusBadge>}
+        />
+      }
+    >
+      <DataTableCard
+        title="Local Decode Matrix"
+        subtitle="OPFS Q4F16 quantized checkpoints on-device"
+        badge="WGSL"
+        copyFormat="markdown"
+        footerLabel="Tabular WebGPU measurements"
+        columns={[
+          { key: 'model', label: 'Checkpoint' },
+          { key: 'quant', label: 'Quant' },
+          { key: 'ttft', label: 'TTFT', numeric: true },
+          { key: 'tps', label: 'Decode', numeric: true },
+          { key: 'vram', label: 'VRAM', numeric: true },
+        ]}
+        rows={[
+          { model: 'Qwen3.5-4B', quant: 'Q4F16', ttft: '74ms', tps: '91.6 t/s', vram: '2.6 GB' },
+          { model: 'Pragma-1.5B', quant: 'Q4F16', ttft: '38ms', tps: '142.4 t/s', vram: '1.1 GB' },
+          { model: 'Gemma-2B-Local', quant: 'INT4', ttft: '52ms', tps: '118.0 t/s', vram: '1.5 GB' },
+        ]}
+      />
+      <ArtifactPreviewCard
+        title="webgpu-audit-trace.md"
+        fileType="MD"
+        meta="4.2 KB · 42 lines · SHA-256"
+        expanded={expanded}
+        onExpandedChange={setExpanded}
+        onSave={() => {}}
+        preview={[
+          '# Local WebGPU Decode Audit',
+          '- Adapter: Apple M3 Max (FP16 subgroup arithmetic)',
+          '- Shader cache: OPFS persisted across extension restarts',
+          '- CSP policy: script-src self; style-src self (zero inline CSS)',
+          '- Memory backend: SQLite-WASM FTS5 + HNSW encrypted store',
+          '- Voice pipeline: Silero VAD + Whisper-tiny local barge-in',
+          '- Guardrail status: Lethal Trifecta breaker armed (network tools locked)',
+          '- Throughput: 91.6 tok/s sustained across 2048-token sliding window',
+          '- Latency budget: 74ms first token including DOM extract',
+          '- Checksum tree: 32 shards verified against manifest root',
+          '- Verification result: 100% deterministic pass on CI runners',
+        ].join('\\n')}
       />
     </SidePanelShell>
   );
@@ -725,11 +790,17 @@ function SpecimenApp() {
   const mode = params.get('mode') || 'gallery';
   const theme = (params.get('theme') || 'light') as 'light' | 'dark';
   const panel = params.get('panel') || 'resting';
-  const narrow = params.get('narrow') === '1';
+  const widthMode = params.get('width') || (params.get('narrow') === '1' ? '340' : '380');
+  const singleClass =
+    widthMode === '340'
+      ? 'yui-spec-single yui-spec-single--narrow'
+      : widthMode === '400'
+        ? 'yui-spec-single yui-spec-single--wide'
+        : 'yui-spec-single';
 
   if (mode === 'single') {
     return (
-      <div className={narrow ? 'yui-spec-single yui-spec-single--narrow' : 'yui-spec-single'} data-theme={theme}>
+      <div className={singleClass} data-theme={theme}>
         {panel === 'resting' ? <RestingPanel theme={theme} /> : null}
         {panel === 'notch' ? <NotchExpandedPanel theme={theme} /> : null}
         {panel === 'chat' ? <ActiveChatPanel theme={theme} /> : null}
@@ -737,6 +808,7 @@ function SpecimenApp() {
         {panel === 'sheet' ? <SheetAndCitationPanel theme={theme} /> : null}
         {panel === 'runtime' ? <RuntimeAndMemoryPanel theme={theme} /> : null}
         {panel === 'settings' ? <SettingsAndVaultPanel theme={theme} /> : null}
+        {panel === 'data' ? <DataAndArtifactPanel theme={theme} /> : null}
         {panel === 'genui' ? <GenUiShowcasePanel theme={theme} /> : null}
       </div>
     );
@@ -751,6 +823,7 @@ function SpecimenApp() {
       <div className="yui-spec-frame"><SheetAndCitationPanel theme={theme} /></div>
       <div className="yui-spec-frame"><RuntimeAndMemoryPanel theme={theme} /></div>
       <div className="yui-spec-frame"><SettingsAndVaultPanel theme={theme} /></div>
+      <div className="yui-spec-frame"><DataAndArtifactPanel theme={theme} /></div>
       <div className="yui-spec-frame-auto"><GenUiShowcasePanel theme={theme} /></div>
     </div>
   );
@@ -778,6 +851,10 @@ html, body {
 
 .yui-spec-single--narrow {
   width: 340px;
+}
+
+.yui-spec-single--wide {
+  width: 400px;
 }
 
 .yui-spec-single > .yui-shell {
@@ -952,7 +1029,17 @@ async function main() {
       }
     };
 
-    const singlePanels = ['resting', 'notch', 'live', 'chat', 'sheet', 'runtime', 'settings', 'genui'];
+    const singlePanels = [
+      'resting',
+      'notch',
+      'live',
+      'chat',
+      'sheet',
+      'runtime',
+      'settings',
+      'data',
+      'genui',
+    ];
     for (const theme of ['light', 'dark']) {
       await page.setViewportSize({ width: 380, height: 828 });
       for (const panel of singlePanels) {
@@ -1102,6 +1189,69 @@ async function main() {
           }
         }
 
+        if (panel === 'settings') {
+          const firstSwitch = page.locator('[data-slot="settings-toggle-row"] [role="switch"]').first();
+          const beforeChecked = await firstSwitch.getAttribute('aria-checked');
+          await firstSwitch.click();
+          const afterChecked = await firstSwitch.getAttribute('aria-checked');
+          if (beforeChecked === afterChecked) {
+            throw new Error(`SettingsToggleRow click did not flip aria-checked (${theme})`);
+          }
+
+          const exportBtn = page.locator('.yui-vault-actions button:has-text("Export vault")');
+          const disabledBefore = await exportBtn.isDisabled();
+          await page.fill('.yui-vault-input', 'correct-horse-staple');
+          const disabledAfter = await exportBtn.isDisabled();
+          if (!disabledBefore || disabledAfter) {
+            throw new Error(
+              `LocalVaultExportCard passphrase gating failed (${theme}): before=${disabledBefore}, after=${disabledAfter}`,
+            );
+          }
+
+          await page.setInputFiles('.yui-vault-file-input', {
+            name: 'snapshot-backup.yvlt',
+            mimeType: 'application/octet-stream',
+            buffer: Buffer.from('yours-encrypted-vault'),
+          });
+          const dropText = await page.locator('[data-slot="vault-file-drop"]').textContent();
+          if (!dropText || !dropText.includes('snapshot-backup.yvlt')) {
+            throw new Error(`Vault file picker bridge failed (${theme}): dropText=${dropText}`);
+          }
+
+          await page.click('.yui-vault-danger-zone button');
+          const promptVisible = await page.locator('.yui-vault-confirm-copy').isVisible();
+          await page.click('.yui-vault-confirm-row button:has-text("Cancel")');
+          const promptGone = (await page.locator('.yui-vault-confirm-copy').count()) === 0;
+          if (!promptVisible || !promptGone) {
+            throw new Error(`LocalVaultExportCard wipe confirmation flow failed (${theme})`);
+          }
+        }
+
+        if (panel === 'data') {
+          await page.click('[data-slot="artifact-preview-card"] button[aria-expanded]');
+          await page.waitForTimeout(220);
+          const collapsedFade = await page
+            .locator('.yui-scroll-wrap')
+            .getAttribute('data-fade-bottom');
+          await page.click('[data-slot="artifact-preview-card"] button[aria-expanded]');
+          await page.waitForTimeout(220);
+          const expandedFade = await page
+            .locator('.yui-scroll-wrap')
+            .getAttribute('data-fade-bottom');
+          if (collapsedFade !== 'false' || expandedFade !== 'true') {
+            throw new Error(
+              `SidePanelShell inner ResizeObserver fade check failed (${theme}): collapsed=${collapsedFade}, expanded=${expandedFade}`,
+            );
+          }
+
+          const copyTableBtn = page.locator('[data-slot="data-table-card"] button');
+          await copyTableBtn.click();
+          const copiedText = await copyTableBtn.textContent();
+          if (!copiedText || !copiedText.includes('Copied')) {
+            throw new Error(`DataTableCard Copy button failed (${theme}): ${copiedText}`);
+          }
+        }
+
         // Capture TopNotch intermediate hover-grow (272px x 52px) state directly over resting
         if (panel === 'resting') {
           await page.hover('.yui-notch-assembly');
@@ -1122,9 +1272,39 @@ async function main() {
         }
       }
 
+      // 400px width verification on Data & Artifact panel + reduced-motion audit
+      await page.setViewportSize({ width: 400, height: 828 });
+      await page.emulateMedia({ reducedMotion: 'reduce' });
+      await page.goto(`${baseUrl}/?mode=single&theme=${theme}&panel=data&width=400`, {
+        waitUntil: 'networkidle',
+      });
+      await waitForSpecimen(`400/${theme}/data`);
+      const data400Audit = await page.evaluate(() => {
+        const root = document.getElementById('specimen-root');
+        const inlineStyleCount = root ? root.querySelectorAll('[style]').length : -1;
+        const docOverflow = document.documentElement.scrollWidth > 400;
+        return { inlineStyleCount, docOverflow };
+      });
+      if (data400Audit.inlineStyleCount !== 0 || data400Audit.docOverflow) {
+        throw new Error(`400px data check failed (${theme}): ${JSON.stringify(data400Audit)}`);
+      }
+      const data400Path = path.join(OUT_DIR, `specimen-${theme}-data-400.png`);
+      await page.screenshot({ path: data400Path });
+      outputs.push(data400Path);
+      await page.emulateMedia({ reducedMotion: 'no-preference' });
+
       // Narrow 340px stress pass across interactive & dense panels
       await page.setViewportSize({ width: 340, height: 828 });
-      for (const narrowPanel of ['resting', 'live', 'chat', 'sheet', 'runtime', 'settings', 'genui']) {
+      for (const narrowPanel of [
+        'resting',
+        'live',
+        'chat',
+        'sheet',
+        'runtime',
+        'settings',
+        'data',
+        'genui',
+      ]) {
         await page.goto(`${baseUrl}/?mode=single&theme=${theme}&panel=${narrowPanel}&narrow=1`, {
           waitUntil: 'networkidle',
         });
@@ -1204,10 +1384,23 @@ async function main() {
           await page.screenshot({ path: runtimeNarrowPath });
           outputs.push(runtimeNarrowPath);
         }
+        if (narrowPanel === 'data') {
+          const tableRightFade = await page
+            .locator('[data-slot="data-table-card"] .yui-data-scroll-wrap')
+            .getAttribute('data-scrollable-right');
+          if (tableRightFade !== 'true') {
+            throw new Error(
+              `Expected DataTableCard horizontal scroll fade at 340px (${theme}), got ${tableRightFade}`,
+            );
+          }
+          const dataNarrowPath = path.join(OUT_DIR, `specimen-${theme}-data-340.png`);
+          await page.screenshot({ path: dataNarrowPath });
+          outputs.push(dataNarrowPath);
+        }
       }
 
-      // Overview 8-up comparison sheet
-      await page.setViewportSize({ width: 3252, height: 900 });
+      // Overview 9-up comparison sheet
+      await page.setViewportSize({ width: 3656, height: 900 });
       await page.goto(`${baseUrl}/?mode=gallery&theme=${theme}`, { waitUntil: 'networkidle' });
       const overviewPath = path.join(OUT_DIR, `specimen-${theme}-overview.png`);
       await page.screenshot({ path: overviewPath, fullPage: true });

@@ -31,6 +31,7 @@ export function SidePanelShell({
   className,
 }: SidePanelShellProps) {
   const scrollRef = useRef<HTMLDivElement | null>(null);
+  const contentRef = useRef<HTMLDivElement | null>(null);
   const [fadeState, setFadeState] = useState<{ top: boolean; bottom: boolean }>({
     top: false,
     bottom: false,
@@ -54,6 +55,7 @@ export function SidePanelShell({
   useEffect(() => {
     syncScrollFades();
     const el = scrollRef.current;
+    const contentEl = contentRef.current;
     if (!el || !scrollEdgeFade) return;
 
     const onScroll = () => syncScrollFades();
@@ -63,6 +65,9 @@ export function SidePanelShell({
     if (typeof ResizeObserver !== 'undefined') {
       ro = new ResizeObserver(() => syncScrollFades());
       ro.observe(el);
+      if (contentEl) {
+        ro.observe(contentEl);
+      }
     }
 
     if (typeof window !== 'undefined') {
@@ -109,7 +114,9 @@ export function SidePanelShell({
           data-fade-bottom={fadeState.bottom ? 'true' : 'false'}
         >
           <div ref={scrollRef} className="yui-scroll-stage">
-            {children}
+            <div ref={contentRef} className="yui-scroll-content">
+              {children}
+            </div>
           </div>
         </div>
         {sheet ? <div className="yui-sheet-region">{sheet}</div> : null}

@@ -3,11 +3,13 @@ import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import {
   ActionBar,
+  ArtifactPreviewCard,
   AttachmentDropzone,
   AttachmentStrip,
   BranchPicker,
   CodeBlock,
   ContextCommandPopover,
+  DataTableCard,
   EmptyState,
   ErrorRecoveryBanner,
   FloatingComposer,
@@ -1177,6 +1179,7 @@ describe('@yours/ui chat & runtime primitives', () => {
     const progress = el.querySelector('.yui-dl-progress') as HTMLProgressElement;
     expect(progress.getAttribute('value')).toBe('64');
     expect(el.querySelector('.yui-dl-bar-card')?.textContent).toContain('118 MB/s');
+    expect(el.querySelectorAll('.yui-dl-sep').length).toBe(2);
 
     act(() => {
       (Array.from(el.querySelectorAll('.yui-dl-bar-card button')).find((b) =>
@@ -1360,5 +1363,100 @@ describe('@yours/ui chat & runtime primitives', () => {
     const cssSource = await readSourceFile('../src/styles/components.css');
     expect(cssSource).toContain('.yui-switch');
     expect(cssSource).toContain('.yui-vault-card');
+  });
+
+  it('supports LocalVaultExportCard file drop input, DataTableCard formatting/copy, and ArtifactPreviewCard collapsible body', async () => {
+    vi.useFakeTimers();
+    const writeText = vi.fn().mockResolvedValue(undefined);
+    Object.defineProperty(navigator, 'clipboard', {
+      configurable: true,
+      value: { writeText },
+    });
+
+    const onImportFile = vi.fn();
+    const onSaveArtifact = vi.fn();
+    const onExpandedChange = vi.fn();
+
+    const el = renderNode(
+      <div>
+        <LocalVaultExportCard
+          selectedFileName="backup-2026.yvlt"
+          statusMessage="Verified 2m ago"
+          onExportEncrypted={() => {}}
+          onImportEncrypted={() => {}}
+          onImportFile={onImportFile}
+        />
+        <DataTableCard
+          title="Decode Latency"
+          badge="WGSL"
+          columns={[
+            { key: 'model', label: 'Model' },
+            { key: 'ttft', label: 'TTFT', numeric: true },
+            { key: 'tps', label: 'TPS', numeric: true },
+          ]}
+          rows={[
+            { model: 'Qwen3.5-4B', ttft: '74ms', tps: 91.6 },
+            { model: 'Pragma-1.5B', ttft: '38ms', tps: 142.4 },
+          ]}
+          copyFormat="markdown"
+          footerLabel="Local benchmark"
+        />
+        <ArtifactPreviewCard
+          title="benchmark-notes.md"
+          fileType="MD"
+          meta="2.4 KB · 32 lines"
+          preview={'# Summary\nAll local runs verified cleanly.'}
+          onExpandedChange={onExpandedChange}
+          onSave={onSaveArtifact}
+        />
+      </div>,
+    );
+
+    expect(el.querySelector('.yui-vault-actions--dual')).toBeTruthy();
+    expect(el.querySelector('[data-slot="vault-file-drop"]')?.textContent).toContain(
+      'backup-2026.yvlt',
+    );
+    const fileInput = el.querySelector('.yui-vault-file-input') as HTMLInputElement;
+    const mockFile = new File(['encrypted'], 'restore.yvlt', { type: 'application/octet-stream' });
+    Object.defineProperty(fileInput, 'files', { configurable: true, value: [mockFile] });
+    act(() => {
+      fileInput.dispatchEvent(new Event('change', { bubbles: true }));
+    });
+    expect(onImportFile).toHaveBeenCalledWith(mockFile);
+
+    // DataTableCard Markdown copy
+    expect(el.querySelectorAll('.yui-data-tr').length).toBe(2);
+    const copyTableBtn = el.querySelector('[data-slot="data-table-card"] button') as HTMLButtonElement;
+    act(() => {
+      copyTableBtn.click();
+    });
+    expect(writeText).toHaveBeenCalledWith(
+      '| Model | TTFT | TPS |\n| :--- | ---: | ---: |\n| Qwen3.5-4B | 74ms | 91.6 |\n| Pragma-1.5B | 38ms | 142.4 |',
+    );
+    expect(copyTableBtn.textContent).toContain('Copied');
+
+    // ArtifactPreviewCard collapse & Save
+    const artifact = el.querySelector('[data-slot="artifact-preview-card"]') as HTMLElement;
+    expect(artifact.getAttribute('data-expanded')).toBe('true');
+    const toggleBtn = artifact.querySelector('[aria-label="Collapse benchmark-notes.md"]') as HTMLButtonElement;
+    act(() => {
+      toggleBtn.click();
+    });
+    expect(artifact.getAttribute('data-expanded')).toBe('false');
+    expect(onExpandedChange).toHaveBeenCalledWith(false);
+
+    const saveBtn = Array.from(artifact.querySelectorAll('button')).find((b) =>
+      b.textContent?.includes('Save'),
+    ) as HTMLButtonElement;
+    act(() => {
+      saveBtn.click();
+    });
+    expect(onSaveArtifact).toHaveBeenCalledTimes(1);
+
+    const cssSource = await readSourceFile('../src/styles/components.css');
+    expect(cssSource).toContain('.yui-data-card');
+    expect(cssSource).toContain('.yui-artifact-card');
+    expect(cssSource).toContain('.yui-vault-drop');
+    expect(cssSource).toContain('.yui-dl-sep');
   });
 });

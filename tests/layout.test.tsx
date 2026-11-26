@@ -837,4 +837,43 @@ describe('@yours/ui layout & TopNotch primitives', () => {
     );
     expect(document.activeElement).toBe(triggerBtn);
   });
+
+  it('observes inner .yui-scroll-content with ResizeObserver to update fades without a scroll event', () => {
+    const observed: Element[] = [];
+    let roCallback: ResizeObserverCallback | null = null;
+
+    globalThis.ResizeObserver = class MockResizeObserver {
+      constructor(cb: ResizeObserverCallback) {
+        roCallback = cb;
+      }
+      observe(target: Element) {
+        observed.push(target);
+      }
+      unobserve() {}
+      disconnect() {}
+    } as unknown as typeof ResizeObserver;
+
+    const el = renderNode(
+      <SidePanelShell>
+        <div>Expanding content</div>
+      </SidePanelShell>,
+    );
+
+    const wrap = el.querySelector('.yui-scroll-wrap') as HTMLElement;
+    const scroller = el.querySelector('.yui-scroll-stage') as HTMLElement;
+    const content = el.querySelector('.yui-scroll-content') as HTMLElement;
+
+    expect(content).toBeTruthy();
+    expect(observed).toContain(scroller);
+    expect(observed).toContain(content);
+    expect(wrap.getAttribute('data-fade-bottom')).toBe('false');
+
+    // Simulate async inner content growth without dispatching a scroll event
+    Object.defineProperty(scroller, 'scrollHeight', { configurable: true, value: 640 });
+    Object.defineProperty(scroller, 'clientHeight', { configurable: true, value: 320 });
+    act(() => {
+      roCallback?.([], {} as ResizeObserver);
+    });
+    expect(wrap.getAttribute('data-fade-bottom')).toBe('true');
+  });
 });

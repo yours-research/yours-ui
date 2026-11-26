@@ -102,6 +102,9 @@ export function ModelDownloadProgressBar({
   const cardClass = ['yui-dl-bar-card', `is-${state}`, className].filter(Boolean).join(' ');
   const sizeTelemetry =
     loadedLabel && totalLabel ? `${loadedLabel} / ${totalLabel}` : loadedLabel ?? totalLabel;
+  const telemetryItems = [sizeTelemetry, speedLabel, etaLabel].filter(
+    (item): item is string => Boolean(item),
+  );
 
   return (
     <section
@@ -147,9 +150,16 @@ export function ModelDownloadProgressBar({
 
       <div className="yui-dl-foot">
         <div className="yui-dl-telemetry">
-          {sizeTelemetry ? <span>{sizeTelemetry}</span> : null}
-          {speedLabel ? <span>{speedLabel}</span> : null}
-          {etaLabel ? <span>{etaLabel}</span> : null}
+          {telemetryItems.map((item, idx) => (
+            <span key={`${item}-${idx}`} className="yui-dl-telemetry-item">
+              {idx > 0 ? (
+                <span className="yui-dl-sep" aria-hidden="true">
+                  &middot;
+                </span>
+              ) : null}
+              <span>{item}</span>
+            </span>
+          ))}
         </div>
         {onPause || onResume || onCancel ? (
           <div className="yui-action-group">

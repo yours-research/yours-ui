@@ -134,3 +134,12 @@ export {
   type SettingsSectionProps,
   type SettingsToggleRowProps,
 } from './SettingsVaultPrimitives.js';
+export {
+  ArtifactPreviewCard,
+  DataTableCard,
+  formatTableData,
+  type ArtifactPreviewCardProps,
+  type DataTableCardProps,
+  type DataTableColumn,
+  type DataTableRow,
+} from './DataArtifactPrimitives.js';

@@ -1,5 +1,5 @@
 import { useId, useState, type ReactNode } from 'react';
-import { ShieldIcon, TrashIcon, UploadIcon } from '../icons/ApertureIcon.js';
+import { CheckIcon, ShieldIcon, TrashIcon, UploadIcon } from '../icons/ApertureIcon.js';
 import { KbdHint } from './KbdHint.js';
 import { StatusBadge, type StatusBadgeTone } from './StatusBadge.js';
 
@@ -114,6 +114,10 @@ export interface LocalVaultExportCardProps {
   error?: string | null;
   onExportEncrypted?: (passphrase: string) => void;
   onImportEncrypted?: (passphrase: string) => void;
+  onImportFile?: (file: File) => void;
+  importAccept?: string;
+  selectedFileName?: string | null;
+  fileDropLabel?: string;
   onWipeAll?: () => void;
   exportLabel?: string;
   importLabel?: string;
@@ -139,6 +143,10 @@ export function LocalVaultExportCard({
   error,
   onExportEncrypted,
   onImportEncrypted,
+  onImportFile,
+  importAccept = '.yvlt,.json,.bin',
+  selectedFileName,
+  fileDropLabel = 'Drop .yvlt backup or choose file',
   onWipeAll,
   exportLabel = 'Export vault',
   importLabel = 'Import',
@@ -148,11 +156,23 @@ export function LocalVaultExportCard({
   className,
 }: LocalVaultExportCardProps) {
   const inputId = useId();
+  const fileInputId = useId();
   const [passphrase, setPassphrase] = useState('');
   const [confirmWipe, setConfirmWipe] = useState(false);
+  const [isDragging, setIsDragging] = useState(false);
 
   const validPassphrase = passphrase.trim().length >= minPassphraseLength;
   const cardClass = ['yui-vault-card', className].filter(Boolean).join(' ');
+  const dropClass = ['yui-vault-drop', isDragging ? 'is-dragging' : '']
+    .filter(Boolean)
+    .join(' ');
+  const hasDualActions = Boolean(onImportEncrypted && onExportEncrypted);
+  const actionsClass = [
+    'yui-vault-actions',
+    hasDualActions ? 'yui-vault-actions--dual' : '',
+  ]
+    .filter(Boolean)
+    .join(' ');
 
   return (
     <section data-slot="local-vault-export-card" className={cardClass} aria-label={title}>
@@ -185,39 +205,78 @@ export function LocalVaultExportCard({
         />
       </div>
 
+      {onImportFile ? (
+        <label
+          htmlFor={fileInputId}
+          data-slot="vault-file-drop"
+          className={dropClass}
+          onDragOver={(event) => {
+            event.preventDefault();
+            if (!busy) setIsDragging(true);
+          }}
+          onDragLeave={() => setIsDragging(false)}
+          onDrop={(event) => {
+            event.preventDefault();
+            setIsDragging(false);
+            if (busy) return;
+            const file = event.dataTransfer.files?.[0];
+            if (file) onImportFile(file);
+          }}
+        >
+          <UploadIcon size={12} />
+          <span className="yui-vault-drop-label">
+            {selectedFileName ?? fileDropLabel}
+          </span>
+          <input
+            id={fileInputId}
+            type="file"
+            accept={importAccept}
+            disabled={busy}
+            className="yui-vault-file-input"
+            onChange={(event) => {
+              const file = event.target.files?.[0];
+              if (file) onImportFile(file);
+            }}
+          />
+        </label>
+      ) : null}
+
       {error ? (
         <div className="yui-vault-feedback yui-vault-feedback--error" role="alert">
           {error}
         </div>
       ) : statusMessage ? (
         <div className="yui-vault-feedback" role="status">
-          {statusMessage}
+          <CheckIcon size={12} />
+          <span>{statusMessage}</span>
         </div>
       ) : null}
 
-      <div className="yui-vault-actions">
-        {onImportEncrypted ? (
-          <button
-            type="button"
-            disabled={busy || !validPassphrase}
-            className="yui-pill-btn yui-pill-btn--ghost"
-            onClick={() => onImportEncrypted(passphrase)}
-          >
-            <UploadIcon size={12} />
-            <span>{importLabel}</span>
-          </button>
-        ) : null}
-        {onExportEncrypted ? (
-          <button
-            type="button"
-            disabled={busy || !validPassphrase}
-            className="yui-pill-btn yui-pill-btn--primary"
-            onClick={() => onExportEncrypted(passphrase)}
-          >
-            <span>{exportLabel}</span>
-          </button>
-        ) : null}
-      </div>
+      {onImportEncrypted || onExportEncrypted ? (
+        <div className={actionsClass}>
+          {onImportEncrypted ? (
+            <button
+              type="button"
+              disabled={busy || !validPassphrase}
+              className="yui-pill-btn yui-pill-btn--ghost"
+              onClick={() => onImportEncrypted(passphrase)}
+            >
+              <UploadIcon size={12} />
+              <span>{importLabel}</span>
+            </button>
+          ) : null}
+          {onExportEncrypted ? (
+            <button
+              type="button"
+              disabled={busy || !validPassphrase}
+              className="yui-pill-btn yui-pill-btn--primary"
+              onClick={() => onExportEncrypted(passphrase)}
+            >
+              <span>{exportLabel}</span>
+            </button>
+          ) : null}
+        </div>
+      ) : null}
 
       {onWipeAll ? (
         <div className="yui-vault-danger-zone">
@@ -247,15 +306,18 @@ export function LocalVaultExportCard({
               </div>
             </div>
           ) : (
-            <button
-              type="button"
-              disabled={busy}
-              className="yui-micro-pill yui-micro-pill--danger"
-              onClick={() => setConfirmWipe(true)}
-            >
-              <TrashIcon size={11} />
-              <span>{wipeLabel}</span>
-            </button>
+            <>
+              <span className="yui-vault-danger-hint">Irreversible local reset</span>
+              <button
+                type="button"
+                disabled={busy}
+                className="yui-micro-pill yui-micro-pill--danger"
+                onClick={() => setConfirmWipe(true)}
+              >
+                <TrashIcon size={11} />
+                <span>{wipeLabel}</span>
+              </button>
+            </>
           )}
         </div>
       ) : null}
