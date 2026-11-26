@@ -65,6 +65,7 @@ import {
   InlineCitationPill,
   InlineCitationPopover,
   InlineNotice,
+  InlineToolStatus,
   LocalVaultExportCard,
   MatrixOrb,
   MemoryInspectorList,
@@ -91,6 +92,7 @@ import {
   SegmentedControl,
   SettingsSection,
   SettingsToggleRow,
+  ShimmerText,
   ShortcutSheet,
   SidePanelShell,
   SitePermissionsList,
@@ -109,6 +111,8 @@ import {
   ThreadHistoryList,
   TimelineCard,
   ToastPill,
+  ToolChain,
+  ToolStatusIcon,
   ToolStepCard,
   ToolTraceList,
   TopNotch,
@@ -1049,6 +1053,112 @@ function TraceAndPermissionPanel({ theme }: { theme: 'light' | 'dark' }) {
         onAllowOnce={() => setDecision('once')}
         onDeny={() => setDecision('denied')}
         onAlwaysSite={() => setDecision('always')}
+      />
+    </SidePanelShell>
+  );
+}
+
+function ToolShimmerChainPanel({ theme }: { theme: 'light' | 'dark' }) {
+  return (
+    <SidePanelShell
+      theme={theme}
+      notch={<TopNotch items={NOTCH_ITEMS} expandedId={null} />}
+      footer={
+        <FloatingComposer
+          value=""
+          onChange={() => {}}
+          onSubmit={() => {}}
+          leftSlot={
+            <span className="yui-chip-btn">
+              <ToolStatusIcon kind="researching" size={12} active />
+              <span>3 tools</span>
+            </span>
+          }
+        />
+      }
+    >
+      <InlineToolStatus
+        state="researching"
+        detail="yours.sh/docs · 3 tabs"
+        favicon={<PageIcon size={12} />}
+        timer
+      />
+
+      <ToolChain
+        steps={[
+          {
+            id: 'mid-1',
+            tool: 'tabs.read',
+            state: 'reading',
+            actionLabel: 'Reading active tab',
+            detail: 'yours.sh/spec',
+            status: 'done',
+            latencyLabel: '42 ms',
+            input: '{"tabId":12}',
+            output: '{"tokens":420}',
+          },
+          {
+            id: 'mid-2',
+            tool: 'web.search',
+            state: 'searching',
+            actionLabel: 'Searching references',
+            detail: 'clean-room svg',
+            status: 'running',
+          },
+          {
+            id: 'mid-3',
+            tool: 'synth.write',
+            state: 'writing',
+            actionLabel: 'Drafting summary',
+            detail: 'Streaming prose',
+            status: 'running',
+          },
+        ]}
+      />
+
+      <ToolChain
+        summary="Used 3 tools"
+        steps={[
+          {
+            id: 'done-1',
+            tool: 'memory.lookup',
+            state: 'memory',
+            actionLabel: 'Recalling workspace',
+            detail: '2 notes matched',
+            status: 'done',
+            latencyLabel: '18 ms',
+            input: '{"q":"mv3 tokens"}',
+            output: '{"hits":2}',
+          },
+          {
+            id: 'done-2',
+            tool: 'code.analyze',
+            state: 'analyzing',
+            actionLabel: 'Analyzing bundle',
+            detail: '79.5 KB gzip',
+            status: 'done',
+            latencyLabel: '31 ms',
+            input: '{"target":"dist/"}',
+            output: '{"withinBudget":true}',
+          },
+          {
+            id: 'done-3',
+            tool: 'math.calc',
+            state: 'calculating',
+            actionLabel: 'Checking contrast',
+            detail: 'WCAG AA 7.4:1',
+            status: 'done',
+            latencyLabel: '14 ms',
+          },
+        ]}
+      />
+
+      <ToolStepCard
+        status="running"
+        state="analyzing"
+        title="Verifying hairline timeline"
+        detail="340px panel"
+        durationLabel="1s"
       />
     </SidePanelShell>
   );
@@ -2115,6 +2225,7 @@ function SpecimenApp() {
         {panel === 'palette' ? <CommandPaletteAndDiffPanel theme={theme} /> : null}
         {panel === 'diff' ? <DiffShowcasePanel theme={theme} /> : null}
         {panel === 'trace' ? <TraceAndPermissionPanel theme={theme} /> : null}
+        {panel === 'shimmer' ? <ToolShimmerChainPanel theme={theme} /> : null}
         {panel === 'drawers' ? <DrawerAndContextPanel theme={theme} /> : null}
         {panel === 'budget' ? <BudgetAndCitationPanel theme={theme} /> : null}
         {panel === 'onboarding' ? <OnboardingAndCodePanel theme={theme} /> : null}
@@ -2147,6 +2258,7 @@ function SpecimenApp() {
       <div className="yui-spec-frame"><CommandPaletteAndDiffPanel theme={theme} /></div>
       <div className="yui-spec-frame"><DiffShowcasePanel theme={theme} /></div>
       <div className="yui-spec-frame"><TraceAndPermissionPanel theme={theme} /></div>
+      <div className="yui-spec-frame"><ToolShimmerChainPanel theme={theme} /></div>
       <div className="yui-spec-frame"><DrawerAndContextPanel theme={theme} /></div>
       <div className="yui-spec-frame"><BudgetAndCitationPanel theme={theme} /></div>
       <div className="yui-spec-frame"><OnboardingAndCodePanel theme={theme} /></div>
@@ -2401,7 +2513,13 @@ async function main() {
     const auditPanelContrast = async (activeTheme, panelName) => {
       const failures = await page.evaluate((t) => {
         const parseRgba = (str) => {
-          const m = str.match(/rgba?\(([^)]+)\)/);
+          const s = str.trim();
+          const hex = s.match(/^#([0-9a-f]{6})$/i);
+          if (hex) {
+            const n = parseInt(hex[1], 16);
+            return [(n >> 16) & 255, (n >> 8) & 255, n & 255, 1];
+          }
+          const m = s.match(/rgba?\(([^)]+)\)/);
           if (!m) return null;
           const parts = m[1].split(',').map((x) => parseFloat(x.trim()));
           return [parts[0], parts[1], parts[2], parts[3] ?? 1];
@@ -2458,7 +2576,11 @@ async function main() {
           if (rect.width < 1 || rect.height < 1) continue;
           const cs = getComputedStyle(el);
           if (cs.visibility === 'hidden' || parseFloat(cs.opacity) < 0.05) continue;
-          const rawFg = parseRgba(cs.color);
+          const isClippedShimmer =
+            el.classList.contains('yui-shimmer-text') && el.classList.contains('is-active');
+          const rawFg = isClippedShimmer
+            ? parseRgba(cs.getPropertyValue('--yui-shimmer-ink')) ?? parseRgba(cs.color)
+            : parseRgba(cs.color);
           if (!rawFg) continue;
           const bg = effectiveBg(el);
           const fg = rawFg[3] < 1 ? compositeOver(rawFg, bg) : rawFg;
@@ -3653,6 +3775,7 @@ async function main() {
         'palette',
         'diff',
         'trace',
+        'shimmer',
         'drawers',
         'budget',
         'onboarding',
@@ -3816,6 +3939,87 @@ async function main() {
           await page.screenshot({ path: traceNarrowPath });
           outputs.push(traceNarrowPath);
         }
+        if (narrowPanel === 'shimmer') {
+          const initialShimmer = await page.evaluate(() => {
+            const shimmer = document.querySelector('[data-slot="inline-tool-status"] .yui-shimmer-text.is-active');
+            const chains = Array.from(document.querySelectorAll('[data-slot="tool-trace-list"]'));
+            const midHead = chains[0]?.querySelector('.yui-trace-head');
+            const settledHead = chains[1]?.querySelector('.yui-trace-head');
+            return {
+              hasShimmer: Boolean(shimmer),
+              shimmerAnim: shimmer ? getComputedStyle(shimmer).animationName : null,
+              chainCount: chains.length,
+              midExpanded: midHead?.getAttribute('aria-expanded'),
+              midBadge: chains[0]?.querySelector('.yui-trace-step-badge')?.textContent?.trim() ?? null,
+              settledExpanded: settledHead?.getAttribute('aria-expanded'),
+              settledSummary: settledHead?.textContent?.trim() ?? null,
+            };
+          });
+          if (
+            !initialShimmer.hasShimmer ||
+            initialShimmer.shimmerAnim !== 'yuiShimmer' ||
+            initialShimmer.chainCount !== 2 ||
+            initialShimmer.midExpanded !== 'true' ||
+            initialShimmer.midBadge !== '3/3' ||
+            initialShimmer.settledExpanded !== 'false' ||
+            !initialShimmer.settledSummary?.includes('Used 3 tools')
+          ) {
+            throw new Error(`340px shimmer initial state check failed (${theme}): ${JSON.stringify(initialShimmer)}`);
+          }
+          const shimmerActivePath = path.join(OUT_DIR, `specimen-${theme}-shimmer-active-340.png`);
+          await page.screenshot({ path: shimmerActivePath });
+          outputs.push(shimmerActivePath);
+
+          // Keyboard Enter expands settled ToolChain hairline rail; Space expands nested step I/O
+          const settledHeadLocator = page.locator('[data-slot="tool-trace-list"]').nth(1).locator('.yui-trace-head');
+          await settledHeadLocator.focus();
+          await page.keyboard.press('Enter');
+          const firstSettledTrigger = page
+            .locator('[data-slot="tool-trace-list"]')
+            .nth(1)
+            .locator('.yui-trace-trigger')
+            .first();
+          await firstSettledTrigger.focus();
+          await page.keyboard.press('Space');
+          await page.waitForTimeout(260);
+          const expandedShimmer = await page.evaluate(() => {
+            const chains = Array.from(document.querySelectorAll('[data-slot="tool-trace-list"]'));
+            const settled = chains[1];
+            const rail = settled?.querySelector('.yui-trace-rail-list');
+            const firstTrigger = settled?.querySelector('.yui-trace-trigger');
+            return {
+              settledExpanded: settled?.querySelector('.yui-trace-head')?.getAttribute('aria-expanded'),
+              hasRail: Boolean(rail),
+              railBeforeWidth: rail ? getComputedStyle(rail, '::before').width : null,
+              firstStepExpanded: firstTrigger?.getAttribute('aria-expanded'),
+              hasInputPayload: settled?.textContent?.includes('mv3 tokens') ?? false,
+              inlineStyles: Array.from(document.querySelectorAll('#specimen-root [style]')).filter(
+                (el) => (el.getAttribute('style') || '').trim().length > 0,
+              ).length,
+              shimmerInlineStyles: document.querySelectorAll(
+                '[data-slot="inline-tool-status"] [style], [data-slot="tool-trace-list"] [style]',
+              ).length,
+              overflow: document.documentElement.scrollWidth > 340,
+            };
+          });
+          if (
+            expandedShimmer.settledExpanded !== 'true' ||
+            !expandedShimmer.hasRail ||
+            expandedShimmer.railBeforeWidth !== '1px' ||
+            expandedShimmer.firstStepExpanded !== 'true' ||
+            !expandedShimmer.hasInputPayload ||
+            expandedShimmer.inlineStyles !== 0 ||
+            expandedShimmer.shimmerInlineStyles !== 0 ||
+            expandedShimmer.overflow
+          ) {
+            throw new Error(`340px shimmer expanded/keyboard check failed (${theme}): ${JSON.stringify(expandedShimmer)}`);
+          }
+          await auditPanelContrast(theme, 'shimmer-expanded-340');
+          await blurActive();
+          const shimmerExpandedPath = path.join(OUT_DIR, `specimen-${theme}-shimmer-expanded-340.png`);
+          await page.screenshot({ path: shimmerExpandedPath });
+          outputs.push(shimmerExpandedPath);
+        }
         if (narrowPanel === 'drawers') {
           const drawer340Audit = await page.evaluate(() => {
             const specVals = Array.from(
@@ -3964,7 +4168,7 @@ async function main() {
 
       // 320px compact Chrome side-panel audit (overflow, zero inline styles, WCAG AA contrast)
       await page.setViewportSize({ width: 320, height: 828 });
-      for (const compactPanel of ['permissions', 'storage', 'controls', 'templates', 'voice', 'preflight', 'resilience']) {
+      for (const compactPanel of ['permissions', 'shimmer', 'storage', 'controls', 'templates', 'voice', 'preflight', 'resilience']) {
         await page.goto(`${baseUrl}/?mode=single&theme=${theme}&panel=${compactPanel}&width=320`, {
           waitUntil: 'networkidle',
         });
@@ -4032,17 +4236,21 @@ async function main() {
       // Forced-colors audit at 380px across settings, recovery, voice, templates, genui, storage & controls
       await page.setViewportSize({ width: 380, height: 828 });
       await page.emulateMedia({ forcedColors: 'active' });
-      for (const fcPanel of ['settings', 'recovery', 'voice', 'templates', 'genui', 'storage', 'controls', 'permissions', 'preflight', 'resilience']) {
+      for (const fcPanel of ['settings', 'shimmer', 'recovery', 'voice', 'templates', 'genui', 'storage', 'controls', 'permissions', 'preflight', 'resilience']) {
         await page.goto(`${baseUrl}/?mode=single&theme=${theme}&panel=${fcPanel}`, {
           waitUntil: 'networkidle',
         });
         await waitForSpecimen(`forced-colors/${theme}/${fcPanel}`);
         const fcAudit = await page.evaluate(() => {
           const root = document.getElementById('specimen-root');
-          return root ? root.querySelectorAll('[style]').length : -1;
+          const shimmer = document.querySelector('.yui-shimmer-text.is-active');
+          return {
+            inlineStyles: root ? root.querySelectorAll('[style]').length : -1,
+            shimmerBgImg: shimmer ? getComputedStyle(shimmer).backgroundImage : null,
+          };
         });
-        if (fcAudit !== 0) {
-          throw new Error(`Forced-colors CSP inline-style audit failed (${theme}/${fcPanel}): ${fcAudit}`);
+        if (fcAudit.inlineStyles !== 0 || (fcPanel === 'shimmer' && fcAudit.shimmerBgImg !== 'none')) {
+          throw new Error(`Forced-colors audit failed (${theme}/${fcPanel}): ${JSON.stringify(fcAudit)}`);
         }
       }
       await page.emulateMedia({ forcedColors: 'none' });
@@ -4120,6 +4328,17 @@ async function main() {
       });
       if (streamAnim.caretAnim !== 'none' || streamAnim.hiddenWord) {
         throw new Error(`StreamingResponse reduced-motion check failed (${theme}): ${JSON.stringify(streamAnim)}`);
+      }
+      await page.goto(`${baseUrl}/?mode=single&theme=${theme}&panel=shimmer`, { waitUntil: 'networkidle' });
+      await waitForSpecimen(`reduced-motion/${theme}/shimmer`);
+      const shimmerRm = await page.evaluate(() => {
+        const s = document.querySelector('.yui-shimmer-text.is-active');
+        if (!s) return null;
+        const cs = getComputedStyle(s);
+        return { anim: cs.animationName, bg: cs.backgroundImage };
+      });
+      if (!shimmerRm || shimmerRm.anim !== 'none' || shimmerRm.bg !== 'none') {
+        throw new Error(`ShimmerText reduced-motion check failed (${theme}): ${JSON.stringify(shimmerRm)}`);
       }
       await page.emulateMedia({ reducedMotion: 'no-preference' });
 
@@ -4368,6 +4587,8 @@ async function main() {
           { tag: 'normal', dir: '', fc: 'none', rm: 'no-preference', panel: 'drawers' },
           { tag: 'normal', dir: '', fc: 'none', rm: 'no-preference', panel: 'runtime' },
           { tag: 'normal', dir: '', fc: 'none', rm: 'no-preference', panel: 'resilience' },
+          { tag: 'normal', dir: '', fc: 'none', rm: 'no-preference', panel: 'shimmer' },
+          { tag: 'rtl', dir: '&dir=rtl', fc: 'none', rm: 'no-preference', panel: 'shimmer' },
           { tag: 'rtl', dir: '&dir=rtl', fc: 'none', rm: 'no-preference', panel: 'rtl' },
           { tag: 'forced', dir: '', fc: 'active', rm: 'no-preference', panel: 'resilience' },
           { tag: 'reduced', dir: '', fc: 'none', rm: 'reduce', panel: 'permissions' },
