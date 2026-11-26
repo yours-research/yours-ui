@@ -28,19 +28,19 @@ export function EntitySummaryCard({
   return (
     <div className="yui-genui-card">
       <div className="yui-genui-head">
-        <div>
+        <div className="yui-col-min">
           <div className="yui-genui-title">{title}</div>
           {subtitle ? <div className="yui-genui-muted">{subtitle}</div> : null}
         </div>
         {tag ? <span className="yui-badge">{tag}</span> : null}
       </div>
 
-      <div className="yui-drawer-body">
+      <div className="yui-genui-body">
         <div className="yui-entity-grid">
           {fields.map((field, idx) => (
             <div key={`${field.label}-${idx}`} className="yui-entity-tile">
               <span className="yui-genui-muted">{field.label}</span>
-              <strong className="yui-prompt-capsule-title">{field.value}</strong>
+              <strong className="yui-entity-val">{field.value}</strong>
             </div>
           ))}
         </div>

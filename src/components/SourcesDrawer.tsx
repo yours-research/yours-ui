@@ -49,9 +49,9 @@ export function SourcesDrawer({ sources, defaultExpanded = false }: SourcesDrawe
               target={src.url ? '_blank' : undefined}
               rel={src.url ? 'noopener noreferrer' : undefined}
             >
-              <div className="yui-action-group">
+              <div className="yui-source-row-main">
                 <span className="yui-source-index">{idx + 1}</span>
-                <div>
+                <div className="yui-col-min">
                   <div className="yui-prompt-capsule-title">{src.title}</div>
                   {src.subtitle ? (
                     <div className="yui-prompt-capsule-sub">{src.subtitle}</div>

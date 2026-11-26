@@ -52,7 +52,10 @@ describe('@yours/ui Generative UI primitives (8 cards)', () => {
           badgeText="Annual saves 17%"
           leftColumnTitle="Pro"
           rightColumnTitle="Team"
-          rows={[{ feature: '10 seats / mo', leftValue: '$200', rightValue: '$250' }]}
+          rows={[
+            { feature: '10 seats / mo', leftValue: '$200', rightValue: '$250' },
+            { feature: 'Annual total', leftValue: '$2,000', rightValue: '$2,500', emphasize: true },
+          ]}
           onCopy={() => {}}
         />
         <ChecklistCard
@@ -112,6 +115,12 @@ describe('@yours/ui Generative UI primitives (8 cards)', () => {
     );
 
     expect(el.querySelectorAll('.yui-genui-card').length).toBe(8);
+    expect(el.querySelectorAll('.yui-genui-body').length).toBe(7);
+    expect(el.querySelector('.yui-table-row.is-emphasized')?.textContent).toContain('Annual total');
+    expect(el.querySelector('.yui-check-item-text.is-done')?.textContent).toContain('Confirm cap');
+    expect(el.querySelector('.yui-brief-list')).toBeTruthy();
+    expect(el.querySelector('.yui-kv-list .yui-kv-row')).toBeTruthy();
+    expect(el.querySelector('.yui-spark-area')).toBeTruthy();
     expect(el.querySelector('.yui-spark-path')?.getAttribute('d')).toMatch(/^M /);
 
     const checkRow = el.querySelectorAll('.yui-check-item-row')[1] as HTMLButtonElement;

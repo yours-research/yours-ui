@@ -45,7 +45,7 @@ export function ChecklistCard({
         value={doneCount}
       />
 
-      <div className="yui-drawer-body">
+      <div className="yui-genui-body">
         {items.map((item) => (
           <button
             key={item.id}
@@ -57,7 +57,7 @@ export function ChecklistCard({
             <span className={item.done ? 'yui-check-circle is-done' : 'yui-check-circle'}>
               {item.done ? <CheckIcon size={10} /> : null}
             </span>
-            <span className={item.done ? 'yui-genui-muted' : 'yui-prompt-capsule-title'}>
+            <span className={item.done ? 'yui-check-item-text is-done' : 'yui-check-item-text'}>
               {item.label}
             </span>
           </button>

@@ -22,7 +22,7 @@ export function ChoicePromptCard({
 }: ChoicePromptCardProps) {
   return (
     <div className="yui-genui-card">
-      <div className="yui-drawer-body">
+      <div className="yui-genui-body">
         <div>
           <div className="yui-genui-title">{question}</div>
           {hint ? <div className="yui-genui-muted">{hint}</div> : null}
@@ -39,7 +39,7 @@ export function ChoicePromptCard({
                 className={selected ? 'yui-choice-row is-selected' : 'yui-choice-row'}
                 onClick={() => onSelect(opt.id)}
               >
-                <div>
+                <div className="yui-col-min">
                   <div className="yui-prompt-capsule-title">{opt.title}</div>
                   {opt.description ? (
                     <div className="yui-genui-muted">{opt.description}</div>

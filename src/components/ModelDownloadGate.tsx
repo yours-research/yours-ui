@@ -1,3 +1,4 @@
+import { AlertIcon } from '../icons/ApertureIcon.js';
 import { MatrixOrb } from '../icons/MatrixOrb.js';
 
 export interface ModelCatalogChoice {
@@ -79,9 +80,9 @@ export function ModelDownloadGate({
                   className={checked ? 'yui-radio-ring is-checked' : 'yui-radio-ring'}
                   aria-hidden="true"
                 />
-                <span>
+                <span className="yui-capsule-copy">
                   <span className="yui-prompt-capsule-title">{m.label}</span>
-                  <div className="yui-prompt-capsule-sub">{m.subtitle}</div>
+                  <span className="yui-prompt-capsule-sub">{m.subtitle}</span>
                 </span>
               </span>
               {m.cached ? (
@@ -98,8 +99,11 @@ export function ModelDownloadGate({
 
       {hardwareLabel ? <div className="yui-speed-readout">{hardwareLabel}</div> : null}
       {error ? (
-        <div className="yui-error-card" role="alert">
-          <span>{error}</span>
+        <div className="yui-error-card yui-error-card--full" role="alert">
+          <div className="yui-action-group">
+            <AlertIcon size={14} className="yui-error-icon" />
+            <span>{error}</span>
+          </div>
         </div>
       ) : null}
 

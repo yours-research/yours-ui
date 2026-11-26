@@ -53,7 +53,8 @@
     "typecheck": "tsc --noEmit",
     "build": "node scripts/generate-icons.mjs && tsc -p tsconfig.build.json && node scripts/copy-assets.mjs",
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "verify:visual": "node scripts/visual-specimen.mjs"
   },
   "peerDependencies": {
     "react": ">=18.0.0",

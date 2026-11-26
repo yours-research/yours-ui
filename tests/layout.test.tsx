@@ -646,4 +646,28 @@ describe('@yours/ui layout & TopNotch primitives', () => {
     expect(cssSource.slice(reducedIdx)).toContain('.yui-hook-rail-layer');
     expect(cssSource.slice(reducedIdx)).toContain('.yui-hook-row');
   });
+
+  it('supports disabled TopNotch items without dispatching onSelectItem', () => {
+    const onSelect = vi.fn();
+    const el = renderNode(
+      <TopNotch
+        expandedId={null}
+        onSelectItem={onSelect}
+        items={[
+          { id: 'new', icon: 'compose', label: 'New', disabled: true },
+          { id: 'threads', icon: 'history', label: 'Threads' },
+        ]}
+      />,
+    );
+
+    const buttons = el.querySelectorAll('.yui-notch-btn') as NodeListOf<HTMLButtonElement>;
+    expect(buttons[0].disabled).toBe(true);
+    expect(buttons[1].disabled).toBe(false);
+    act(() => {
+      buttons[0].click();
+      buttons[1].click();
+    });
+    expect(onSelect).toHaveBeenCalledTimes(1);
+    expect(onSelect).toHaveBeenCalledWith('threads');
+  });
 });

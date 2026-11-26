@@ -60,7 +60,7 @@ export function DraftCard({
         </div>
       </div>
 
-      <div className="yui-drawer-body">
+      <div className="yui-genui-body">
         <div className="yui-draft-well">{activeTone?.content ?? ''}</div>
       </div>
 

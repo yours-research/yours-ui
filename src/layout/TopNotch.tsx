@@ -10,6 +10,7 @@ export interface TopNotchItem {
   title?: string;
   badgeDot?: 'green' | 'amber' | 'none';
   badgePulse?: boolean;
+  disabled?: boolean;
   onClick?: () => void;
 }
 
@@ -76,11 +77,13 @@ export function TopNotch({
                 <button
                   key={item.id}
                   type="button"
+                  disabled={item.disabled}
                   className={active ? 'yui-notch-btn is-active' : 'yui-notch-btn'}
                   title={item.title ?? item.label}
                   aria-label={item.label}
                   aria-expanded={active}
                   onClick={() => {
+                    if (item.disabled) return;
                     item.onClick?.();
                     onSelectItem?.(item.id);
                   }}

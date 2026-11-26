@@ -29,10 +29,14 @@ export function PermissionApprovalCard({
         <div className="yui-icon-badge">
           <ShieldIcon size={14} />
         </div>
-        <div>
+        <div className="yui-col-min">
           <div className="yui-prompt-capsule-title">{title}</div>
           <div className="yui-prompt-capsule-sub">{description}</div>
-          {ruleBadge ? <span className="yui-badge">{ruleBadge}</span> : null}
+          {ruleBadge ? (
+            <div className="yui-badge-row">
+              <span className="yui-badge">{ruleBadge}</span>
+            </div>
+          ) : null}
         </div>
       </div>
       <div className="yui-btn-row">
