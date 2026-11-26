@@ -10,6 +10,8 @@ import {
   MetricStripCard,
   PageActionCard,
   PageBriefCard,
+  QuoteExcerptCard,
+  TimelineCard,
 } from '../src/genui/index.js';
 
 (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
@@ -147,5 +149,66 @@ describe('@yours/ui Generative UI primitives (8 cards)', () => {
     expect(onInsertDraft).toHaveBeenCalledWith('Warm reply body.');
     expect(onSelectChoice).toHaveBeenCalledWith('deep');
     expect(onConfirmPageAction).toHaveBeenCalledTimes(1);
+  });
+
+  it('renders TimelineCard and QuoteExcerptCard cleanly without inline styles', () => {
+    const writeText = vi.fn().mockResolvedValue(undefined);
+    Object.defineProperty(navigator, 'clipboard', {
+      configurable: true,
+      value: { writeText },
+    });
+
+    const onSelectStep = vi.fn();
+    const onJumpToSource = vi.fn();
+    const onCopyQuote = vi.fn();
+
+    const el = renderNode(
+      <div>
+        <TimelineCard
+          title="Verification Plan"
+          subtitle="Local WebGPU pipeline"
+          metaLabel="3 steps"
+          onSelectStep={onSelectStep}
+          steps={[
+            { id: 's1', label: 'Load weights', detail: 'Mapped 2.6 GB from OPFS', timestamp: '00:01', status: 'done' },
+            { id: 's2', label: 'Compile WGSL kernels', detail: 'Subgroup barrier pass', timestamp: '00:03', status: 'active' },
+            { id: 's3', label: 'Verify checksums', status: 'pending' },
+          ]}
+        />
+        <QuoteExcerptCard
+          sourceTitle="Chromium MV3 Security Architecture"
+          sourceDomain="developer.chrome.com"
+          locator="§3 · Line 42"
+          quote="Side panel documents enforce script-src 'self' and style-src 'self' strictly."
+          onJumpToSource={onJumpToSource}
+          onCopyQuote={onCopyQuote}
+        />
+      </div>,
+    );
+
+    expect(el.querySelectorAll('[style]').length).toBe(0);
+
+    const timeline = el.querySelector('[data-slot="timeline-card"]') as HTMLElement;
+    expect(timeline.querySelectorAll('.yui-tl-item').length).toBe(3);
+    expect(timeline.querySelectorAll('.yui-tl-dot.is-active').length).toBe(1);
+
+    act(() => {
+      (timeline.querySelectorAll('.yui-tl-btn')[1] as HTMLButtonElement).click();
+    });
+    expect(onSelectStep).toHaveBeenCalledWith(expect.objectContaining({ id: 's2', status: 'active' }));
+
+    const quote = el.querySelector('[data-slot="quote-excerpt-card"]') as HTMLElement;
+    expect(quote.querySelector('.yui-qec-locator')?.textContent).toBe('§3 · Line 42');
+
+    act(() => {
+      (quote.querySelector('.yui-qec-copy') as HTMLButtonElement).click();
+      (quote.querySelector('button:not(.yui-qec-copy)') as HTMLButtonElement).click();
+    });
+    expect(writeText).toHaveBeenCalledWith(
+      "Side panel documents enforce script-src 'self' and style-src 'self' strictly.",
+    );
+    expect(onCopyQuote).toHaveBeenCalledTimes(1);
+    expect(onJumpToSource).toHaveBeenCalledTimes(1);
+    expect(quote.querySelector('.yui-qec-copy')?.textContent).toContain('Copied');
   });
 });

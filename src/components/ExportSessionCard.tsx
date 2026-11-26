@@ -1,5 +1,6 @@
-import { useEffect, useRef, useState } from 'react';
+import { useState } from 'react';
 import { ArrowDownIcon, CheckIcon, CopyIcon, ShieldIcon } from '../icons/ApertureIcon.js';
+import { useCopyFeedback } from '../utils/clipboard.js';
 import { SegmentedControl, type SegmentedOption } from './SegmentedControl.js';
 
 export type ExportSessionFormat = 'markdown' | 'json' | 'text';
@@ -73,16 +74,7 @@ export function ExportSessionCard({
   const [internalFormat, setInternalFormat] = useState<ExportSessionFormat>(defaultFormat);
   const [internalTraces, setInternalTraces] = useState(defaultIncludeToolTraces);
   const [internalCitations, setInternalCitations] = useState(defaultIncludeCitations);
-  const [copied, setCopied] = useState(false);
-  const timerRef = useRef<number | null>(null);
-
-  useEffect(() => {
-    return () => {
-      if (timerRef.current !== null) {
-        window.clearTimeout(timerRef.current);
-      }
-    };
-  }, []);
+  const { copied, triggerCopy } = useCopyFeedback();
 
   const format = controlledFormat ?? internalFormat;
   const includeToolTraces = controlledTraces ?? internalTraces;
@@ -112,15 +104,8 @@ export function ExportSessionCard({
   };
 
   const handleCopy = () => {
-    if (previewText && typeof navigator !== 'undefined' && navigator.clipboard?.writeText) {
-      void navigator.clipboard.writeText(previewText).catch(() => {});
-    }
+    triggerCopy(previewText);
     onCopy?.(currentOptions);
-    setCopied(true);
-    if (timerRef.current !== null) {
-      window.clearTimeout(timerRef.current);
-    }
-    timerRef.current = window.setTimeout(() => setCopied(false), 1400);
   };
 
   const rootClass = ['yui-export-card', className].filter(Boolean).join(' ');
@@ -133,11 +118,11 @@ export function ExportSessionCard({
       aria-label={title}
     >
       <div className="yui-export-head">
-        <div className="yui-col-min">
+        <div className="yui-export-title-row">
           <h3 className="yui-export-title">{title}</h3>
-          {subtitle ? <p className="yui-export-sub">{subtitle}</p> : null}
+          {metaLabel ? <span className="yui-export-meta">{metaLabel}</span> : null}
         </div>
-        {metaLabel ? <span className="yui-export-meta">{metaLabel}</span> : null}
+        {subtitle ? <p className="yui-export-sub">{subtitle}</p> : null}
       </div>
 
       <SegmentedControl

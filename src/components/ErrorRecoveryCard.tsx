@@ -1,4 +1,4 @@
-import { useEffect, useId, useRef, useState } from 'react';
+import { useId, useState } from 'react';
 import {
   AlertIcon,
   CheckIcon,
@@ -8,6 +8,7 @@ import {
   RetryIcon,
 } from '../icons/ApertureIcon.js';
 import { MatrixOrb } from '../icons/MatrixOrb.js';
+import { useCopyFeedback } from '../utils/clipboard.js';
 
 export interface ErrorRecoveryCardProps {
   title: string;
@@ -48,29 +49,13 @@ export function ErrorRecoveryCard({
   className,
 }: ErrorRecoveryCardProps) {
   const [traceOpen, setTraceOpen] = useState(defaultDiagnosticsOpen);
-  const [copied, setCopied] = useState(false);
-  const timerRef = useRef<number | null>(null);
+  const { copied, triggerCopy } = useCopyFeedback();
   const traceId = useId();
-
-  useEffect(() => {
-    return () => {
-      if (timerRef.current !== null) {
-        window.clearTimeout(timerRef.current);
-      }
-    };
-  }, []);
 
   const handleCopy = () => {
     if (!diagnostics) return;
-    if (typeof navigator !== 'undefined' && navigator.clipboard?.writeText) {
-      void navigator.clipboard.writeText(diagnostics).catch(() => {});
-    }
+    triggerCopy(diagnostics);
     onCopyDiagnostics?.(diagnostics);
-    setCopied(true);
-    if (timerRef.current !== null) {
-      window.clearTimeout(timerRef.current);
-    }
-    timerRef.current = window.setTimeout(() => setCopied(false), 1400);
   };
 
   const rootClass = ['yui-recovery-card', className].filter(Boolean).join(' ');

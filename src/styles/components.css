@@ -7246,10 +7246,17 @@ span.yui-citation-pill {
   gap: 10px;
 }
 
-.yui-ptl-head,
 .yui-export-head {
   display: flex;
-  align-items: flex-start;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+}
+
+.yui-ptl-head,
+.yui-export-title-row {
+  display: flex;
+  align-items: baseline;
   justify-content: space-between;
   gap: 8px;
   min-width: 0;
@@ -7489,6 +7496,158 @@ span.yui-citation-pill {
   white-space: nowrap;
 }
 
+/* ==========================================================================
+ * GenUI: TimelineCard & QuoteExcerptCard (Milestone 17)
+ * ========================================================================== */
+.yui-tl-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.yui-tl-item {
+  display: flex;
+  align-items: stretch;
+  gap: 10px;
+  min-width: 0;
+}
+
+.yui-tl-rail {
+  width: 14px;
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding-top: 5px;
+}
+
+.yui-tl-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 9999px;
+  box-sizing: border-box;
+  flex-shrink: 0;
+  border: 1.5px solid var(--yui-strong);
+  background-color: var(--yui-capsule-bg);
+}
+
+.yui-tl-dot.is-done {
+  border-color: var(--yui-green);
+  background-color: var(--yui-green);
+}
+
+.yui-tl-dot.is-active {
+  border-color: var(--yui-cobalt);
+  background-color: var(--yui-cobalt);
+  box-shadow: 0 0 0 3px var(--yui-cobalt-soft);
+}
+
+.yui-tl-dot.is-error {
+  border-color: var(--yui-danger-ink);
+  background-color: var(--yui-danger-ink);
+}
+
+.yui-tl-stem {
+  width: 1px;
+  flex: 1;
+  min-height: 12px;
+  margin: 3px 0;
+  background-color: var(--yui-hairline);
+}
+
+.yui-tl-content,
+.yui-tl-btn {
+  flex: 1;
+  min-width: 0;
+  padding: 1px 0 11px 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.yui-tl-item:last-child .yui-tl-content,
+.yui-tl-item:last-child .yui-tl-btn {
+  padding-bottom: 2px;
+}
+
+.yui-tl-btn {
+  border: none;
+  background: transparent;
+  text-align: left;
+  font-family: var(--font-sans);
+  cursor: pointer;
+  border-radius: 6px;
+}
+
+.yui-tl-btn:hover .yui-tl-label {
+  color: var(--yui-cobalt);
+}
+
+.yui-tl-top {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+  min-width: 0;
+}
+
+.yui-tl-label {
+  font-size: 12px;
+  line-height: 16px;
+  font-weight: 500;
+  color: var(--yui-ink);
+  min-width: 0;
+  word-break: break-word;
+}
+
+.yui-tl-time {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  line-height: 14px;
+  color: var(--yui-secondary);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.yui-tl-detail {
+  margin: 0;
+  font-size: 11.5px;
+  line-height: 16px;
+  color: var(--yui-secondary);
+  word-break: break-word;
+}
+
+.yui-qec-locator {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  line-height: 14px;
+  color: var(--yui-secondary);
+  background-color: var(--yui-chip-bg);
+  border: 1px solid var(--yui-hairline);
+  border-radius: 6px;
+  padding: 2px 6px;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.yui-qec-quote {
+  margin: 0;
+  padding: 2px 0 2px 11px;
+  border-left: 2.5px solid var(--yui-cobalt);
+  font-size: 12.5px;
+  line-height: 18px;
+  color: var(--yui-ink);
+  word-break: break-word;
+}
+
+.yui-qec-link {
+  text-decoration: none;
+  color: var(--yui-ink);
+}
+
 .yui-icon-btn:focus-visible,
 .yui-pill-btn:focus-visible,
 .yui-seg-btn:focus-visible,
@@ -7500,7 +7659,9 @@ span.yui-citation-pill {
 .yui-recovery-copy:focus-visible,
 .yui-notice-action:focus-visible,
 .yui-voice-ptt-btn:focus-visible,
-.yui-ptl-main:focus-visible {
+.yui-ptl-main:focus-visible,
+.yui-tl-btn:focus-visible,
+.yui-qec-link:focus-visible {
   outline: 2px solid var(--focus-ring);
   outline-offset: 2px;
 }
@@ -7630,7 +7791,8 @@ span.yui-citation-pill {
   .yui-ptl-list,
   .yui-export-card,
   .yui-export-toggles,
-  .yui-alm-strip {
+  .yui-alm-strip,
+  .yui-genui-card {
     border: 1px solid CanvasText;
   }
 
@@ -7726,6 +7888,27 @@ span.yui-citation-pill {
     forced-color-adjust: none;
   }
 
+  .yui-tl-dot {
+    border: 2px solid CanvasText;
+    background-color: Canvas;
+    forced-color-adjust: none;
+  }
+
+  .yui-tl-dot.is-done,
+  .yui-tl-dot.is-active,
+  .yui-tl-dot.is-error {
+    border-color: Highlight;
+    background-color: Highlight;
+  }
+
+  .yui-tl-stem {
+    background-color: CanvasText;
+  }
+
+  .yui-qec-quote {
+    border-left-color: Highlight;
+  }
+
   .yui-model-dot.is-checked {
     border-color: Highlight;
     box-shadow: inset 0 0 0 3px Highlight;
@@ -7762,7 +7945,8 @@ span.yui-citation-pill {
   .yui-recovery-badge,
   .yui-tabctx-kind,
   .yui-codecard-lang,
-  .yui-sr-code-lang {
+  .yui-sr-code-lang,
+  .yui-qec-locator {
     border: 1px solid CanvasText;
     color: CanvasText;
     background-color: Canvas;
@@ -7785,6 +7969,8 @@ span.yui-citation-pill {
   .yui-composer-cmd-btn:focus-visible,
   .yui-ptl-main:focus-visible,
   .yui-ptl-search:focus-visible,
+  .yui-tl-btn:focus-visible,
+  .yui-qec-link:focus-visible,
   .yui-model-radio-btn:focus-visible,
   .yui-tabctx-main-btn:focus-visible,
   .yui-tabctx-mute-btn:focus-visible {

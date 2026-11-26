@@ -3,14 +3,16 @@
 All notable milestones for **`@yours/ui`** are documented here.
 The library targets Chrome MV3 side panels (`340px–440px`), maintains zero runtime dependencies, zero JSX inline `style` attributes, and zero `dangerouslySetInnerHTML`.
 
-## Unreleased / Milestone 16 (PR #19)
+## Unreleased / Milestone 17 (PR #20)
 
-- Polished `VoiceSessionCard` control hierarchy so `Barge-in | Mute | End` aligns cleanly on a single flush primary strip with a dedicated full-width `Hold [Space] to talk` push-to-talk row across `340px`, `380px`, and `400px`.
-- Added **`PromptTemplateList`** (`PromptTemplateItem`, `PromptTemplateListProps`) for local slash-command and prompt template libraries with category pills, search filtering, bookmark pinning, and roving `ArrowUp`/`ArrowDown`/`Home`/`End`/`Enter` keyboard navigation.
-- Added **`ExportSessionCard`** (`ExportSessionCardProps`, `ExportSessionFormat`, `ExportSessionOptions`) with `Markdown` / `JSON` / `Plain text` `SegmentedControl`, optional tool-trace & citation switches, compact size/count metadata, and local `Copy` / `Download` actions.
-- Consolidated shared Paper Page 9 card surface & privacy footer styles in `src/styles/components.css` to keep CSS gzip well below the MV3 budget.
+- Fixed `ExportSessionCard` header layout at `340px` so `title` and `metaLabel` share row 1 cleanly while `subtitle` spans full width underneath.
+- Added **`TimelineCard`** (`TimelineCardProps`, `TimelineStep`, `TimelineStepStatus`) and **`QuoteExcerptCard`** (`QuoteExcerptCardProps`) to `@yours/ui/genui` and `@yours/ui` with `@media (forced-colors: active)` and `340px` support.
+- Extracted shared `useCopyFeedback` hook (`src/utils/clipboard.ts`) to eliminate duplicate clipboard/timer boilerplate across copyable cards, keeping total JS/CSS sizes cleanly under budget.
+- Added `400px` & `340px` Light/Dark `genui` showcase checks in `scripts/visual-specimen.mjs`.
 
 ## Milestone History (`v0.1.0`)
+
+- **Milestone 16 (PR #19):** Polished `VoiceSessionCard` primary control row + full-width `Hold [Space] to talk` bar, added `PromptTemplateList` and `ExportSessionCard`, consolidated CSS card/privacy rules, and added `CHANGELOG.md`.
 
 - **Milestone 15 (PR #18):** Added `VoiceSessionCard` and zero-inline-style `AudioLevelMeter`, optional `onOpenCommands` (`/`) trigger & `contextUsageLabel` badge (`--yui-amber-ink`) on `FloatingComposer`, `npm run check:size` MV3 bundle budget guard, and strict `tsc --strict` consumer subpath verification including `@yours/ui/styles`.
 - **Milestone 14 (PR #17):** Upgraded `SidePanelShell` top scroll fade to an `84px` two-stop solid cap (`52%`) under `TopNotch`, added `ErrorRecoveryCard` and `InlineNotice`, and completed `@media (forced-colors: active)` and `@media (prefers-reduced-motion: reduce)` support.
