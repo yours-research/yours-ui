@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCopyFeedback, useHorizontalFade } from '../utils/clipboard.js';
 import {
   BookmarkIcon,
   CheckIcon,
@@ -102,10 +103,7 @@ export function DataTableCard({
   footerLabel,
   className,
 }: DataTableCardProps) {
-  const scrollRef = useRef<HTMLDivElement | null>(null);
-  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const [copied, setCopied] = useState(false);
-  const [canScrollRight, setCanScrollRight] = useState(false);
+  const { copied, triggerCopy } = useCopyFeedback(1600);
   const [uncontrolledSort, setUncontrolledSort] = useState<DataTableSortState | null>(defaultSort);
 
   const activeSort = controlledSort !== undefined ? controlledSort : uncontrolledSort;
@@ -117,6 +115,8 @@ export function DataTableCard({
     const mult = activeSort.direction === 'asc' ? 1 : -1;
     return [...rows].sort((a, b) => compareCells(a[col.key], b[col.key]) * mult);
   }, [activeSort, columns, rows]);
+
+  const { scrollRef, canScrollRight } = useHorizontalFade([columns, sortedRows]);
 
   const toggleSort = (key: string) => {
     let next: DataTableSortState | null;
@@ -133,53 +133,10 @@ export function DataTableCard({
     onSortChange?.(next);
   };
 
-  const syncHorizontalFade = useCallback(() => {
-    const el = scrollRef.current;
-    if (!el) return;
-    const next = el.scrollWidth - el.clientWidth - el.scrollLeft > 2;
-    setCanScrollRight((prev) => (prev === next ? prev : next));
-  }, []);
-
-  useEffect(() => {
-    syncHorizontalFade();
-    const el = scrollRef.current;
-    if (!el) return;
-
-    const onScroll = () => syncHorizontalFade();
-    el.addEventListener('scroll', onScroll, { passive: true });
-
-    let ro: ResizeObserver | undefined;
-    if (typeof ResizeObserver !== 'undefined') {
-      ro = new ResizeObserver(() => syncHorizontalFade());
-      ro.observe(el);
-    }
-
-    if (typeof window !== 'undefined') {
-      window.addEventListener('resize', onScroll, { passive: true });
-    }
-
-    return () => {
-      el.removeEventListener('scroll', onScroll);
-      ro?.disconnect();
-      if (typeof window !== 'undefined') {
-        window.removeEventListener('resize', onScroll);
-      }
-    };
-  }, [syncHorizontalFade, columns, sortedRows]);
-
-  useEffect(() => {
-    return () => {
-      if (timerRef.current !== null) clearTimeout(timerRef.current);
-    };
-  }, []);
-
   const handleCopy = () => {
     const formatted = formatTableData(columns, sortedRows, copyFormat);
-    void navigator.clipboard?.writeText(formatted).catch(() => {});
+    triggerCopy(formatted);
     onCopy?.(formatted);
-    setCopied(true);
-    if (timerRef.current !== null) clearTimeout(timerRef.current);
-    timerRef.current = setTimeout(() => setCopied(false), 1600);
   };
 
   const cardClass = ['yui-data-card', className].filter(Boolean).join(' ');
@@ -353,9 +310,8 @@ export function ArtifactPreviewCard({
 }: ArtifactPreviewCardProps) {
   const preRef = useRef<HTMLPreElement | null>(null);
   const [uncontrolledExpanded, setUncontrolledExpanded] = useState(defaultExpanded);
-  const [copied, setCopied] = useState(false);
+  const { copied, triggerCopy } = useCopyFeedback(1600);
   const [hasBottomFade, setHasBottomFade] = useState(false);
-  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const isExpanded = controlledExpanded ?? uncontrolledExpanded;
 
@@ -384,12 +340,6 @@ export function ArtifactPreviewCard({
     };
   }, [capped, isExpanded, preview, syncPreviewFade]);
 
-  useEffect(() => {
-    return () => {
-      if (timerRef.current !== null) clearTimeout(timerRef.current);
-    };
-  }, []);
-
   const toggleExpanded = () => {
     if (!collapsible) return;
     const next = !isExpanded;
@@ -400,11 +350,8 @@ export function ArtifactPreviewCard({
   };
 
   const handleCopy = () => {
-    void navigator.clipboard?.writeText(preview).catch(() => {});
+    triggerCopy(preview);
     onCopy?.(preview);
-    setCopied(true);
-    if (timerRef.current !== null) clearTimeout(timerRef.current);
-    timerRef.current = setTimeout(() => setCopied(false), 1600);
   };
 
   const cardClass = ['yui-artifact-card', className].filter(Boolean).join(' ');

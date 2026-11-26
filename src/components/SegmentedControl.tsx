@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { ApertureIcon } from '../icons/ApertureIcon.js';
 import type { ApertureIconName } from '../icons/iconData.js';
+import { lerp, roundPx, sampleDampedSpring, useReducedMotion } from '../utils/spring.js';
 
 export interface SegmentedOption<T extends string = string> {
   value: T;
@@ -25,29 +26,6 @@ const SPRING_MASS = 0.7;
 const SPRING_DURATION_MS = 320;
 const SPRING_STEPS = 20;
 
-function sampleDampedSpring(
-  tSec: number,
-  stiffness = SPRING_STIFFNESS,
-  damping = SPRING_DAMPING,
-  mass = SPRING_MASS,
-): number {
-  if (tSec <= 0) return 0;
-  const omega0 = Math.sqrt(stiffness / mass);
-  const zeta = damping / (2 * Math.sqrt(stiffness * mass));
-  if (zeta < 1) {
-    const sqrtOneMinusZetaSq = Math.sqrt(1 - zeta * zeta);
-    const omegaD = omega0 * sqrtOneMinusZetaSq;
-    const envelope = Math.exp(-zeta * omega0 * tSec);
-    return (
-      1 -
-      envelope *
-        (Math.cos(omegaD * tSec) + (zeta / sqrtOneMinusZetaSq) * Math.sin(omegaD * tSec))
-    );
-  }
-  const envelope = Math.exp(-omega0 * tSec);
-  return 1 - envelope * (1 + omega0 * tSec);
-}
-
 const SPRING_PROGRESS: readonly number[] = Array.from(
   { length: SPRING_STEPS + 1 },
   (_, index) => {
@@ -56,45 +34,6 @@ const SPRING_PROGRESS: readonly number[] = Array.from(
     return sampleDampedSpring((index / SPRING_STEPS) * (SPRING_DURATION_MS / 1000));
   },
 );
-
-function lerp(start: number, end: number, t: number): number {
-  return start + (end - start) * t;
-}
-
-function roundPx(value: number): number {
-  return Math.round(value * 100) / 100;
-}
-
-function getPrefersReducedMotion(): boolean {
-  if (typeof window === 'undefined' || typeof window.matchMedia !== 'function') {
-    return false;
-  }
-  return Boolean(window.matchMedia('(prefers-reduced-motion: reduce)')?.matches);
-}
-
-function useReducedMotion(): boolean {
-  const [reduced, setReduced] = useState<boolean>(getPrefersReducedMotion);
-
-  useEffect(() => {
-    if (typeof window === 'undefined' || typeof window.matchMedia !== 'function') {
-      return;
-    }
-    const mq = window.matchMedia('(prefers-reduced-motion: reduce)');
-    if (!mq) {
-      return;
-    }
-    setReduced(Boolean(mq.matches));
-    const onChange = (event: MediaQueryListEvent) => setReduced(Boolean(event.matches));
-    if (typeof mq.addEventListener === 'function') {
-      mq.addEventListener('change', onChange);
-      return () => mq.removeEventListener('change', onChange);
-    }
-    mq.addListener?.(onChange);
-    return () => mq.removeListener?.(onChange);
-  }, []);
-
-  return reduced;
-}
 
 /**
  * Minimalist hairline segmented selector (`Max · Balanced · Smooth` or

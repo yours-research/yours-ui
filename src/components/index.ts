@@ -255,3 +255,17 @@ export {
   type StorageQuotaCardProps,
   type StorageQuotaEntry,
 } from './StorageQuotaCard.js';
+export {
+  ModelParametersCard,
+  type GpuPacingMode,
+  type ModelParametersCardProps,
+  type ModelParametersValue,
+  type ThinkingMode,
+} from './ModelParametersCard.js';
+export {
+  NetworkAuditCard,
+  type NetworkAuditCardProps,
+  type NetworkAuditDecision,
+  type NetworkAuditEvent,
+  type NetworkAuditMetric,
+} from './NetworkAuditCard.js';

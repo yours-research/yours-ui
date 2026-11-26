@@ -7240,7 +7240,9 @@ span.yui-citation-pill {
  * ========================================================================== */
 .yui-ptl-card,
 .yui-export-card,
-.yui-storage-card {
+.yui-storage-card,
+.yui-params-card,
+.yui-audit-card {
   width: 100%;
   box-sizing: border-box;
   flex-shrink: 0;
@@ -7889,16 +7891,24 @@ span.yui-citation-pill {
 
 .yui-storage-row-top {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: space-between;
   gap: 8px;
   min-width: 0;
 }
 
+.yui-storage-row-lead {
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+  min-width: 0;
+  flex: 1 1 auto;
+}
+
 .yui-storage-row-title-wrap {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 4px 6px;
   min-width: 0;
   flex: 1 1 auto;
   flex-wrap: wrap;
@@ -7909,6 +7919,7 @@ span.yui-citation-pill {
   height: 7px;
   border-radius: 999px;
   flex-shrink: 0;
+  margin-top: 4.5px;
 }
 
 .yui-storage-dot--weights {
@@ -7963,6 +7974,7 @@ span.yui-citation-pill {
   color: var(--yui-ink);
   font-weight: 500;
   flex-shrink: 0;
+  align-self: flex-start;
 }
 
 .yui-storage-row-sub {
@@ -8012,6 +8024,200 @@ span.yui-citation-pill {
   color: var(--yui-secondary);
 }
 
+/* ==========================================================================
+ * ModelParametersCard & NetworkAuditCard (Milestone 20)
+ * ========================================================================== */
+.yui-params-card,
+.yui-audit-card {
+  color: var(--yui-ink);
+}
+
+.yui-params-card .yui-genui-title,
+.yui-params-card .yui-genui-muted,
+.yui-audit-card .yui-genui-title,
+.yui-audit-card .yui-genui-muted {
+  margin: 0;
+}
+
+.yui-params-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 8px;
+  min-width: 0;
+}
+
+.yui-params-groups,
+.yui-params-sliders {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.yui-params-field,
+.yui-slider-row {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.yui-params-label {
+  font-size: 11.5px;
+  line-height: 15px;
+  font-weight: 500;
+  color: var(--yui-secondary);
+}
+
+.yui-slider-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.yui-slider-val {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  line-height: 15px;
+  font-variant-numeric: tabular-nums;
+  color: var(--yui-ink);
+  font-weight: 600;
+}
+
+.yui-range-input {
+  width: 100%;
+  height: 18px;
+  margin: 0;
+  accent-color: var(--yui-cobalt);
+  background: transparent;
+  cursor: pointer;
+}
+
+.yui-params-foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  flex-wrap: wrap;
+  padding-top: 8px;
+  border-top: 1px solid var(--yui-hairline);
+}
+
+.yui-audit-metrics {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 6px;
+}
+
+.yui-audit-metric-tile {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 7px 8px;
+  border-radius: 9px;
+  border: 1px solid var(--yui-hairline);
+  background-color: var(--yui-well-bg);
+  min-width: 0;
+}
+
+.yui-audit-metric-label {
+  font-family: var(--font-mono);
+  font-size: 9.5px;
+  line-height: 12px;
+  color: var(--yui-muted);
+}
+
+.yui-audit-metric-val {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  line-height: 15px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  color: var(--yui-ink);
+}
+
+.yui-audit-row {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  padding: 7px 10px;
+}
+
+.yui-audit-row + .yui-audit-row {
+  border-top: 1px solid var(--yui-hairline);
+}
+
+.yui-audit-row-top,
+.yui-audit-row-sub {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  min-width: 0;
+}
+
+.yui-audit-target {
+  font-family: var(--font-mono);
+  font-size: 11.5px;
+  line-height: 16px;
+  font-weight: 500;
+  color: var(--yui-ink);
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.yui-audit-pill {
+  display: inline-flex;
+  align-items: center;
+  padding: 1px 6px;
+  border-radius: 999px;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  line-height: 14px;
+  font-weight: 600;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.yui-audit-pill.is-blocked {
+  color: var(--yui-danger-ink);
+  background-color: var(--yui-danger-soft);
+}
+
+.yui-audit-pill.is-allowed-once {
+  color: var(--yui-amber-ink);
+  background-color: var(--yui-amber-soft);
+}
+
+.yui-audit-pill.is-local {
+  color: var(--yui-green-ink);
+  background-color: var(--yui-green-soft);
+}
+
+.yui-audit-detail,
+.yui-audit-time {
+  font-size: 10.5px;
+  line-height: 14px;
+  color: var(--yui-secondary);
+}
+
+.yui-audit-time {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  flex-shrink: 0;
+}
+
+.yui-audit-empty {
+  padding: 12px 10px;
+  border-radius: 10px;
+  border: 1px solid var(--yui-hairline);
+  background-color: var(--yui-well-bg);
+  font-size: 12px;
+  line-height: 16px;
+  color: var(--yui-secondary);
+  text-align: center;
+}
+
 @media (max-width: 360px) {
   .yui-find-bar {
     gap: 3px;
@@ -8022,12 +8228,19 @@ span.yui-citation-pill {
     font-size: 10.5px;
   }
 
-  .yui-storage-card {
+  .yui-storage-card,
+  .yui-params-card,
+  .yui-audit-card {
     padding: 11px 12px;
   }
 
-  .yui-storage-row {
+  .yui-storage-row,
+  .yui-audit-row {
     padding: 7px 9px;
+  }
+
+  .yui-audit-metric-tile {
+    padding: 6px 6px;
   }
 }
 
@@ -8183,7 +8396,11 @@ span.yui-citation-pill {
   .yui-find-bar,
   .yui-storage-card,
   .yui-storage-bar,
-  .yui-storage-list {
+  .yui-storage-list,
+  .yui-params-card,
+  .yui-audit-card,
+  .yui-audit-metric-tile,
+  .yui-audit-empty {
     border: 1px solid CanvasText;
   }
 
@@ -8369,13 +8586,18 @@ span.yui-citation-pill {
   .yui-find-input:focus-visible,
   .yui-storage-action-btn:focus-visible,
   .yui-storage-clear-btn:focus-visible,
-  .yui-storage-clear-all:focus-visible {
+  .yui-storage-clear-all:focus-visible,
+  .yui-range-input:focus-visible,
+  .yui-params-reset-btn:focus-visible,
+  .yui-audit-clear-btn:focus-visible,
+  .yui-audit-export-btn:focus-visible {
     outline: 2px solid Highlight;
     outline-offset: 2px;
   }
 
   .yui-find-case-btn.is-active,
-  .yui-storage-status.is-verified {
+  .yui-storage-status.is-verified,
+  .yui-audit-pill {
     border: 1px solid Highlight;
     background-color: Highlight;
     color: HighlightText;

@@ -1,6 +1,5 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
 import { CheckIcon, CopyIcon } from '../icons/ApertureIcon.js';
-import { useCopyFeedback } from '../utils/clipboard.js';
+import { useCopyFeedback, useHorizontalFade } from '../utils/clipboard.js';
 
 export interface CodeBlockCardProps {
   code: string;
@@ -28,43 +27,8 @@ export function CodeBlockCard({
   copiedLabel = 'Copied',
   className,
 }: CodeBlockCardProps) {
-  const scrollRef = useRef<HTMLDivElement | null>(null);
+  const { scrollRef, canScrollRight } = useHorizontalFade([code]);
   const { copied, triggerCopy } = useCopyFeedback();
-  const [canScrollRight, setCanScrollRight] = useState(false);
-
-  const syncFade = useCallback(() => {
-    const el = scrollRef.current;
-    if (!el) return;
-    const next = el.scrollWidth - el.clientWidth - el.scrollLeft > 2;
-    setCanScrollRight((prev) => (prev === next ? prev : next));
-  }, []);
-
-  useEffect(() => {
-    syncFade();
-    const el = scrollRef.current;
-    if (!el) return;
-
-    const onScroll = () => syncFade();
-    el.addEventListener('scroll', onScroll, { passive: true });
-
-    let ro: ResizeObserver | undefined;
-    if (typeof ResizeObserver !== 'undefined') {
-      ro = new ResizeObserver(() => syncFade());
-      ro.observe(el);
-    }
-
-    if (typeof window !== 'undefined') {
-      window.addEventListener('resize', onScroll, { passive: true });
-    }
-
-    return () => {
-      el.removeEventListener('scroll', onScroll);
-      ro?.disconnect();
-      if (typeof window !== 'undefined') {
-        window.removeEventListener('resize', onScroll);
-      }
-    };
-  }, [syncFade, code]);
 
   const handleCopy = () => {
     triggerCopy(code);

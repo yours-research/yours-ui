@@ -3,13 +3,16 @@
 All notable milestones for **`@yours/ui`** are documented here.
 The library targets Chrome MV3 side panels (`340px–440px`), maintains zero runtime dependencies, zero JSX inline `style` attributes, and zero `dangerouslySetInnerHTML`.
 
-## Unreleased / Milestone 19 (PR #22)
+## Unreleased / Milestone 20 (PR #23)
 
-- Added **`FindInThreadBar`** (`src/components/FindInThreadBar.tsx`) and **`StorageQuotaCard`** (`src/components/StorageQuotaCard.tsx`) exported from `@yours/ui/components` and `@yours/ui`, featuring `tabular-nums` match readouts, `Aa` case-sensitivity toggle, zero-inline-style SVG segmented capacity bars, `Verify SHA-256`/`Clear` controls, `100% local browser storage` privacy footers, and `@media (forced-colors: active)` + `340px` support.
-- Consolidated overlay focus management into **`src/utils/focus.ts`** (`< 0.5 KB` gzip) across `CommandPalette`, `ShortcutSheet` (optional `open`/`onClose` dialog mode), `FloatingContextSheet`, and `TopNotch` with `Tab`/`Shift+Tab` containment and trigger focus restoration on `Escape` or veil click.
-- Expanded Light & Dark WCAG AA contrast assertions across all specimen panels (`voice`, `templates`, `recovery`, `onboarding`, `budget`, `drawers`, `trace`, `diff`, `palette`, `data`, `shortcuts`, `welcome`, `storage`, and all 10 GenUI cards), upgrading `--yui-muted`/`--text-muted` tokens (`#6F6D68` Light / `#8C8A84` Dark) and green ink pills (`--yui-green-ink`) to clear `>= 4.5:1`.
+- Polished `StorageQuotaCard` `340px` alignment so wrapped `Verified` status pills align cleanly under the title text column while size readouts stay pinned to the top baseline (`align-self: flex-start`).
+- Added **`ModelParametersCard`** (`src/components/ModelParametersCard.tsx`) and **`NetworkAuditCard`** (`src/components/NetworkAuditCard.tsx`) exported from `@yours/ui/components` and `@yours/ui` (`0` inline styles, `340px`-safe, Light/Dark + `@media (forced-colors: active)`).
+- Extracted shared `useHorizontalFade` (`src/utils/clipboard.ts`) and `src/utils/spring.ts` (`sampleDampedSpring`, `useReducedMotion`) helpers across streaming, diff, code-block, table, and segmented-control components, keeping bundle totals at `85.11 KB` JS gzip (`<= 86.00 KB`) and `19.14 KB` CSS gzip (`<= 20.50 KB`).
+- Refreshed `ARCHITECTURE.md` to cover all 10 GenUI cards, `SidePanelShell` layering/`84px` fade cap, `src/utils/focus.ts`, MV3 bundle budgets, and full Light/Dark WCAG AA verification; added the `controls` specimen panel across `400px`/`340px` Light & Dark.
 
 ## Milestone History (`v0.1.0`)
+
+- **Milestone 19 (PR #22):** Added `FindInThreadBar` & `StorageQuotaCard`, consolidated `src/utils/focus.ts` modal focus containment & restoration, upgraded muted/green-ink tokens, and expanded the Light & Dark WCAG AA contrast sweep across all specimen views.
 
 - **Milestone 18 (PR #21):** Fixed `CompareTable` and `.yui-genui-card` dark-mode ink inheritance, compacted published `dist/` JS (`80.77 KB` gzip) and CSS (`17.96 KB` gzip) bundles, tightened `PromptTemplateList` `340px` spacing, and added 10-card GenUI Light/Dark WCAG AA audits.
 

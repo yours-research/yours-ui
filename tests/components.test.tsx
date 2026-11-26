@@ -36,7 +36,9 @@ import {
   MessageSkeleton,
   ModelDownloadGate,
   ModelDownloadProgressBar,
+  ModelParametersCard,
   ModelRosterList,
+  NetworkAuditCard,
   OnboardingCard,
   PermissionApprovalCard,
   PermissionCard,
@@ -2706,5 +2708,89 @@ describe('@yours/ui chat & runtime primitives', () => {
       mounted?.container.remove();
       mounted = null;
     }
+  });
+
+  it('renders ModelParametersCard and NetworkAuditCard with zero inline styles and full interactions', async () => {
+    const onReset = vi.fn();
+    const onClearLog = vi.fn();
+    const onExportJson = vi.fn();
+    const events = [
+      {
+        id: 'e1',
+        target: 'api.external.invalid/v1',
+        detail: 'Blocked by default-deny network policy',
+        decision: 'blocked' as const,
+        timestamp: '05:31:12',
+      },
+      {
+        id: 'e2',
+        target: 'docs.yours.sh/spec',
+        detail: 'One-time page fetch approved by user',
+        decision: 'allowed-once' as const,
+        timestamp: '05:31:18',
+      },
+      {
+        id: 'e3',
+        target: 'opfs://qwen3.5-4b-q4.bin',
+        detail: 'Local WebGPU tensor weights',
+        decision: 'local' as const,
+        timestamp: '05:31:20',
+      },
+    ];
+
+    const el = renderNode(
+      <div>
+        <ModelParametersCard modelLabel="Qwen3.5-4B" onReset={onReset} />
+        <NetworkAuditCard
+          events={events}
+          onClearLog={onClearLog}
+          onExportJson={onExportJson}
+        />
+      </div>,
+    );
+
+    expect(el.querySelectorAll('[style]').length).toBe(0);
+
+    const params = el.querySelector('[data-slot="model-parameters-card"]') as HTMLElement;
+    expect(params.textContent).toContain('0.70');
+    expect(params.textContent).toContain('0.90');
+    expect(params.textContent).toContain('2,048');
+
+    const tabs = Array.from(params.querySelectorAll('[role="radio"]')) as HTMLButtonElement[];
+    act(() => {
+      tabs.find((btn) => btn.textContent === 'Deep')?.click();
+      tabs.find((btn) => btn.textContent === 'Smooth UI')?.click();
+    });
+    expect(params.querySelector('.yui-params-foot')?.textContent).toContain('DEEP');
+    expect(params.querySelector('.yui-params-foot')?.textContent).toContain('Smooth UI');
+
+    act(() => {
+      (params.querySelector('.yui-params-reset-btn') as HTMLButtonElement).click();
+    });
+    expect(onReset).toHaveBeenCalledTimes(1);
+    expect(params.querySelector('.yui-params-foot')?.textContent).toContain('AUTO');
+
+    const audit = el.querySelector('[data-slot="network-audit-card"]') as HTMLElement;
+    expect(audit.textContent).toContain('0 bytes');
+    expect(audit.textContent).toContain('Local WebGPU');
+    expect(audit.querySelectorAll('[data-audit-id]').length).toBe(3);
+    expect(audit.textContent).toContain('Blocked');
+    expect(audit.textContent).toContain('Allowed once');
+    expect(audit.textContent).toContain('Local only');
+
+    act(() => {
+      (audit.querySelector('.yui-audit-clear-btn') as HTMLButtonElement).click();
+      (audit.querySelector('.yui-audit-export-btn') as HTMLButtonElement).click();
+    });
+    expect(onClearLog).toHaveBeenCalledTimes(1);
+    expect(onExportJson).toHaveBeenCalledWith(events);
+
+    const cssSource = await readSourceFile('../src/styles/components.css');
+    expect(cssSource).toContain('.yui-params-card');
+    expect(cssSource).toContain('.yui-audit-card');
+    expect(cssSource).toContain('.yui-storage-row-lead');
+    expect(cssSource.slice(cssSource.indexOf('@media (forced-colors: active)'))).toContain(
+      '.yui-audit-card',
+    );
   });
 });

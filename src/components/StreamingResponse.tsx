@@ -17,6 +17,8 @@ import {
   ThumbDownIcon,
   ThumbUpIcon,
 } from '../icons/ApertureIcon.js';
+import { useCopyFeedback, useHorizontalFade } from '../utils/clipboard.js';
+import { useReducedMotion } from '../utils/spring.js';
 
 export type StreamingResponseStatus = 'streaming' | 'done' | 'stopped';
 export type StreamingResponseFeedback = 'up' | 'down' | null;
@@ -62,44 +64,6 @@ const SAFE_HREF = /^(https?:|mailto:|\/|#)/i;
 
 function cx(...parts: Array<string | false | null | undefined>): string {
   return parts.filter(Boolean).join(' ');
-}
-
-function getPrefersReducedMotion(): boolean {
-  if (typeof window === 'undefined' || typeof window.matchMedia !== 'function') {
-    return false;
-  }
-  return Boolean(window.matchMedia('(prefers-reduced-motion: reduce)')?.matches);
-}
-
-/** Tracks `prefers-reduced-motion: reduce` safely across SSR and jsdom. */
-function useReducedMotion(): boolean {
-  const [reduced, setReduced] = useState<boolean>(getPrefersReducedMotion);
-
-  useEffect(() => {
-    if (typeof window === 'undefined' || typeof window.matchMedia !== 'function') {
-      return;
-    }
-    const mq = window.matchMedia('(prefers-reduced-motion: reduce)');
-    if (!mq) return;
-    setReduced(Boolean(mq.matches));
-    const onChange = (event: MediaQueryListEvent) => {
-      setReduced(event.matches);
-    };
-    if (typeof mq.addEventListener === 'function') {
-      mq.addEventListener('change', onChange);
-      return () => mq.removeEventListener('change', onChange);
-    }
-    mq.addListener?.(onChange);
-    return () => mq.removeListener?.(onChange);
-  }, []);
-
-  return reduced;
-}
-
-function copyToClipboard(value: string): void {
-  if (typeof navigator !== 'undefined' && navigator.clipboard?.writeText) {
-    void navigator.clipboard.writeText(value).catch(() => {});
-  }
 }
 
 /**
@@ -748,56 +712,11 @@ interface StreamingCodeBlockProps {
 
 /** Internal line-by-line animated fenced code block with header language tag, Copy swap, and scroll fade. */
 function StreamingCodeBlock({ lang, code, animate, caret }: StreamingCodeBlockProps) {
-  const scrollRef = useRef<HTMLDivElement | null>(null);
-  const [copied, setCopied] = useState(false);
-  const [canScrollRight, setCanScrollRight] = useState(false);
-  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-
-  const syncFade = useCallback(() => {
-    const el = scrollRef.current;
-    if (!el) return;
-    const next = el.scrollWidth - el.clientWidth - el.scrollLeft > 2;
-    setCanScrollRight((prev) => (prev === next ? prev : next));
-  }, []);
-
-  useEffect(() => {
-    syncFade();
-    const el = scrollRef.current;
-    if (!el) return;
-
-    const onScroll = () => syncFade();
-    el.addEventListener('scroll', onScroll, { passive: true });
-
-    let ro: ResizeObserver | undefined;
-    if (typeof ResizeObserver !== 'undefined') {
-      ro = new ResizeObserver(() => syncFade());
-      ro.observe(el);
-    }
-
-    if (typeof window !== 'undefined') {
-      window.addEventListener('resize', onScroll, { passive: true });
-    }
-
-    return () => {
-      el.removeEventListener('scroll', onScroll);
-      ro?.disconnect();
-      if (typeof window !== 'undefined') {
-        window.removeEventListener('resize', onScroll);
-      }
-    };
-  }, [syncFade, code]);
-
-  useEffect(() => {
-    return () => {
-      if (timerRef.current !== null) clearTimeout(timerRef.current);
-    };
-  }, []);
+  const { scrollRef, canScrollRight } = useHorizontalFade([code]);
+  const { copied, triggerCopy } = useCopyFeedback(COPIED_MS);
 
   const handleCopy = () => {
-    copyToClipboard(code);
-    setCopied(true);
-    if (timerRef.current !== null) clearTimeout(timerRef.current);
-    timerRef.current = setTimeout(() => setCopied(false), COPIED_MS);
+    triggerCopy(code);
   };
 
   const lines = code.split('\n');
@@ -1050,7 +969,7 @@ export function StreamingResponse({
   const [pos, setPos] = useState<number>(() => (status === 'streaming' ? 0 : text.length));
   const [run, setRun] = useState(0);
   const [feedback, setFeedback] = useState<StreamingResponseFeedback>(defaultFeedback);
-  const [copied, setCopied] = useState(false);
+  const { copied, triggerCopy } = useCopyFeedback(COPIED_MS);
   const [spins, setSpins] = useState(0);
 
   const seen = useRef(text);
@@ -1060,11 +979,9 @@ export function StreamingResponse({
   const paceRef = useRef({ lastAt: 0, budget: 1, pauseUntil: 0 });
   const freshRef = useRef<FreshFrame>({ at: 0, n: 0 });
   const trackRef = useRef<CaretTrack | null>(null);
-  const copyTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
     return () => {
-      if (copyTimerRef.current !== null) clearTimeout(copyTimerRef.current);
       trackRef.current?.glide?.cancel();
     };
   }, []);
@@ -1208,11 +1125,8 @@ export function StreamingResponse({
   ) : null;
 
   const handleCopyResponse = () => {
-    copyToClipboard(visible);
+    triggerCopy(visible);
     onCopy?.(visible);
-    setCopied(true);
-    if (copyTimerRef.current !== null) clearTimeout(copyTimerRef.current);
-    copyTimerRef.current = setTimeout(() => setCopied(false), COPIED_MS);
   };
 
   const handleFeedback = (choice: 'up' | 'down') => {
