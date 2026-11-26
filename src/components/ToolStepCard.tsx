@@ -52,10 +52,18 @@ export function ToolStepCard({
           ) : null}
         </div>
       </div>
-      {hasBody && expanded ? (
-        <div className="yui-tool-card-body">
-          {summary ? <div>{summary}</div> : null}
-          {details ? <div className="yours-telemetry">{details}</div> : null}
+      {hasBody ? (
+        <div
+          className={expanded ? 'yui-disclosure is-open' : 'yui-disclosure'}
+          aria-hidden={!expanded}
+          inert={!expanded ? true : undefined}
+        >
+          <div className="yui-disclosure-inner">
+            <div className="yui-tool-card-body">
+              {summary ? <div>{summary}</div> : null}
+              {details ? <div className="yours-telemetry">{details}</div> : null}
+            </div>
+          </div>
         </div>
       ) : null}
     </div>

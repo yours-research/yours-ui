@@ -9,6 +9,7 @@ export interface FloatingComposerProps {
   isGenerating?: boolean;
   disabled?: boolean;
   placeholder?: string;
+  popoverSlot?: ReactNode;
   topSlot?: ReactNode;
   leftSlot?: ReactNode;
   rightSlot?: ReactNode;
@@ -27,6 +28,7 @@ export function FloatingComposer({
   isGenerating = false,
   disabled = false,
   placeholder = 'Ask anything...',
+  popoverSlot,
   topSlot,
   leftSlot,
   rightSlot,
@@ -37,6 +39,7 @@ export function FloatingComposer({
 
   return (
     <div className="yui-composer" aria-busy={isGenerating || undefined}>
+      {popoverSlot}
       <div className="yui-composer-top">
         {topSlot}
         <textarea

@@ -7,10 +7,13 @@ import {
   AttachmentStrip,
   BranchPicker,
   CodeBlock,
+  ContextCommandPopover,
   EmptyState,
   ErrorRecoveryBanner,
   FloatingComposer,
   FollowUpSuggestions,
+  InlineCitationPill,
+  KbdHint,
   MessageSkeleton,
   ModelDownloadGate,
   PermissionApprovalCard,
@@ -18,6 +21,7 @@ import {
   QuotedContextBanner,
   ReasoningTrace,
   ScrollToBottomButton,
+  SegmentedControl,
   SourcesDrawer,
   StatusBadge,
   StreamingResponse,
@@ -269,16 +273,20 @@ describe('@yours/ui chat & runtime primitives', () => {
 
     const liveWrap = el.querySelector('[data-case="live"]')!;
     const trigger = liveWrap.querySelector('button.yui-reasoning-trigger') as HTMLButtonElement;
+    const liveDisclosure = liveWrap.querySelector('.yui-disclosure') as HTMLElement;
     expect(trigger).toBeTruthy();
     expect(trigger.getAttribute('aria-expanded')).toBe('false');
     expect(trigger.textContent).toContain('Thinking');
     expect(trigger.textContent).toContain('2s');
-    expect(liveWrap.querySelector('.yui-reasoning-body')).toBeNull();
+    expect(liveDisclosure.classList.contains('is-open')).toBe(false);
+    expect(liveDisclosure.getAttribute('aria-hidden')).toBe('true');
 
     act(() => {
       trigger.click();
     });
     expect(trigger.getAttribute('aria-expanded')).toBe('true');
+    expect(liveDisclosure.classList.contains('is-open')).toBe(true);
+    expect(liveDisclosure.getAttribute('aria-hidden')).toBe('false');
     expect(liveWrap.querySelector('.yui-reasoning-body')).toBeTruthy();
     expect(liveWrap.querySelector('.yui-reasoning-text')?.textContent).toBe('Step 1');
 
@@ -286,10 +294,12 @@ describe('@yours/ui chat & runtime primitives', () => {
       trigger.click();
     });
     expect(trigger.getAttribute('aria-expanded')).toBe('false');
-    expect(liveWrap.querySelector('.yui-reasoning-body')).toBeNull();
+    expect(liveDisclosure.classList.contains('is-open')).toBe(false);
+    expect(liveDisclosure.getAttribute('aria-hidden')).toBe('true');
 
     const defaultOpenWrap = el.querySelector('[data-case="default-open"]')!;
     expect(defaultOpenWrap.querySelector('button.yui-reasoning-trigger')?.getAttribute('aria-expanded')).toBe('true');
+    expect(defaultOpenWrap.querySelector('.yui-disclosure')?.classList.contains('is-open')).toBe(true);
     expect(defaultOpenWrap.querySelector('.yui-reasoning-text')?.textContent).toBe('Step 1');
   });
 
@@ -819,5 +829,125 @@ describe('@yours/ui chat & runtime primitives', () => {
         /\bdangerouslySetInnerHTML\s*=/,
       );
     }
+  });
+
+  it('supports bidirectional CSS grid disclosures on ToolStepCard and SourcesDrawer, plus KbdHint, ContextCommandPopover, SegmentedControl, and InlineCitationPill', async () => {
+    const onSelectCmd = vi.fn();
+    const onCloseCmd = vi.fn();
+    const onSegChange = vi.fn();
+    const onCiteClick = vi.fn();
+
+    const el = renderNode(
+      <div>
+        <div data-case="tool">
+          <ToolStepCard
+            status="done"
+            title="Read tab"
+            summary="Parsed 3 tables"
+            defaultExpanded={false}
+          />
+        </div>
+        <div data-case="sources">
+          <SourcesDrawer
+            sources={[{ id: 's1', title: 'Spec', url: 'https://yours.sh' }]}
+            defaultExpanded={false}
+          />
+        </div>
+        <KbdHint keys={['⌘', 'K']} size="xs" />
+        <SegmentedControl
+          value="balanced"
+          onChange={onSegChange}
+          options={[
+            { value: 'max', label: 'Max' },
+            { value: 'balanced', label: 'Balanced' },
+            { value: 'disabled', label: 'Off', disabled: true },
+            { value: 'smooth', label: 'Smooth' },
+          ]}
+        />
+        <div data-case="citations">
+          <InlineCitationPill index={1} label="yours.sh" href="https://yours.sh" />
+          <InlineCitationPill index={2} label="This tab" active onClick={onCiteClick} />
+          <InlineCitationPill label="Static note" />
+        </div>
+        <FloatingComposer
+          value="@"
+          onChange={() => {}}
+          onSubmit={() => {}}
+          popoverSlot={
+            <ContextCommandPopover
+              open
+              floating
+              trigger="@"
+              items={[
+                { id: 'tab', label: 'Current tab', icon: 'page', hasLiveDot: true, shortcut: 'Tab' },
+                { id: 'blocked', label: 'Locked', disabled: true },
+                { id: 'docs', label: 'Local docs', icon: 'document', badge: 'OPFS' },
+              ]}
+              onSelect={onSelectCmd}
+              onClose={onCloseCmd}
+            />
+          }
+        />
+      </div>,
+    );
+
+    // ToolStepCard & SourcesDrawer start collapsed in grid-row disclosure and toggle smoothly
+    const toolDisclosure = el.querySelector('[data-case="tool"] .yui-disclosure')!;
+    const toolBtn = el.querySelector('[data-case="tool"] button') as HTMLButtonElement;
+    expect(toolDisclosure.classList.contains('is-open')).toBe(false);
+    act(() => {
+      toolBtn.click();
+    });
+    expect(toolDisclosure.classList.contains('is-open')).toBe(true);
+
+    const srcDisclosure = el.querySelector('[data-case="sources"] .yui-disclosure')!;
+    const srcBtn = el.querySelector('[data-case="sources"] button') as HTMLButtonElement;
+    expect(srcDisclosure.classList.contains('is-open')).toBe(false);
+    act(() => {
+      srcBtn.click();
+    });
+    expect(srcDisclosure.classList.contains('is-open')).toBe(true);
+
+    // KbdHint renders exact keycaps
+    expect(el.querySelectorAll('.yui-kbd--xs').length).toBeGreaterThanOrEqual(2);
+
+    // SegmentedControl ArrowRight skips disabled option
+    const activeRadio = el.querySelector('.yui-seg-btn.is-active') as HTMLButtonElement;
+    act(() => {
+      activeRadio.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowRight', bubbles: true }));
+    });
+    expect(onSegChange).toHaveBeenCalledWith('smooth');
+
+    // InlineCitationPill renders anchor, button, and span
+    expect(el.querySelector('a.yui-citation-pill')?.getAttribute('target')).toBe('_blank');
+    const citeBtn = el.querySelector('button.yui-citation-pill') as HTMLButtonElement;
+    act(() => {
+      citeBtn.click();
+    });
+    expect(onCiteClick).toHaveBeenCalledTimes(1);
+    expect(el.querySelector('span.yui-citation-pill')).toBeTruthy();
+
+    // ContextCommandPopover keyboard navigation skips disabled item and selects with Enter, Escape closes
+    const popover = el.querySelector('[data-slot="context-command-popover"]')!;
+    expect(popover.classList.contains('yui-cmd-popover--floating')).toBe(true);
+    act(() => {
+      document.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowDown', bubbles: true }));
+    });
+    act(() => {
+      document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }));
+    });
+    expect(onSelectCmd).toHaveBeenCalledWith(expect.objectContaining({ id: 'docs' }));
+
+    act(() => {
+      document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
+    });
+    expect(onCloseCmd).toHaveBeenCalledTimes(1);
+
+    const cssSource = await readSourceFile('../src/styles/components.css');
+    expect(cssSource).toContain('.yui-disclosure.is-open');
+    expect(cssSource).toContain('.yui-cmd-popover--floating');
+    expect(cssSource).toContain('.yui-seg-btn.is-active');
+    expect(cssSource).toContain('.yui-citation-pill');
+    expect(cssSource).toContain('.yui-notch-opt-row');
   });
 });

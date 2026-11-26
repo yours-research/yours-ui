@@ -39,30 +39,40 @@ export function SourcesDrawer({ sources, defaultExpanded = false }: SourcesDrawe
           {expanded ? <ChevronUpIcon size={11} /> : <ChevronDownIcon size={11} />}
         </button>
       </div>
-      {expanded ? (
-        <div className="yui-sources-list">
-          {sources.map((src, idx) => (
-            <a
-              key={src.id}
-              className="yui-source-row"
-              href={src.url ?? '#'}
-              target={src.url ? '_blank' : undefined}
-              rel={src.url ? 'noopener noreferrer' : undefined}
-            >
-              <div className="yui-source-row-main">
-                <span className="yui-source-index">{idx + 1}</span>
-                <div className="yui-col-min">
-                  <div className="yui-prompt-capsule-title">{src.title}</div>
-                  {src.subtitle ? (
-                    <div className="yui-prompt-capsule-sub">{src.subtitle}</div>
-                  ) : null}
+      <div
+        className={
+          expanded
+            ? 'yui-disclosure yui-disclosure--sources is-open'
+            : 'yui-disclosure yui-disclosure--sources'
+        }
+        aria-hidden={!expanded}
+        inert={!expanded ? true : undefined}
+      >
+        <div className="yui-disclosure-inner">
+          <div className="yui-sources-list">
+            {sources.map((src, idx) => (
+              <a
+                key={src.id}
+                className="yui-source-row"
+                href={src.url ?? '#'}
+                target={src.url ? '_blank' : undefined}
+                rel={src.url ? 'noopener noreferrer' : undefined}
+              >
+                <div className="yui-source-row-main">
+                  <span className="yui-source-index">{idx + 1}</span>
+                  <div className="yui-col-min">
+                    <div className="yui-prompt-capsule-title">{src.title}</div>
+                    {src.subtitle ? (
+                      <div className="yui-prompt-capsule-sub">{src.subtitle}</div>
+                    ) : null}
+                  </div>
                 </div>
-              </div>
-              <ExternalLinkIcon size={12} />
-            </a>
-          ))}
+                <ExternalLinkIcon size={12} />
+              </a>
+            ))}
+          </div>
         </div>
-      ) : null}
+      </div>
     </div>
   );
 }

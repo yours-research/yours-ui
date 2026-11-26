@@ -12,3 +12,4 @@ export {
   type NotchStatusMode,
   type NotchStatusPillProps,
 } from './NotchStatusPill.js';
+export { NotchOptionRow, type NotchOptionRowProps } from './NotchOptionRow.js';

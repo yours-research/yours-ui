@@ -84,7 +84,7 @@ export function UserMessageBubble({
         <div className="yui-user-text">{content}</div>
       </div>
       {onStartEdit || onCopy ? (
-        <div className="yui-action-group">
+        <div className="yui-action-group yui-user-actions">
           {onStartEdit ? (
             <button
               type="button"
