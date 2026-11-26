@@ -1,30 +1,33 @@
 export { FloatingComposer, type FloatingComposerProps } from './FloatingComposer.js';
 export {
+  ActionBar,
+  AssistantMessage,
   AttachmentDropzone,
   AttachmentStrip,
-  type AttachmentDropzoneProps,
-  type AttachmentItem,
-  type AttachmentStripProps,
-} from './AttachmentChips.js';
-export {
+  BranchPicker,
   FollowUpSuggestions,
   PromptCapsuleStack,
   QuotedContextBanner,
+  ReasoningTrace,
   ScrollToBottomButton,
   SuggestionChipRow,
+  UserMessageBubble,
+  type ActionBarProps,
+  type AssistantMessageProps,
+  type AttachmentDropzoneProps,
+  type AttachmentItem,
+  type AttachmentStripProps,
+  type BranchPickerProps,
   type FollowUpSuggestionsProps,
   type PromptCapsuleStackProps,
   type PromptStarterItem,
   type QuotedContextBannerProps,
+  type ReasoningTraceProps,
   type ScrollToBottomButtonProps,
+  type SpeedMetricsSummary,
   type SuggestionChipRowProps,
-} from './PromptSuggestions.js';
-export {
-  AssistantMessage,
-  UserMessageBubble,
-  type AssistantMessageProps,
   type UserMessageBubbleProps,
-} from './MessageBubble.js';
+} from './ChatMessagePrimitives.js';
 export {
   CodeBlock,
   CodeBlockCard,
@@ -32,42 +35,40 @@ export {
   type CodeBlockProps,
 } from './CodeBlocks.js';
 export {
-  ActionBar,
-  type ActionBarProps,
-  type SpeedMetricsSummary,
-} from './ActionBar.js';
-export { BranchPicker, type BranchPickerProps } from './BranchPicker.js';
-export { ReasoningTrace, type ReasoningTraceProps } from './ReasoningTrace.js';
-export {
-  ToolStepCard,
-  type ToolStepCardProps,
-} from './ToolStepCard.js';
-export {
   PermissionApprovalCard,
   PermissionCard,
   type PermissionApprovalCardProps,
   type PermissionCardProps,
 } from './PermissionPrompts.js';
 export {
+  CitationFootnoteList,
   InlineCitationPill,
   InlineCitationPopover,
   SourcesDrawer,
+  WebSearchSourcesStrip,
+  type CitationFootnoteItem,
+  type CitationFootnoteListProps,
   type InlineCitationPillProps,
   type InlineCitationPopoverProps,
   type InlineCitationSource,
   type SourceCitation,
   type SourcesDrawerProps,
+  type WebSearchSourceItem,
+  type WebSearchSourcesStripProps,
 } from './InlineCitationPopover.js';
 export {
-  ThreadHistoryDrawer,
-  type ThreadDrawerItem,
-  type ThreadHistoryDrawerProps,
-} from './ThreadHistoryDrawer.js';
-export {
   ErrorRecoveryBanner,
+  InlineNotice,
+  KbdHint,
   MessageSkeleton,
+  StatusBadge,
   ToastPill,
   type ErrorRecoveryBannerProps,
+  type InlineNoticeProps,
+  type InlineNoticeTone,
+  type KbdHintProps,
+  type StatusBadgeProps,
+  type StatusBadgeTone,
   type ToastPillProps,
 } from './FeedbackPrimitives.js';
 export {
@@ -89,12 +90,6 @@ export {
   type EmptyPanelStateProps,
   type EmptyStateProps,
 } from './EmptyStates.js';
-export {
-  StatusBadge,
-  type StatusBadgeProps,
-  type StatusBadgeTone,
-} from './StatusBadge.js';
-export { KbdHint, type KbdHintProps } from './KbdHint.js';
 export {
   ContextCommandPopover,
   type ContextCommandItem,
@@ -197,12 +192,17 @@ export {
 export {
   InlineToolStatus,
   ShimmerText,
+  ToolStepCard,
   type InlineToolStateMeta,
   type InlineToolStatusProps,
   type ShimmerTextProps,
+  type ToolStepCardProps,
 } from './InlineToolStatus.js';
 export {
+  ThreadHistoryDrawer,
   ThreadHistoryList,
+  type ThreadDrawerItem,
+  type ThreadHistoryDrawerProps,
   type ThreadHistoryItem,
   type ThreadHistoryListProps,
 } from './ThreadHistoryList.js';
@@ -226,11 +226,6 @@ export {
   type ContextBudgetSegment,
 } from './ContextBudgetMeter.js';
 export {
-  CitationFootnoteList,
-  type CitationFootnoteItem,
-  type CitationFootnoteListProps,
-} from './CitationFootnoteList.js';
-export {
   OnboardingCard,
   type OnboardingCardProps,
 } from './OnboardingCard.js';
@@ -238,11 +233,6 @@ export {
   ErrorRecoveryCard,
   type ErrorRecoveryCardProps,
 } from './ErrorRecoveryCard.js';
-export {
-  InlineNotice,
-  type InlineNoticeProps,
-  type InlineNoticeTone,
-} from './InlineNotice.js';
 export {
   FindInThreadBar,
   type FindInThreadBarProps,

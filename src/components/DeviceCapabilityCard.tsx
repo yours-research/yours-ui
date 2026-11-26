@@ -1,6 +1,6 @@
 import { AlertIcon, CheckIcon, LocalDeviceIcon, RetryIcon, XIcon } from '../icons/ApertureIcon.js';
 import { CardFooterChrome, CardHeaderChrome, CardSegmentBar, cn } from './CardChrome.js';
-import { StatusBadge, type StatusBadgeTone } from './StatusBadge.js';
+import { StatusBadge, type StatusBadgeTone } from './FeedbackPrimitives.js';
 
 export type DeviceCapabilityStatus = 'ready' | 'tight' | 'unsupported';
 
@@ -97,7 +97,7 @@ export function DeviceCapabilityCard({
           .map(([id, label, value, st]) => ({ id, label, value, status: st }));
 
   const [tone, , defaultLabel, StatusGlyph] = META[status];
-  const cardClass = cn('yui-card-shell yui-devcap-card', `is-${status}`, className);
+  const cardClass = cn('yui-card-shell yui-card-pad yui-devcap-card', `is-${status}`, className);
 
   const unit = headroom?.unitLabel ?? 'GB';
   const total = headroom ? Math.max(0.1, headroom.totalGb ?? headroom.usedGb + headroom.freeGb) : 1;
@@ -131,7 +131,7 @@ export function DeviceCapabilityCard({
             return (
               <li key={row.id} className="yui-row-between yui-wrap yui-devcap-row">
                 <span className="yui-params-label">{row.label}</span>
-                <span className="yui-row yui-wrap yui-devcap-val-wrap">
+                <span className="yui-row yui-wrap yui-end">
                   <span className="yui-storage-row-size">{row.value}</span>
                   {rMeta && RowIcon ? (
                     <span className={`yui-badge yui-audit-pill ${rMeta[1]}`}>
@@ -177,7 +177,7 @@ export function DeviceCapabilityCard({
       ) : null}
 
       {tiers && tiers.length > 0 ? (
-        <div className="yui-col yui-devcap-tiers">
+        <div className="yui-col-5">
           <span className="yui-perm-meta-label">Recommended tier</span>
           <div className="yui-row yui-wrap" role="group" aria-label="Recommended model tiers">
             {tiers.map((t) => {

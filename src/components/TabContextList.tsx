@@ -38,7 +38,7 @@ export function TabContextList({
   if (items.length === 0) {
     return (
       <div data-slot="tab-context-list" className={listClass} role="status">
-        <div className="yui-empty-box yui-tabctx-empty">{emptyLabel}</div>
+        <div className="yui-muted-note yui-center">{emptyLabel}</div>
       </div>
     );
   }

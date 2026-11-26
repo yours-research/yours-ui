@@ -1,5 +1,5 @@
 import { LocalDeviceIcon, ShieldIcon, XIcon } from '../icons/ApertureIcon.js';
-import { StatusBadge, type StatusBadgeTone } from './StatusBadge.js';
+import { StatusBadge, type StatusBadgeTone } from './FeedbackPrimitives.js';
 
 export type HardwareTierStatus = 'ready' | 'probing' | 'fallback' | 'unsupported';
 
@@ -114,7 +114,7 @@ export function ModelDownloadProgressBar({
       aria-label={`${modelLabel} download status`}
       aria-live="polite"
     >
-      <div className="yui-dl-top">
+      <div className="yui-row-between">
         <div className="yui-dl-title-wrap">
           <span className="yui-ellipsis yui-dl-title">{modelLabel}</span>
           {hardwareLabel ? <StatusBadge tone="neutral">{hardwareLabel}</StatusBadge> : null}
@@ -148,7 +148,7 @@ export function ModelDownloadProgressBar({
         aria-label={`${modelLabel} download progress`}
       />
 
-      <div className="yui-dl-foot">
+      <div className="yui-row-between yui-dl-foot">
         <div className="yui-dl-telemetry">
           {telemetryItems.map((item, idx) => (
             <span key={`${item}-${idx}`} className="yui-dl-telemetry-item">

@@ -7,7 +7,7 @@ import {
   XIcon,
 } from '../icons/ApertureIcon.js';
 import { CardFooterChrome, CardHeaderChrome, cn } from './CardChrome.js';
-import { StatusBadge } from './StatusBadge.js';
+import { StatusBadge } from './FeedbackPrimitives.js';
 
 export interface PageSelectionCardProps {
   excerpt: string;
@@ -87,7 +87,7 @@ export function PageSelectionCard({
     onExpandedChange?.(next);
   };
 
-  const cardClass = cn('yui-card-shell yui-sel-card', className);
+  const cardClass = cn('yui-card-shell yui-card-pad yui-sel-card', className);
 
   return (
     <section

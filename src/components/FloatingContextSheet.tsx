@@ -59,12 +59,12 @@ export function FloatingContextSheet({
       aria-label={title}
       className={sheetClass}
     >
-      <div className="yui-sheet-grabber-row" aria-hidden="true">
+      <div className="yui-center-row yui-pt-2" aria-hidden="true">
         <span className="yui-sheet-grabber" />
       </div>
       <div className="yui-sheet-head">
         <div className="yui-col-min">
-          <div className="yui-sheet-title-row">
+          <div className="yui-row">
             <span className="yui-genui-title">{title}</span>
             {badge ? <span className="yui-badge">{badge}</span> : null}
           </div>

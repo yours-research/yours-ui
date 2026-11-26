@@ -27,7 +27,7 @@ export function PermissionApprovalCard({
 }: PermissionApprovalCardProps) {
   return (
     <div className="yui-approval-card" role="alert">
-      <div className="yui-approval-head">
+      <div className="yui-row-start yui-gap-8">
         <div className="yui-icon-badge">
           <ShieldIcon size={14} />
         </div>
@@ -35,7 +35,7 @@ export function PermissionApprovalCard({
           <div className="yui-prompt-capsule-title">{title}</div>
           <div className="yui-prompt-capsule-sub">{description}</div>
           {ruleBadge ? (
-            <div className="yui-badge-row">
+            <div className="yui-pt-2">
               <span className="yui-badge">{ruleBadge}</span>
             </div>
           ) : null}
@@ -124,7 +124,7 @@ export function PermissionCard({
         </div>
       </div>
 
-      <dl className="yui-perm-scope">
+      <dl className="yui-well yui-col-5 yui-m-0">
         <div className="yui-perm-meta-row">
           <dt className="yui-perm-meta-label">Domain</dt>
           <dd className="yui-perm-meta-val yui-perm-domain">

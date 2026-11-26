@@ -2,7 +2,7 @@ import { ArrowDownIcon, LocalDeviceIcon } from '../icons/ApertureIcon.js';
 import { MatrixOrb } from '../icons/MatrixOrb.js';
 import { YoursMark } from '../icons/YoursMark.js';
 import { CardPrivacyNote, cn } from './CardChrome.js';
-import { StatusBadge } from './StatusBadge.js';
+import { StatusBadge } from './FeedbackPrimitives.js';
 
 export interface OnboardingCardProps {
   title?: string;
@@ -50,7 +50,7 @@ export function OnboardingCard({
       className={rootClass}
       aria-label={title}
     >
-      <div className="yui-row-start yui-onb-hero">
+      <div className="yui-row-start yui-gap-8">
         <div className="yui-onb-mark" aria-hidden="true">
           <YoursMark size={20} />
         </div>
@@ -65,7 +65,7 @@ export function OnboardingCard({
           <LocalDeviceIcon size={13.5} className="yui-privacy-icon" />
           <span className="yui-onb-ckpt-label">{checkpointLabel}</span>
         </div>
-        <div className="yui-onb-chips">
+        <div className="yui-row yui-shrink-0">
           <StatusBadge tone={adapterReady ? 'local' : 'amber'} dot>
             {adapterLabel}
           </StatusBadge>

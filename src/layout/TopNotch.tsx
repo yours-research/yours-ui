@@ -108,10 +108,8 @@ export function TopNotch({
             <div className="yui-notch-drawer-inner">
               {isExpanded && drawerContent ? (
                 <>
-                  <div className="yui-drawer-hairline-wrap">
-                    <div className="yui-drawer-hairline" />
-                  </div>
-                  <div className="yui-drawer-body">{drawerContent}</div>
+                  <div className="yui-drawer-hairline" />
+                  <div className="yui-col yui-drawer-body">{drawerContent}</div>
                 </>
               ) : null}
             </div>

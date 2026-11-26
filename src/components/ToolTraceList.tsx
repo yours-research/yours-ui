@@ -210,7 +210,7 @@ export function ToolTraceList({
           elapsed={headerElapsed}
           className="yui-trace-its"
           rightSlot={
-            <span className="yui-trace-head-right">
+            <span className="yui-action-group">
               {isRunning && steps.length > 1 ? (
                 <span className="yui-trace-step-badge">{`${activeIndex + 1}/${steps.length}`}</span>
               ) : null}
@@ -267,7 +267,7 @@ export function ToolTraceList({
                       ) : null}
                     </span>
                   </span>
-                  <span className="yui-trace-right">
+                  <span className="yui-row yui-gap-5 yui-shrink-0">
                     {latencyText ? <span className="yui-trace-latency">{latencyText}</span> : null}
                     {hasDetail ? (
                       <ChevronDownIcon
@@ -311,13 +311,13 @@ export function ToolTraceList({
                       <div className="yui-disclosure-inner">
                         <div className="yui-trace-detail">
                           {step.input ? (
-                            <div className="yui-trace-io-block">
+                            <div className="yui-col">
                               <span className="yui-perm-meta-label">Input</span>
                               <pre className="yui-trace-pre">{step.input}</pre>
                             </div>
                           ) : null}
                           {step.output ? (
-                            <div className="yui-trace-io-block">
+                            <div className="yui-col">
                               <span className="yui-perm-meta-label">
                                 {step.status === 'blocked' || step.status === 'error'
                                   ? 'Note'

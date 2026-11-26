@@ -57,7 +57,7 @@ export function FloatingComposer({
   return (
     <div className="yui-composer" aria-busy={isGenerating || undefined}>
       {popoverSlot}
-      <div className="yui-composer-top">
+      <div className="yui-col-8">
         {topSlot}
         <textarea
           className="yui-composer-input"

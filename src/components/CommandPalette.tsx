@@ -2,7 +2,7 @@ import { useEffect, useId, useMemo, useRef, useState } from 'react';
 import { ApertureIcon, SearchIcon, XIcon } from '../icons/ApertureIcon.js';
 import type { ApertureIconName } from '../icons/iconData.js';
 import { useFocusTrap } from '../utils/focus.js';
-import { KbdHint } from './KbdHint.js';
+import { KbdHint } from './FeedbackPrimitives.js';
 
 export interface CommandPaletteAction {
   id: string;
@@ -267,7 +267,7 @@ export function CommandPalette({
                         ) : null}
                       </span>
                     </span>
-                    <span className="yui-cmd-item-right">
+                    <span className="yui-action-group">
                       {action.badge ? <span className="yui-badge">{action.badge}</span> : null}
                       {action.shortcut ? <KbdHint keys={action.shortcut} /> : null}
                     </span>
@@ -280,15 +280,15 @@ export function CommandPalette({
       )}
 
       <div className="yui-cmd-foot">
-        <span className="yui-cmd-foot-hint">
+        <span className="yui-action-group">
           <KbdHint keys={['↑', '↓']} />
           <span>Navigate</span>
         </span>
-        <span className="yui-cmd-foot-hint">
+        <span className="yui-action-group">
           <KbdHint keys="↵" />
           <span>Run</span>
         </span>
-        <span className="yui-cmd-foot-hint">
+        <span className="yui-action-group">
           <KbdHint keys="Esc" />
           <span>Close</span>
         </span>

@@ -1,7 +1,7 @@
 import { CheckIcon, MicIcon, ShieldIcon, XIcon } from '../icons/ApertureIcon.js';
 import { MatrixOrb, type MatrixOrbState } from '../icons/MatrixOrb.js';
 import { cn } from '../utils/clipboard.js';
-import { KbdHint } from './KbdHint.js';
+import { KbdHint } from './FeedbackPrimitives.js';
 
 export type VoiceSessionState =
   | 'idle'
@@ -144,7 +144,7 @@ export function VoiceDictationPill({
 }: VoiceDictationPillProps) {
   return (
     <div className="yui-dictate-pill">
-      <div className="yui-dictate-left">
+      <div className="yui-row yui-gap-8">
         <span className="yui-dictate-dot" aria-hidden="true" />
         <div className="yui-waveform" aria-hidden="true">
           {bars.map((height, idx) => (
@@ -369,8 +369,8 @@ export function VoiceSessionCard({
       className={cn('yui-card-shell yui-voice-card', `is-${state}`, muted && 'is-muted', className)}
       aria-label="Local voice session"
     >
-      <div className="yui-voice-card-head">
-        <div className="yui-voice-card-status">
+      <div className="yui-row-between">
+        <div className="yui-row">
           <MatrixOrb state={muted ? 'idle' : ORB_STATE_MAP[state]} size={18} />
           <span className="yui-ellipsis yui-voice-card-title">{resolvedStatus}</span>
           {elapsedLabel ? <span className="yui-voice-time">{elapsedLabel}</span> : null}
@@ -385,7 +385,7 @@ export function VoiceSessionCard({
         />
       </div>
 
-      <div className="yui-well yui-voice-transcript" aria-live="polite">
+      <div className="yui-well" aria-live="polite">
         {hasProse ? (
           <p className="yui-prose-12">
             {transcript ? <span className="yui-voice-committed">{transcript}</span> : null}
@@ -403,7 +403,7 @@ export function VoiceSessionCard({
         )}
       </div>
 
-      <div className="yui-voice-card-controls">
+      <div className="yui-col-8">
         <div className="yui-voice-card-btns">
           <div className="yui-action-group">
             {onToggleBargeIn ? (

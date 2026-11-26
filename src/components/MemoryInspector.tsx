@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { TrashIcon, UndoIcon } from '../icons/ApertureIcon.js';
 import { EmptyState } from './EmptyStates.js';
 import { SegmentedControl, type SegmentedOption } from './SegmentedControl.js';
-import { StatusBadge, type StatusBadgeTone } from './StatusBadge.js';
+import { StatusBadge, type StatusBadgeTone } from './FeedbackPrimitives.js';
 
 export type MemoryTier = 'profile' | 'episodic' | 'working' | 'document';
 
@@ -61,7 +61,7 @@ export function MemoryRecordCard({
       data-forgotten={isForgotten ? 'true' : 'false'}
       className={cardClass}
     >
-      <div className="yui-mem-head">
+      <div className="yui-row-between">
         <div className="yui-action-group">
           <StatusBadge tone={tierMeta.tone} dot>
             {tierMeta.label}

@@ -13,7 +13,7 @@ export function CodeBlock({ code, language = 'Snippet', onCopy }: CodeBlockProps
 
   return (
     <div className="yui-code-block">
-      <div className="yui-code-head">
+      <div className="yui-row-between yui-bar-head yui-muted-note">
         <span>{language}</span>
         <CardCopyButton
           copied={copied}

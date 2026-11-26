@@ -78,6 +78,7 @@ import {
   VoiceDictationPill,
   VoiceSessionBar,
   VoiceSessionCard,
+  WebSearchSourcesStrip,
   type StreamingResponseFeedback,
   type StreamingResponseProps,
   type StreamingResponseStatus,
@@ -3576,5 +3577,107 @@ describe('@yours/ui chat & runtime primitives', () => {
     const forcedCss = compCss.slice(compCss.indexOf('@media (forced-colors: active)'));
     expect(forcedCss).toContain('.yui-shimmer-text.is-active');
     expect(forcedCss).toContain('.yui-trace-rail-list::before');
+  });
+
+  it('renders clean-room inline WebSearchSourcesStrip & SourcesDrawer inline mode with stacked favicons, +N more reveal, safe links, CSS broken-image hiding, and zero inline styles', async () => {
+    const sources = [
+      {
+        id: 's1',
+        title: 'Chrome Extensions Content Security Policy',
+        url: 'https://developer.chrome.com/docs/extensions/mv3/manifest/content_security_policy/',
+        faviconUrl: 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg"/>',
+        snippet: 'Strict MV3 CSP disallows unsafe-inline styles and remote code execution.',
+      },
+      {
+        id: 's2',
+        title: 'WebGPU Adapter & WGSL Spec',
+        domain: 'www.w3.org',
+        url: 'https://www.w3.org/TR/webgpu/',
+      },
+      {
+        id: 's3',
+        title: 'Yours UI Side Panel Tokens',
+        url: 'https://yours.sh/docs/tokens',
+      },
+      {
+        id: 's4',
+        title: 'OPFS Private Storage Benchmarks',
+        url: 'https://web.dev/articles/origin-private-file-system',
+      },
+      {
+        id: 's5',
+        title: 'Unsafe Link Stripped Safely',
+        url: 'javascript:alert(1)',
+        domain: 'untrusted.invalid',
+      },
+    ] as const;
+
+    const onSelect = vi.fn();
+    const el = renderNode(
+      <div>
+        <WebSearchSourcesStrip sources={sources} onSelectSource={onSelect} />
+        <SourcesDrawer
+          variant="inline"
+          sources={[{ id: 'd1', title: 'Local Note', url: 'https://yours.sh/note' }]}
+        />
+      </div>,
+    );
+
+    const strip = el.querySelector('[data-slot="web-search-sources-strip"]') as HTMLDivElement;
+    const trigger = strip.querySelector('.yui-wss-trigger') as HTMLButtonElement;
+    expect(trigger.getAttribute('aria-expanded')).toBe('false');
+    expect(trigger.textContent).toContain('Searched 5 sites');
+    expect(trigger.querySelectorAll('.yui-wss-favicons .yui-wss-fav').length).toBe(3);
+
+    // Broken favicon triggers CSS .is-hidden fallback without any inline style=
+    const img = trigger.querySelector('.yui-wss-fav-img') as HTMLImageElement;
+    act(() => {
+      img.dispatchEvent(new Event('error', { bubbles: false }));
+    });
+    expect(img.classList.contains('is-hidden')).toBe(true);
+    expect(trigger.querySelector('.yui-wss-fav')?.textContent).toBe('D');
+
+    // Expand grid -> initially renders 4 cards + "+1 more" reveal pill
+    act(() => {
+      trigger.click();
+    });
+    expect(trigger.getAttribute('aria-expanded')).toBe('true');
+    expect(strip.querySelectorAll('.yui-wss-card').length).toBe(4);
+    const links = Array.from(strip.querySelectorAll('a.yui-wss-card'));
+    expect(links.length).toBe(4);
+    expect(links[0]?.getAttribute('rel')).toBe('noopener noreferrer');
+    expect(strip.textContent).toContain('developer.chrome.com');
+    expect(strip.textContent).toContain('w3.org');
+
+    const moreBtn = Array.from(strip.querySelectorAll('button')).find((b) =>
+      b.textContent?.includes('+1 more'),
+    ) as HTMLButtonElement;
+    expect(moreBtn).toBeDefined();
+    act(() => {
+      moreBtn.click();
+    });
+    expect(strip.querySelectorAll('.yui-wss-card').length).toBe(5);
+    // Unsafe javascript: URL renders a button rather than an <a href="javascript:...">
+    expect(strip.querySelector('a[href^="javascript:"]')).toBeNull();
+    const fifthBtn = strip.querySelector('button.yui-wss-card') as HTMLButtonElement;
+    act(() => {
+      fifthBtn.click();
+    });
+    expect(onSelect).toHaveBeenCalledTimes(1);
+
+    // SourcesDrawer inline variant
+    const drawer = el.querySelector('[data-variant="inline"]') as HTMLElement;
+    expect(drawer.querySelector('.yui-wss-trigger')).not.toBeNull();
+    expect(el.querySelectorAll('[style]').length).toBe(0);
+
+    const compCss = await readSourceFile('../src/styles/components.css');
+    expect(compCss).toContain('.yui-wss-trigger');
+    expect(compCss).toContain('.yui-wss-grid');
+    expect(compCss).toContain('.yui-wss-fav-img.is-hidden');
+    const narrowCss = compCss.slice(compCss.indexOf('@container (max-width: 340px)'));
+    expect(narrowCss).toContain('.yui-wss-grid');
+    const forcedCss = compCss.slice(compCss.indexOf('@media (forced-colors: active)'));
+    expect(forcedCss).toContain('.yui-wss-trigger');
+    expect(forcedCss).toContain('.yui-wss-fav');
   });
 });
