@@ -63,8 +63,8 @@ for (const file of cssFiles) {
   totalCssGzip += m.gzip;
 }
 
-const MAX_CSS_GZIP = 32 * 1024;
-const MAX_JS_GZIP = 96 * 1024;
+const MAX_CSS_GZIP = 20.5 * 1024;
+const MAX_JS_GZIP = 86 * 1024;
 
 const rows = ENTRYPOINTS.map(([label, rel]) => {
   const abs = path.join(ROOT, rel);

@@ -2652,6 +2652,102 @@ async function main() {
           }
         }
 
+        if (panel === 'genui') {
+          const genuiAudit = await page.evaluate((activeTheme) => {
+            const parseRgba = (str) => {
+              const m = str.match(/rgba?\(([^)]+)\)/);
+              if (!m) return null;
+              const parts = m[1].split(',').map((x) => parseFloat(x.trim()));
+              return [parts[0], parts[1], parts[2], parts[3] ?? 1];
+            };
+            const relLum = ([r, g, b]) => {
+              const f = (c) => {
+                const s = c / 255;
+                return s <= 0.03928 ? s / 12.92 : Math.pow((s + 0.055) / 1.055, 2.4);
+              };
+              return 0.2126 * f(r) + 0.7152 * f(g) + 0.0722 * f(b);
+            };
+            const compositeOver = (fg, bg) => {
+              const a = fg[3] ?? 1;
+              return [
+                fg[0] * a + bg[0] * (1 - a),
+                fg[1] * a + bg[1] * (1 - a),
+                fg[2] * a + bg[2] * (1 - a),
+                1,
+              ];
+            };
+            const effectiveBg = (el) => {
+              const stack = [];
+              let cur = el;
+              while (cur && cur !== document.documentElement) {
+                const bg = parseRgba(getComputedStyle(cur).backgroundColor);
+                if (bg && bg[3] > 0) stack.unshift(bg);
+                cur = cur.parentElement;
+              }
+              const rootBg = activeTheme === 'dark' ? [18, 18, 21, 1] : [250, 248, 245, 1];
+              return stack.reduce((acc, layer) => compositeOver(layer, acc), rootBg);
+            };
+            const bodySelectors = [
+              '[data-slot="timeline-card"] .yui-genui-title',
+              '[data-slot="timeline-card"] .yui-tl-label',
+              '[data-slot="timeline-card"] .yui-tl-detail',
+              '[data-slot="quote-excerpt-card"] .yui-genui-title',
+              '[data-slot="quote-excerpt-card"] .yui-qec-quote',
+              '[data-slot="quote-excerpt-card"] .yui-qec-locator',
+              '.yui-genui-card .yui-genui-title',
+              '.yui-genui-card .yui-table-cell-val',
+              '.yui-genui-card .yui-table-cell-label',
+              '.yui-genui-card .yui-table-row.is-emphasized .yui-table-cell-val',
+              '.yui-genui-card .yui-check-item-text',
+              '.yui-genui-card .yui-metric-primary',
+              '.yui-genui-card .yui-delta-pill',
+              '.yui-genui-card .yui-brief-list li',
+              '.yui-genui-card .yui-draft-well',
+              '.yui-genui-card .yui-entity-val',
+              '.yui-genui-card .yui-prompt-capsule-title',
+              '.yui-genui-card .yui-kv-val',
+              '.yui-genui-card .yui-micro-pill',
+              '.yui-genui-card .yui-pill-btn',
+            ];
+            const mutedSelectors = [
+              '.yui-genui-card .yui-genui-muted',
+              '.yui-genui-card .yui-table-col-head',
+              '.yui-genui-card .yui-kv-key',
+              '[data-slot="timeline-card"] .yui-tl-time',
+            ];
+            const cardCount = document.querySelectorAll('.yui-genui-card').length;
+            const bad = [];
+            const missing = [];
+            const check = (selectors, minRatio) => {
+              for (const sel of selectors) {
+                const nodes = document.querySelectorAll(sel);
+                if (nodes.length === 0) {
+                  missing.push(sel);
+                  continue;
+                }
+                for (const node of nodes) {
+                  const bg = effectiveBg(node);
+                  const rawFg = parseRgba(getComputedStyle(node).color);
+                  if (!rawFg) continue;
+                  const fg = rawFg[3] < 1 ? compositeOver(rawFg, bg) : rawFg;
+                  const l1 = Math.max(relLum(fg), relLum(bg));
+                  const l2 = Math.min(relLum(fg), relLum(bg));
+                  const ratio = (l1 + 0.05) / (l2 + 0.05);
+                  if (ratio < minRatio) {
+                    bad.push({ sel, ratio: Number(ratio.toFixed(2)), minRatio, text: (node.textContent ?? '').slice(0, 48) });
+                  }
+                }
+              }
+            };
+            check(bodySelectors, 4.5);
+            check(mutedSelectors, 3.0);
+            return { cardCount, missing, bad };
+          }, theme);
+          if (genuiAudit.cardCount < 10 || genuiAudit.missing.length > 0 || genuiAudit.bad.length > 0) {
+            throw new Error(`GenUI WCAG AA contrast audit failed (${theme}): ${JSON.stringify(genuiAudit)}`);
+          }
+        }
+
         if (panel === 'budget') {
           const budgetContrast = await page.evaluate(() => {
             const parseRgba = (str) => {
