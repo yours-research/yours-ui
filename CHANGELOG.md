@@ -3,7 +3,13 @@
 All notable milestones for **`@yours/ui`** are documented here.
 The library targets Chrome MV3 side panels (`340px–440px`), maintains zero runtime dependencies, zero JSX inline `style` attributes, and zero `dangerouslySetInnerHTML`.
 
-## Unreleased / Milestone 29 (PR #32)
+## Unreleased / Milestone 30 (PR #33)
+
+- **Fix `MemoryRecordCard` (`MemoryInspector`) Right-Edge Clipping at `320px`/`340px`:** Removed accidental `.yui-cmd-item-label` (`white-space: nowrap; overflow: hidden;`) selector grouping from `.yui-mem-card` / `.yui-hw-*` / `.yui-dl-bar-card`, separated `.yui-mem-time` from `.yui-mem-summary`, and enforced `white-space: normal; overflow-wrap: anywhere` so descriptions wrap cleanly across multiple lines with automated Playwright `scrollWidth <= clientWidth` checks.
+- **Fix Narrow Table Clipping (`320px` & `340px`):** Tightened `.yui-sr-th` / `.yui-sr-td` padding and font sizing (`6px`, `9.5px`/`11px`) plus `CompareTable` (`.yui-table-cell-val`, `.yui-table-col-head`, `.yui-table-row`) under `@container (max-width: 340px)` so all columns (`"WebGPU"` and `CompareTable` values) render unclipped at `320px` and `340px`.
+- **Compact Speculative Engine Mode Telemetry:** Added optional `specModeLabel` and `draftEngineLabel` (e.g., `"Tree · M=8"`) chip support on both `SpeedMetricsSummary` (`ActionBar`) and `HardwareStatusStrip` while maintaining `76.07 KB` JS gzip and `18.38 KB` CSS gzip (`67/67` tests, zero inline `style=`).
+
+## Milestone 29 (PR #32)
 
 - **Dark Overview Canvas Seam Fix (`scripts/visual-specimen.mjs`):** Sized `.yui-spec-grid` to `width: max-content; min-width: 100%; min-height: 100vh;` and applied matching dark canvas styling on `:has([data-theme="dark"])`, eliminating the white canvas seam behind the right-most columns in `.visual/specimen-dark-overview.png`.
 - **Speculative Speed & Hardware Telemetry Chips:** Extended `SpeedMetricsSummary` (`ActionBar`: `speedupMultiplier`, `acceptedTokPerStep`, `vramDeltaLabel`) and `HardwareStatusStrip` (`speedupLabel`, `acceptedTokLabel`, `vramDeltaLabel`, `telemetryChips`) with compact wrapping `.yui-telem-chip` pills, forced-colors styling, and left-aligned wrapped `ActionBar` action buttons (`.yui-action-row .yui-action-group`).

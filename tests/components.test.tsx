@@ -3682,9 +3682,10 @@ describe('@yours/ui chat & runtime primitives', () => {
     expect(forcedCss).toContain('.yui-wss-trigger');
     expect(forcedCss).toContain('.yui-wss-fav');
     expect(forcedCss).toContain('.yui-telem-chip');
+    expect(compCss).not.toMatch(/\.yui-mem-card\s*,\s*[\r\n]+\s*\.yui-cmd-item-label/);
   });
 
-  it('renders speculative decoding speedup, accepted tok/step, and VRAM delta chips on ActionBar and HardwareStatusStrip with zero inline styles', () => {
+  it('renders speculative decoding speedup, accepted tok/step, spec mode, draft engine, and VRAM delta chips on ActionBar and HardwareStatusStrip with zero inline styles', () => {
     const el = renderNode(
       <div>
         <ActionBar
@@ -3695,6 +3696,8 @@ describe('@yours/ui chat & runtime primitives', () => {
             outputTokens: 142,
             speedupMultiplier: 1.58,
             acceptedTokPerStep: 3.4,
+            specModeLabel: 'Tree · M=8',
+            draftEngineLabel: 'E0 draft',
             vramDeltaLabel: '-254 MiB',
           }}
         />
@@ -3704,8 +3707,10 @@ describe('@yours/ui chat & runtime primitives', () => {
           memoryLabel="2.6 GB"
           speedupLabel={1.58}
           acceptedTokLabel={3.4}
+          specModeLabel="Tree · M=8"
+          draftEngineLabel="E0 draft"
           vramDeltaLabel="-254 MiB"
-          telemetryChips={['E0 draft']}
+          telemetryChips={['INT4 KV']}
           status="ready"
           sha256Verified
         />
@@ -3716,14 +3721,18 @@ describe('@yours/ui chat & runtime primitives', () => {
     expect(speedTelem.textContent).toContain('109.1 tok/s · 74ms TTFT · 142 tok');
     expect(speedTelem.textContent).toContain('1.58x');
     expect(speedTelem.textContent).toContain('3.4 tok/step');
+    expect(speedTelem.textContent).toContain('Tree · M=8');
+    expect(speedTelem.textContent).toContain('E0 draft');
     expect(speedTelem.textContent).toContain('-254 MiB');
 
     const hwStrip = el.querySelector('[data-slot="hardware-status-strip"]') as HTMLElement;
     expect(hwStrip.textContent).toContain('WebGPU FP16');
     expect(hwStrip.textContent).toContain('1.58x');
     expect(hwStrip.textContent).toContain('3.4 tok/step');
-    expect(hwStrip.textContent).toContain('-254 MiB');
+    expect(hwStrip.textContent).toContain('Tree · M=8');
     expect(hwStrip.textContent).toContain('E0 draft');
+    expect(hwStrip.textContent).toContain('-254 MiB');
+    expect(hwStrip.textContent).toContain('INT4 KV');
     expect(hwStrip.textContent).toContain('SHA-256');
     expect(hwStrip.querySelector('.yui-telem-chip.is-spec')?.textContent).toBe('1.58x');
     expect(el.querySelectorAll('[style]').length).toBe(0);

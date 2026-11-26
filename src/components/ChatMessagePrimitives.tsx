@@ -344,6 +344,10 @@ export interface SpeedMetricsSummary {
   speedupMultiplier?: number;
   /** Mean accepted tokens per verify step (e.g. `3.4` -> `3.4 tok/step`). */
   acceptedTokPerStep?: number;
+  /** Compact speculative decoding mode chip (e.g. `"Tree · M=8"`). */
+  specModeLabel?: string;
+  /** Draft engine label chip (e.g. `"E0 draft"`). */
+  draftEngineLabel?: string;
   /** Quantized VRAM footprint delta label (e.g. `"-254 MiB"`). */
   vramDeltaLabel?: string;
 }
@@ -393,22 +397,17 @@ export function ActionBar({
     parts.push(`${speedMetrics.outputTokens} tok`);
   }
 
-  const chips: { label: string; spec?: boolean }[] = [];
-  if (
-    speedMetrics?.speedupMultiplier !== undefined &&
-    Number.isFinite(speedMetrics.speedupMultiplier)
-  ) {
-    chips.push({ label: `${speedMetrics.speedupMultiplier.toFixed(2)}x`, spec: true });
-  }
-  if (
-    speedMetrics?.acceptedTokPerStep !== undefined &&
-    Number.isFinite(speedMetrics.acceptedTokPerStep)
-  ) {
-    chips.push({ label: `${speedMetrics.acceptedTokPerStep.toFixed(1)} tok/step` });
-  }
-  if (speedMetrics?.vramDeltaLabel) {
-    chips.push({ label: speedMetrics.vramDeltaLabel });
-  }
+  const chips = [
+    speedMetrics?.speedupMultiplier !== undefined && Number.isFinite(speedMetrics.speedupMultiplier)
+      ? { label: `${speedMetrics.speedupMultiplier.toFixed(2)}x`, spec: true }
+      : null,
+    speedMetrics?.acceptedTokPerStep !== undefined && Number.isFinite(speedMetrics.acceptedTokPerStep)
+      ? { label: `${speedMetrics.acceptedTokPerStep.toFixed(1)} tok/step`, spec: false }
+      : null,
+    speedMetrics?.specModeLabel ? { label: speedMetrics.specModeLabel, spec: false } : null,
+    speedMetrics?.draftEngineLabel ? { label: speedMetrics.draftEngineLabel, spec: false } : null,
+    speedMetrics?.vramDeltaLabel ? { label: speedMetrics.vramDeltaLabel, spec: false } : null,
+  ].filter((c): c is { label: string; spec: boolean } => Boolean(c));
 
   const telemetryNode =
     chips.length > 0 ? (

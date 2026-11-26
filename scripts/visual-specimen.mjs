@@ -304,6 +304,7 @@ function ActiveChatPanel({ theme }: { theme: 'light' | 'dark' }) {
                 outputTokens: 142,
                 speedupMultiplier: 1.58,
                 acceptedTokPerStep: 3.4,
+                specModeLabel: 'Tree · M=8',
                 vramDeltaLabel: '-254 MiB',
               }}
             />
@@ -683,6 +684,7 @@ function RuntimeAndMemoryPanel({ theme }: { theme: 'light' | 'dark' }) {
         adapterLabel="M3 Max"
         memoryLabel="2.6 GB"
         speedupLabel={1.58}
+        specModeLabel="Tree · M=8"
         vramDeltaLabel="-254 MiB"
         status="ready"
         sha256Verified
@@ -836,6 +838,7 @@ function DataAndArtifactPanel({ theme }: { theme: 'light' | 'dark' }) {
         adapterLabel="M3 Max"
         memoryLabel="2.6 GB"
         speedupLabel={1.58}
+        specModeLabel="Tree · M=8"
         vramDeltaLabel="-254 MiB"
         status="ready"
         sha256Verified
@@ -3900,7 +3903,7 @@ async function main() {
               '[data-slot="voice-session-bar"]',
               '[data-slot="memory-inspector-list"]',
             ];
-            return selectors.map((selector) => {
+            const boxBounds = selectors.map((selector) => {
               const el = document.querySelector(selector);
               if (!el) return { selector, missing: true };
               const rect = el.getBoundingClientRect();
@@ -3910,9 +3913,25 @@ async function main() {
                 scrollOverflow: el.scrollWidth > el.clientWidth + 1,
               };
             });
+            const memSummaries = Array.from(
+              document.querySelectorAll('[data-slot="memory-record-card"] .yui-mem-summary'),
+            ).map((el) => {
+              const card = el.closest('[data-slot="memory-record-card"]');
+              const sr = el.getBoundingClientRect();
+              const cr = card?.getBoundingClientRect();
+              return {
+                scrollOverflow: el.scrollWidth > el.clientWidth + 1,
+                clippedRight: Boolean(cr && sr.right > cr.right - 2),
+                height: Math.round(sr.height),
+              };
+            });
+            return { boxBounds, memSummaries };
           });
-          const bad = runtimeBounds.find((b) => b.missing || b.right > 332 || b.scrollOverflow);
-          if (bad) {
+          const bad = runtimeBounds.boxBounds.find((b) => b.missing || b.right > 332 || b.scrollOverflow);
+          const badMem = runtimeBounds.memSummaries.find(
+            (m) => m.scrollOverflow || m.clippedRight || m.height < 30,
+          );
+          if (bad || badMem) {
             throw new Error(`340px runtime bounds failed (${theme}): ${JSON.stringify(runtimeBounds)}`);
           }
         }
@@ -3930,6 +3949,18 @@ async function main() {
         }
         await blurActive();
         if (narrowPanel === 'chat') {
+          const tableAudit = await page.evaluate(() => {
+            const card = document.querySelector('[data-slot="streaming-response-table"]');
+            const wrap = card?.querySelector('.yui-x-scroll');
+            const table = card?.querySelector('.yui-sr-table');
+            return {
+              hasTable: Boolean(card && wrap && table),
+              overflow: wrap && table ? table.scrollWidth > wrap.clientWidth + 1 : true,
+            };
+          });
+          if (!tableAudit.hasTable || tableAudit.overflow) {
+            throw new Error(`340px chat table clipping failed (${theme}): ${JSON.stringify(tableAudit)}`);
+          }
           const narrowPath = path.join(OUT_DIR, `specimen-${theme}-narrow340.png`);
           await page.screenshot({ path: narrowPath });
           outputs.push(narrowPath);
@@ -4244,11 +4275,26 @@ async function main() {
         });
         await waitForSpecimen(`320/${theme}/${compactPanel}`);
         await auditPanelContrast(theme, `${compactPanel}-320`);
-        const compactCheck = await page.evaluate(() => ({
-          overflow: document.documentElement.scrollWidth > 320,
-          inlineStyles: document.querySelectorAll('#specimen-root [style]').length,
-        }));
-        if (compactCheck.overflow || compactCheck.inlineStyles !== 0) {
+        const compactCheck = await page.evaluate(() => {
+          const memBad = Array.from(
+            document.querySelectorAll('[data-slot="memory-record-card"] .yui-mem-summary'),
+          ).filter((el) => el.scrollWidth > el.clientWidth + 1).length;
+          const compareBad = Array.from(
+            document.querySelectorAll('.yui-table-row, .yui-table-cell-val, .yui-table-cell-label'),
+          ).filter((el) => el.scrollWidth > el.clientWidth + 1).length;
+          return {
+            overflow: document.documentElement.scrollWidth > 320,
+            inlineStyles: document.querySelectorAll('#specimen-root [style]').length,
+            memBad,
+            compareBad,
+          };
+        });
+        if (
+          compactCheck.overflow ||
+          compactCheck.inlineStyles !== 0 ||
+          compactCheck.memBad !== 0 ||
+          compactCheck.compareBad !== 0
+        ) {
           throw new Error(`320px compact audit failed (${theme}/${compactPanel}): ${JSON.stringify(compactCheck)}`);
         }
         await blurActive();
