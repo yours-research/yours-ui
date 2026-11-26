@@ -215,3 +215,12 @@ export {
   OnboardingCard,
   type OnboardingCardProps,
 } from './OnboardingCard.js';
+export {
+  ErrorRecoveryCard,
+  type ErrorRecoveryCardProps,
+} from './ErrorRecoveryCard.js';
+export {
+  InlineNotice,
+  type InlineNoticeProps,
+  type InlineNoticeTone,
+} from './InlineNotice.js';

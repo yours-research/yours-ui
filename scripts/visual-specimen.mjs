@@ -54,6 +54,7 @@ import {
   EmptyPanelState,
   EmptyState,
   EntitySummaryCard,
+  ErrorRecoveryCard,
   FloatingComposer,
   FloatingContextSheet,
   FollowUpSuggestions,
@@ -61,6 +62,7 @@ import {
   HookSidebarList,
   InlineCitationPill,
   InlineCitationPopover,
+  InlineNotice,
   LocalVaultExportCard,
   MatrixOrb,
   MemoryInspectorList,
@@ -1259,6 +1261,66 @@ function OnboardingAndCodePanel({ theme }: { theme: 'light' | 'dark' }) {
   );
 }
 
+function RecoveryAndNoticePanel({ theme }: { theme: 'light' | 'dark' }) {
+  const [retried, setRetried] = useState(false);
+  const [switched, setSwitched] = useState(false);
+  const [compactionExpanded, setCompactionExpanded] = useState(false);
+
+  return (
+    <SidePanelShell
+      theme={theme}
+      notch={<TopNotch items={NOTCH_ITEMS} expandedId={null} />}
+      footer={
+        <FloatingComposer
+          value=""
+          onChange={() => {}}
+          onSubmit={() => {}}
+          leftSlot={
+            <StatusBadge tone={retried ? 'local' : 'danger'} dot>
+              {retried ? 'Retry queued' : switched ? 'Selecting checkpoint' : 'Adapter interrupted'}
+            </StatusBadge>
+          }
+        />
+      }
+    >
+      <InlineNotice
+        tone="info"
+        icon="history"
+        message={
+          compactionExpanded
+            ? 'Context compacted · 9 older turns shown inline'
+            : 'Context compacted · 9 older turns folded'
+        }
+        actionLabel={compactionExpanded ? 'Collapse' : 'Expand'}
+        onAction={() => setCompactionExpanded((prev) => !prev)}
+      />
+      <InlineNotice
+        tone="warning"
+        icon="shield"
+        message="Private tab · Local memory paused"
+        actionLabel="Settings"
+        onAction={() => {}}
+      />
+      <InlineNotice
+        tone="success"
+        message="OPFS weights verified · SHA-256 matched"
+      />
+      <ErrorRecoveryCard
+        title="WebGPU device adapter lost"
+        badgeLabel="WebGPU lost"
+        diagnosis="Chrome reclaimed the GPU context while the tab slept. Cached OPFS weights remain intact."
+        diagnostics={
+          'GPUDeviceLostInfo: reason="unknown"\\n' +
+          'adapter=Apple M3 (metal, subgroup=32)\\n' +
+          'opfs=qwen3.5-4b-q4f16 (2.6 GB verified)'
+        }
+        onRetry={() => setRetried(true)}
+        onSwitchModel={() => setSwitched(true)}
+      />
+    </SidePanelShell>
+  );
+}
+
 function ShortcutAndToastPanel({ theme }: { theme: 'light' | 'dark' }) {
   const [toastOpen, setToastOpen] = useState(true);
   const [drawerOpen, setDrawerOpen] = useState(false);
@@ -1374,6 +1436,7 @@ function SpecimenApp() {
         {panel === 'drawers' ? <DrawerAndContextPanel theme={theme} /> : null}
         {panel === 'budget' ? <BudgetAndCitationPanel theme={theme} /> : null}
         {panel === 'onboarding' ? <OnboardingAndCodePanel theme={theme} /> : null}
+        {panel === 'recovery' ? <RecoveryAndNoticePanel theme={theme} /> : null}
         {panel === 'genui' ? <GenUiShowcasePanel theme={theme} /> : null}
       </div>
     );
@@ -1397,6 +1460,7 @@ function SpecimenApp() {
       <div className="yui-spec-frame"><DrawerAndContextPanel theme={theme} /></div>
       <div className="yui-spec-frame"><BudgetAndCitationPanel theme={theme} /></div>
       <div className="yui-spec-frame"><OnboardingAndCodePanel theme={theme} /></div>
+      <div className="yui-spec-frame"><RecoveryAndNoticePanel theme={theme} /></div>
       <div className="yui-spec-frame-auto"><GenUiShowcasePanel theme={theme} /></div>
     </div>
   );
@@ -1619,6 +1683,7 @@ async function main() {
       'drawers',
       'budget',
       'onboarding',
+      'recovery',
       'genui',
     ];
     const blurActive = () =>
@@ -2193,6 +2258,85 @@ async function main() {
           }
         }
 
+        if (panel === 'recovery') {
+          const recContrast = await page.evaluate(() => {
+            const parseRgba = (str) => {
+              const m = str.match(/rgba?\(([^)]+)\)/);
+              if (!m) return null;
+              const parts = m[1].split(',').map((x) => parseFloat(x.trim()));
+              return [parts[0], parts[1], parts[2], parts[3] ?? 1];
+            };
+            const relLum = ([r, g, b]) => {
+              const f = (c) => {
+                const s = c / 255;
+                return s <= 0.03928 ? s / 12.92 : Math.pow((s + 0.055) / 1.055, 2.4);
+              };
+              return 0.2126 * f(r) + 0.7152 * f(g) + 0.0722 * f(b);
+            };
+            const compositeOver = (fg, bg) => {
+              const a = fg[3] ?? 1;
+              return [
+                fg[0] * a + bg[0] * (1 - a),
+                fg[1] * a + bg[1] * (1 - a),
+                fg[2] * a + bg[2] * (1 - a),
+                1,
+              ];
+            };
+            const effectiveBg = (el) => {
+              const stack = [];
+              let cur = el;
+              while (cur && cur !== document.documentElement) {
+                const bg = parseRgba(getComputedStyle(cur).backgroundColor);
+                if (bg && bg[3] > 0) stack.unshift(bg);
+                cur = cur.parentElement;
+              }
+              return stack.reduce((acc, layer) => compositeOver(layer, acc), [255, 255, 255, 1]);
+            };
+            const selectors = [
+              '[data-slot="error-recovery-card"] .yui-recovery-badge',
+              '[data-slot="error-recovery-card"] .yui-recovery-title',
+              '[data-slot="error-recovery-card"] .yui-recovery-diagnosis',
+              '[data-slot="error-recovery-card"] .yui-recovery-toggle',
+              '[data-slot="inline-notice"] .yui-notice-text',
+              '[data-slot="inline-notice"] .yui-notice-action',
+            ];
+            const bad = [];
+            for (const sel of selectors) {
+              for (const node of document.querySelectorAll(sel)) {
+                const fg = parseRgba(getComputedStyle(node).color);
+                const bg = effectiveBg(node);
+                if (!fg) continue;
+                const l1 = Math.max(relLum(fg), relLum(bg));
+                const l2 = Math.min(relLum(fg), relLum(bg));
+                const ratio = (l1 + 0.05) / (l2 + 0.05);
+                if (ratio < 4.5) {
+                  bad.push({ sel, ratio: Number(ratio.toFixed(2)), text: node.textContent });
+                }
+              }
+            }
+            return bad;
+          });
+          if (recContrast.length > 0) {
+            throw new Error(`WCAG AA contrast audit failed (${theme}/recovery): ${JSON.stringify(recContrast)}`);
+          }
+          const toggleBtn = page.locator('[data-slot="error-recovery-card"] .yui-recovery-toggle');
+          await toggleBtn.click();
+          if ((await toggleBtn.getAttribute('aria-expanded')) !== 'true') {
+            throw new Error(`ErrorRecoveryCard trace toggle failed (${theme})`);
+          }
+          await page.locator('[data-slot="error-recovery-card"] .yui-recovery-copy').click();
+          const copyText = await page.locator('[data-slot="error-recovery-card"] .yui-recovery-copy').textContent();
+          if (!copyText?.includes('Copied')) {
+            throw new Error(`ErrorRecoveryCard copy diagnostics failed (${theme}): ${copyText}`);
+          }
+          await page.locator('[data-slot="error-recovery-card"] .yui-recovery-retry').click();
+          const recBadge = await page.locator('.yui-composer .yui-status-badge').textContent();
+          if (!recBadge?.includes('Retry queued')) {
+            throw new Error(`ErrorRecoveryCard retry click did not update badge (${theme}): ${recBadge}`);
+          }
+          await page.locator('[data-slot="inline-notice"] .yui-notice-action').first().click();
+        }
+
         if (panel === 'budget') {
           const budgetContrast = await page.evaluate(() => {
             const parseRgba = (str) => {
@@ -2283,10 +2427,10 @@ async function main() {
         }
       }
 
-      // 400px width verification on Chat, Data, Shortcuts, Welcome, Palette, Diff, Trace, Drawers, Budget & Onboarding panels + reduced-motion audit
+      // 400px width verification across key panels + reduced-motion audit
       await page.setViewportSize({ width: 400, height: 828 });
       await page.emulateMedia({ reducedMotion: 'reduce' });
-      for (const widePanel of ['chat', 'data', 'shortcuts', 'welcome', 'palette', 'diff', 'trace', 'drawers', 'budget', 'onboarding']) {
+      for (const widePanel of ['chat', 'data', 'shortcuts', 'welcome', 'palette', 'diff', 'trace', 'drawers', 'budget', 'onboarding', 'recovery']) {
         await page.goto(`${baseUrl}/?mode=single&theme=${theme}&panel=${widePanel}&width=400`, {
           waitUntil: 'networkidle',
         });
@@ -2325,6 +2469,7 @@ async function main() {
         'drawers',
         'budget',
         'onboarding',
+        'recovery',
         'genui',
       ]) {
         await page.goto(`${baseUrl}/?mode=single&theme=${theme}&panel=${narrowPanel}&narrow=1`, {
@@ -2333,29 +2478,46 @@ async function main() {
         await waitForSpecimen(`340/${theme}/${narrowPanel}`);
 
         if (narrowPanel === 'chat') {
-          const narrowClearance = await page.evaluate(async () => {
+          await page.evaluate(() => {
             const stage = document.querySelector('.yui-scroll-stage');
             if (stage) stage.scrollTop = stage.scrollHeight;
+          });
+          await page.waitForTimeout(260);
+          const narrowClearance = await page.evaluate(async () => {
+            const stage = document.querySelector('.yui-scroll-stage');
+            const wrap = document.querySelector('.yui-scroll-wrap--fade');
+            const notch = document.querySelector('.yui-notch-housing');
             await new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r)));
             const actionRow = Array.from(document.querySelectorAll('.yui-action-row')).at(-1);
             const composer = document.querySelector('.yui-composer');
-            if (!stage || !actionRow || !composer) return null;
+            if (!stage || !wrap || !notch || !actionRow || !composer) return null;
             const sr = stage.getBoundingClientRect();
+            const nr = notch.getBoundingClientRect();
             const ar = actionRow.getBoundingClientRect();
             const cr = composer.getBoundingClientRect();
+            const beforeStyle = getComputedStyle(wrap, '::before');
             return {
               actionBottom: Math.round(ar.bottom),
               stageBottom: Math.round(sr.bottom),
               composerTop: Math.round(cr.top),
+              fadeTop: wrap.getAttribute('data-fade-top'),
+              beforeOpacity: Number(parseFloat(beforeStyle.opacity).toFixed(2)),
+              beforeHeight: Math.round(parseFloat(beforeStyle.height)),
+              notchBottom: Math.round(nr.bottom),
+              solidCapClearance: Math.round(parseFloat(beforeStyle.height) * 0.52),
             };
           });
           if (
             !narrowClearance ||
             narrowClearance.actionBottom > narrowClearance.stageBottom + 1 ||
-            narrowClearance.actionBottom > narrowClearance.composerTop - 12
+            narrowClearance.actionBottom > narrowClearance.composerTop - 12 ||
+            narrowClearance.fadeTop !== 'true' ||
+            narrowClearance.beforeOpacity < 0.99 ||
+            narrowClearance.beforeHeight < 80 ||
+            narrowClearance.solidCapClearance < narrowClearance.notchBottom - 12
           ) {
             throw new Error(
-              `340px narrow chat clearance failed (${theme}): ${JSON.stringify(narrowClearance)}`,
+              `340px narrow chat clearance/top-cap failed (${theme}): ${JSON.stringify(narrowClearance)}`,
             );
           }
         }
@@ -2523,10 +2685,33 @@ async function main() {
           await page.screenshot({ path: onbNarrowPath });
           outputs.push(onbNarrowPath);
         }
+        if (narrowPanel === 'recovery') {
+          const recNarrowPath = path.join(OUT_DIR, `specimen-${theme}-recovery-340.png`);
+          await page.screenshot({ path: recNarrowPath });
+          outputs.push(recNarrowPath);
+        }
       }
 
-      // Overview 17-up comparison sheet
-      await page.setViewportSize({ width: 6892, height: 900 });
+      // Forced-colors audit at 380px across settings & recovery
+      await page.setViewportSize({ width: 380, height: 828 });
+      await page.emulateMedia({ forcedColors: 'active' });
+      for (const fcPanel of ['settings', 'recovery']) {
+        await page.goto(`${baseUrl}/?mode=single&theme=${theme}&panel=${fcPanel}`, {
+          waitUntil: 'networkidle',
+        });
+        await waitForSpecimen(`forced-colors/${theme}/${fcPanel}`);
+        const fcAudit = await page.evaluate(() => {
+          const root = document.getElementById('specimen-root');
+          return root ? root.querySelectorAll('[style]').length : -1;
+        });
+        if (fcAudit !== 0) {
+          throw new Error(`Forced-colors CSP inline-style audit failed (${theme}/${fcPanel}): ${fcAudit}`);
+        }
+      }
+      await page.emulateMedia({ forcedColors: 'none' });
+
+      // Overview 18-up comparison sheet
+      await page.setViewportSize({ width: 7296, height: 900 });
       await page.goto(`${baseUrl}/?mode=gallery&theme=${theme}`, { waitUntil: 'networkidle' });
       const overviewPath = path.join(OUT_DIR, `specimen-${theme}-overview.png`);
       await page.screenshot({ path: overviewPath, fullPage: true });

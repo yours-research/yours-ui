@@ -18,12 +18,14 @@ import {
   EmptyPanelState,
   EmptyState,
   ErrorRecoveryBanner,
+  ErrorRecoveryCard,
   FloatingComposer,
   FloatingContextSheet,
   FollowUpSuggestions,
   HardwareStatusStrip,
   InlineCitationPill,
   InlineCitationPopover,
+  InlineNotice,
   KbdHint,
   LocalVaultExportCard,
   MemoryInspectorList,
@@ -2176,8 +2178,97 @@ describe('@yours/ui chat & runtime primitives', () => {
     expect(onSecondaryAction).toHaveBeenCalledTimes(1);
 
     const cssSource = await readSourceFile('../src/styles/components.css');
-    expect(cssSource).toContain('height: 54px;');
+    expect(cssSource).toContain('height: 84px;');
     expect(cssSource).toContain('.yui-codecard');
     expect(cssSource).toContain('.yui-onb-card');
+  });
+
+  it('renders ErrorRecoveryCard (expandable trace, Copy diagnostics, Retry/Switch) and InlineNotice tones cleanly without inline styles', async () => {
+    const writeText = vi.fn().mockResolvedValue(undefined);
+    Object.defineProperty(navigator, 'clipboard', {
+      configurable: true,
+      value: { writeText },
+    });
+
+    const onRetry = vi.fn();
+    const onSwitchModel = vi.fn();
+    const onCopyDiagnostics = vi.fn();
+    const onNoticeAction = vi.fn();
+
+    const el = renderNode(
+      <div>
+        <ErrorRecoveryCard
+          title="WebGPU device adapter lost"
+          badgeLabel="WebGPU lost"
+          diagnosis="Chrome reclaimed the GPU context after idle sleep."
+          diagnostics={'GPUDeviceLostInfo: reason="destroyed"\nadapter=Apple M3'}
+          onRetry={onRetry}
+          onSwitchModel={onSwitchModel}
+          onCopyDiagnostics={onCopyDiagnostics}
+        />
+        <InlineNotice
+          tone="info"
+          icon="history"
+          message="Context compacted · 9 older turns folded"
+          actionLabel="Expand"
+          onAction={onNoticeAction}
+        />
+        <InlineNotice tone="warning" message="Private tab · Local memory paused" />
+        <InlineNotice tone="success" message="OPFS weights verified" />
+      </div>,
+    );
+
+    expect(el.querySelectorAll('[style]').length).toBe(0);
+
+    const card = el.querySelector('[data-slot="error-recovery-card"]') as HTMLElement;
+    expect(card.textContent).toContain('WebGPU lost');
+    expect(card.textContent).toContain('WebGPU device adapter lost');
+    expect(card.querySelector('.yui-recovery-pre')).toBeNull();
+
+    const toggle = card.querySelector('.yui-recovery-toggle') as HTMLButtonElement;
+    expect(toggle.getAttribute('aria-expanded')).toBe('false');
+    act(() => {
+      toggle.click();
+    });
+    expect(toggle.getAttribute('aria-expanded')).toBe('true');
+    expect(card.querySelector('.yui-recovery-pre')?.textContent).toContain('GPUDeviceLostInfo');
+
+    act(() => {
+      (card.querySelector('.yui-recovery-copy') as HTMLButtonElement).click();
+    });
+    expect(writeText).toHaveBeenCalledWith('GPUDeviceLostInfo: reason="destroyed"\nadapter=Apple M3');
+    expect(onCopyDiagnostics).toHaveBeenCalledTimes(1);
+    expect(card.querySelector('.yui-recovery-copy')?.textContent).toContain('Copied');
+
+    act(() => {
+      (card.querySelector('.yui-recovery-retry') as HTMLButtonElement).click();
+      (card.querySelector('.yui-recovery-switch') as HTMLButtonElement).click();
+    });
+    expect(onRetry).toHaveBeenCalledTimes(1);
+    expect(onSwitchModel).toHaveBeenCalledTimes(1);
+
+    const notices = el.querySelectorAll('[data-slot="inline-notice"]');
+    expect(notices.length).toBe(3);
+    expect(notices[0].getAttribute('data-tone')).toBe('info');
+    expect(notices[1].getAttribute('data-tone')).toBe('warning');
+    expect(notices[2].getAttribute('data-tone')).toBe('success');
+
+    act(() => {
+      (notices[0].querySelector('.yui-notice-action') as HTMLButtonElement).click();
+    });
+    expect(onNoticeAction).toHaveBeenCalledTimes(1);
+
+    const cssSource = await readSourceFile('../src/styles/components.css');
+    expect(cssSource).toContain('.yui-recovery-card');
+    expect(cssSource).toContain('.yui-notice--warning');
+
+    const reducedIdx = cssSource.indexOf('@media (prefers-reduced-motion: reduce)');
+    expect(cssSource.slice(reducedIdx)).toContain('.yui-recovery-chevron');
+    expect(cssSource.slice(reducedIdx)).toContain('.yui-notice-action');
+
+    const forcedIdx = cssSource.indexOf('@media (forced-colors: active)');
+    expect(forcedIdx).toBeGreaterThan(-1);
+    expect(cssSource.slice(forcedIdx)).toContain('.yui-recovery-card');
+    expect(cssSource.slice(forcedIdx)).toContain('.yui-notice');
   });
 });

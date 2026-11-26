@@ -906,4 +906,19 @@ describe('@yours/ui layout & TopNotch primitives', () => {
     expect(standaloneOverlay?.classList.contains('yui-toast-overlay--standalone')).toBe(true);
     expect(standaloneOverlay?.textContent).toContain('Toast B');
   });
+
+  it('defines solid-cap top fade geometry and forced-colors high-contrast styles in components.css', async () => {
+    const cssSource = await readStyleFile('../src/styles/components.css');
+    expect(cssSource).toContain('height: 84px;');
+    expect(cssSource).toContain('var(--yui-stage-bg) 52%');
+
+    const forcedIdx = cssSource.indexOf('@media (forced-colors: active)');
+    expect(forcedIdx).toBeGreaterThan(-1);
+    const forcedBlock = cssSource.slice(forcedIdx);
+    expect(forcedBlock).toContain('.yui-switch');
+    expect(forcedBlock).toContain('.yui-model-dot');
+    expect(forcedBlock).toContain('.yui-dl-progress');
+    expect(forcedBlock).toContain('forced-color-adjust: none');
+    expect(forcedBlock).toContain('2px solid Highlight');
+  });
 });
