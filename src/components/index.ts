@@ -195,3 +195,15 @@ export {
   type TabContextKind,
   type TabContextListProps,
 } from './TabContextList.js';
+export {
+  ContextBudgetMeter,
+  formatCompactTokens,
+  type ContextBudgetLevel,
+  type ContextBudgetMeterProps,
+  type ContextBudgetSegment,
+} from './ContextBudgetMeter.js';
+export {
+  CitationFootnoteList,
+  type CitationFootnoteItem,
+  type CitationFootnoteListProps,
+} from './CitationFootnoteList.js';

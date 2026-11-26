@@ -7,8 +7,10 @@ import {
   AttachmentDropzone,
   AttachmentStrip,
   BranchPicker,
+  CitationFootnoteList,
   CodeBlock,
   CommandPalette,
+  ContextBudgetMeter,
   ContextCommandPopover,
   DataTableCard,
   DiffCard,
@@ -1986,5 +1988,91 @@ describe('@yours/ui chat & runtime primitives', () => {
     expect(cssSource).toContain('.yui-th-root');
     expect(cssSource).toContain('.yui-model-roster');
     expect(cssSource).toContain('.yui-tabctx-list');
+  });
+
+  it('renders ContextBudgetMeter threshold states & breakdown and CitationFootnoteList copy/jump actions', async () => {
+    const writeText = vi.fn().mockResolvedValue(undefined);
+    Object.defineProperty(navigator, 'clipboard', {
+      configurable: true,
+      value: { writeText },
+    });
+
+    const onShowOnPage = vi.fn();
+    const onCopyQuote = vi.fn();
+
+    const el = renderNode(
+      <div>
+        <ContextBudgetMeter
+          usedTokens={3200}
+          maxTokens={8000}
+          segments={[
+            { id: 'sys', label: 'System', tokensLabel: '640 tok', percent: 8 },
+            { id: 'tab', label: 'Active tab', tokensLabel: '1.4k tok', percent: 18 },
+            { id: 'hist', label: 'History', tokensLabel: '840 tok', percent: 10 },
+            { id: 'mem', label: 'Memory', tokensLabel: '320 tok', percent: 4 },
+          ]}
+        />
+        <ContextBudgetMeter usedTokens={6800} maxTokens={8000} title="Near cap" />
+        <ContextBudgetMeter usedTokens={7800} maxTokens={8000} title="At cap" />
+        <CitationFootnoteList
+          activeIndex={1}
+          onShowOnPage={onShowOnPage}
+          onCopyQuote={onCopyQuote}
+          citations={[
+            {
+              id: 'fn1',
+              index: 1,
+              title: 'WebGPU Subgroup Operations Spec',
+              domain: 'gpuweb.github.io',
+              locator: 'Section 3.2 · Para 4',
+              excerpt: 'Subgroup barriers synchronize invocations cleanly within a compute workgroup.',
+              highlight: 'warm',
+            },
+            {
+              id: 'fn2',
+              index: 2,
+              title: 'MV3 Content Security Policy',
+              domain: 'developer.chrome.com',
+              locator: 'CSP v3 · Note 2',
+              excerpt: 'Extension pages prohibit unsafe-inline styles by default.',
+              highlight: 'mono',
+            },
+          ]}
+        />
+      </div>,
+    );
+
+    const meters = Array.from(el.querySelectorAll('[data-slot="context-budget-meter"]')) as HTMLElement[];
+    expect(meters.length).toBe(3);
+    expect(meters[0].getAttribute('data-level')).toBe('normal');
+    expect(meters[0].textContent).toContain('3.2k / 8k · 40%');
+    expect(meters[1].getAttribute('data-level')).toBe('warning');
+    expect(meters[2].getAttribute('data-level')).toBe('critical');
+    expect((meters[0].querySelector('progress') as HTMLProgressElement).value).toBe(40);
+
+    const toggle = meters[0].querySelector('.yui-budget-toggle') as HTMLButtonElement;
+    expect(toggle.getAttribute('aria-expanded')).toBe('false');
+    act(() => {
+      toggle.click();
+    });
+    expect(toggle.getAttribute('aria-expanded')).toBe('true');
+    expect(meters[0].textContent).toContain('Active tab');
+    expect(meters[0].textContent).toContain('1.4k tok');
+
+    const footnotes = el.querySelector('[data-slot="citation-footnote-list"]') as HTMLElement;
+    expect(footnotes.querySelectorAll('.yui-fn-row').length).toBe(2);
+    act(() => {
+      (footnotes.querySelector('.yui-fn-btn') as HTMLButtonElement).click();
+      (footnotes.querySelector('[aria-label="Copy quote 1"]') as HTMLButtonElement).click();
+    });
+    expect(onShowOnPage).toHaveBeenCalledTimes(1);
+    expect(onCopyQuote).toHaveBeenCalledTimes(1);
+    expect(writeText).toHaveBeenCalledWith(
+      'Subgroup barriers synchronize invocations cleanly within a compute workgroup.',
+    );
+
+    const cssSource = await readSourceFile('../src/styles/components.css');
+    expect(cssSource).toContain('.yui-budget-progress');
+    expect(cssSource).toContain('.yui-fn-quote.is-warm');
   });
 });
