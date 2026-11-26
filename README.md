@@ -180,7 +180,7 @@ Run `npm run build && npm run check:size` to inspect live raw and gzipped sizes 
 | `@yours/ui/icons` | `ApertureIcon`, `APERTURE_ICON_NAMES`, 48 named `*Icon` SVG components, `MatrixOrb`, `NotchEar`, `YoursMark`. |
 | `@yours/ui/layout` | `SidePanelShell` (`overlay`, `sheet` & `toast` z-45 slots + `ResizeObserver` scroll-edge fades), `TopNotch` (`144x36` -> `272x52` hover-grow & drawer), `HookSidebarList`, `NotchDrawerSearch`, `NotchOptionRow`, `NotchStatusPill`, `GreenLed`. |
 | `@yours/ui/components` | Grouped below across shell/command, conversation, tools/guard, runtime/models, and data/settings. |
-| `@yours/ui/genui` | `CompareTable`, `ChecklistCard`, `PageBriefCard`, `DraftCard`, `EntitySummaryCard`, `ChoicePromptCard`, `MetricStripCard`, `PageActionCard`. |
+| `@yours/ui/genui` | `CompareTable`, `ChecklistCard`, `PageBriefCard`, `DraftCard`, `EntitySummaryCard`, `ChoicePromptCard`, `MetricStripCard`, `PageActionCard`, `TimelineCard`, `QuoteExcerptCard`. |
 | `@yours/ui/styles` | Cotton Paper & Anodized Obsidian CSS variables (`tokens.css`) and scoped `.yui-*` rules (`components.css`). |
 
 ### `@yours/ui/components` Inventory

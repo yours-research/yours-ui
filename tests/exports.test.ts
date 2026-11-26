@@ -140,6 +140,10 @@ describe('@yours/ui built ESM & CSS exports smoke test', () => {
     expect(typeof componentsMod.ExportSessionCard).toBe('function');
     expect(typeof genuiMod.CompareTable).toBe('function');
     expect(typeof genuiMod.MetricStripCard).toBe('function');
+    expect(typeof genuiMod.TimelineCard).toBe('function');
+    expect(typeof genuiMod.QuoteExcerptCard).toBe('function');
+    expect(typeof rootMod.TimelineCard).toBe('function');
+    expect(typeof rootMod.QuoteExcerptCard).toBe('function');
   });
 
   it('typechecks a strict TypeScript consumer across all public subpaths with zero missing declarations', async () => {
@@ -195,7 +199,7 @@ describe('@yours/ui built ESM & CSS exports smoke test', () => {
         "import { SidePanelShell, TopNotch } from '@yours/ui/layout';",
         "import { ErrorRecoveryCard, FloatingComposer, InlineNotice } from '@yours/ui/components';",
         "import { PromptTemplateList, ExportSessionCard } from '@yours/ui/components';",
-        "import { CompareTable, MetricStripCard } from '@yours/ui/genui';",
+        "import { CompareTable, MetricStripCard, QuoteExcerptCard, TimelineCard } from '@yours/ui/genui';",
         '',
         'export function ConsumerExample(props: FloatingComposerProps) {',
         '  return (',
@@ -214,6 +218,8 @@ describe('@yours/ui built ESM & CSS exports smoke test', () => {
         '      <ExportSessionCard metaLabel="4 turns" onCopy={() => {}} onDownload={() => {}} />',
         '      <MetricStripCard label="VRAM" primaryValue="2.4 GB" values={[2.1, 2.3, 2.4]} />',
         '      <CompareTable title="Bench" leftColumnTitle="A" rightColumnTitle="B" rows={[{ feature: "Speed", leftValue: "44", rightValue: "39" }]} />',
+        '      <TimelineCard title="Plan" steps={[{ id: "s1", label: "Step 1", status: "done" }]} />',
+        '      <QuoteExcerptCard quote="Quoted prose." sourceTitle="Spec" locator="§1" />',
         '    </SidePanelShell>',
         '  );',
         '}',

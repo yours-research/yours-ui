@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { CheckIcon, CopyIcon } from '../icons/ApertureIcon.js';
+import { useCopyFeedback } from '../utils/clipboard.js';
 
 export interface CodeBlockCardProps {
   code: string;
@@ -28,8 +29,7 @@ export function CodeBlockCard({
   className,
 }: CodeBlockCardProps) {
   const scrollRef = useRef<HTMLDivElement | null>(null);
-  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const [copied, setCopied] = useState(false);
+  const { copied, triggerCopy } = useCopyFeedback();
   const [canScrollRight, setCanScrollRight] = useState(false);
 
   const syncFade = useCallback(() => {
@@ -66,20 +66,9 @@ export function CodeBlockCard({
     };
   }, [syncFade, code]);
 
-  useEffect(() => {
-    return () => {
-      if (timerRef.current !== null) clearTimeout(timerRef.current);
-    };
-  }, []);
-
   const handleCopy = () => {
-    if (typeof navigator !== 'undefined' && navigator.clipboard?.writeText) {
-      void navigator.clipboard.writeText(code).catch(() => {});
-    }
+    triggerCopy(code);
     onCopy?.(code);
-    setCopied(true);
-    if (timerRef.current !== null) clearTimeout(timerRef.current);
-    timerRef.current = setTimeout(() => setCopied(false), 1400);
   };
 
   const lines = code.split('\n');

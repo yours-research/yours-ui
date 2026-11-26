@@ -82,6 +82,7 @@ import {
   PermissionCard,
   PromptCapsuleStack,
   PromptTemplateList,
+  QuoteExcerptCard,
   QuotedContextBanner,
   ReasoningTrace,
   SegmentedControl,
@@ -95,6 +96,7 @@ import {
   StreamingResponse,
   TabContextList,
   ThreadHistoryList,
+  TimelineCard,
   ToastPill,
   ToolStepCard,
   ToolTraceList,
@@ -400,9 +402,46 @@ function LiveStreamPopoverPanel({ theme }: { theme: 'light' | 'dark' }) {
 function GenUiShowcasePanel({ theme }: { theme: 'light' | 'dark' }) {
   const [toneId, setToneId] = useState('concise');
   const [choiceId, setChoiceId] = useState('quick');
+  const [activeStep, setActiveStep] = useState('tl-2');
 
   return (
     <div className="yui-spec-scroll-col" data-theme={theme}>
+      <TimelineCard
+        title="Local Inference Pipeline"
+        subtitle="Isolated worker startup"
+        metaLabel="3 steps"
+        onSelectStep={(step) => setActiveStep(step.id)}
+        steps={[
+          {
+            id: 'tl-1',
+            label: 'Mount OPFS weights',
+            detail: 'Verified 2.6 GB SHA-256 manifest locally.',
+            timestamp: '00:01',
+            status: 'done',
+          },
+          {
+            id: 'tl-2',
+            label: 'Compile WGSL decode pass',
+            detail: activeStep === 'tl-2' ? 'Subgroup reduction tuned for M3 GPU.' : 'Ready on adapter.',
+            timestamp: '00:03',
+            status: 'active',
+          },
+          {
+            id: 'tl-3',
+            label: 'Attach page DOM snapshot',
+            timestamp: '00:04',
+            status: 'pending',
+          },
+        ]}
+      />
+      <QuoteExcerptCard
+        sourceTitle="MV3 Side Panel Specification"
+        sourceDomain="developer.chrome.com"
+        locator="§3 · Line 42"
+        quote="Extension pages enforce style-src 'self' strictly so runtime components must avoid inline style attributes."
+        onJumpToSource={() => {}}
+        onCopyQuote={() => {}}
+      />
       <CompareTable
         title="Pro vs. Team"
         badgeText="Local check"
@@ -2706,7 +2745,7 @@ async function main() {
       // 400px width verification across key panels + reduced-motion audit
       await page.setViewportSize({ width: 400, height: 828 });
       await page.emulateMedia({ reducedMotion: 'reduce' });
-      for (const widePanel of ['chat', 'data', 'shortcuts', 'welcome', 'palette', 'diff', 'trace', 'drawers', 'budget', 'onboarding', 'recovery', 'voice', 'templates']) {
+      for (const widePanel of ['chat', 'data', 'shortcuts', 'welcome', 'palette', 'diff', 'trace', 'drawers', 'budget', 'onboarding', 'recovery', 'voice', 'templates', 'genui']) {
         await page.goto(`${baseUrl}/?mode=single&theme=${theme}&panel=${widePanel}&width=400`, {
           waitUntil: 'networkidle',
         });
@@ -2722,7 +2761,7 @@ async function main() {
         }
         await blurActive();
         const widePath = path.join(OUT_DIR, `specimen-${theme}-${widePanel}-400.png`);
-        await page.screenshot({ path: widePath });
+        await page.screenshot({ path: widePath, fullPage: widePanel === 'genui' });
         outputs.push(widePath);
       }
       await page.emulateMedia({ reducedMotion: 'no-preference' });
@@ -2989,12 +3028,17 @@ async function main() {
           await page.screenshot({ path: tplNarrowPath });
           outputs.push(tplNarrowPath);
         }
+        if (narrowPanel === 'genui') {
+          const genuiNarrowPath = path.join(OUT_DIR, `specimen-${theme}-genui-340.png`);
+          await page.screenshot({ path: genuiNarrowPath, fullPage: true });
+          outputs.push(genuiNarrowPath);
+        }
       }
 
-      // Forced-colors audit at 380px across settings, recovery, voice & templates
+      // Forced-colors audit at 380px across settings, recovery, voice, templates & genui
       await page.setViewportSize({ width: 380, height: 828 });
       await page.emulateMedia({ forcedColors: 'active' });
-      for (const fcPanel of ['settings', 'recovery', 'voice', 'templates']) {
+      for (const fcPanel of ['settings', 'recovery', 'voice', 'templates', 'genui']) {
         await page.goto(`${baseUrl}/?mode=single&theme=${theme}&panel=${fcPanel}`, {
           waitUntil: 'networkidle',
         });
