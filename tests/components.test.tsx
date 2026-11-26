@@ -8,8 +8,11 @@ import {
   AttachmentStrip,
   BranchPicker,
   CodeBlock,
+  CommandPalette,
   ContextCommandPopover,
   DataTableCard,
+  DiffCard,
+  EmptyPanelState,
   EmptyState,
   ErrorRecoveryBanner,
   FloatingComposer,
@@ -1588,5 +1591,135 @@ describe('@yours/ui chat & runtime primitives', () => {
     expect(cssSource).toContain('.yui-shortcut-sheet');
     expect(cssSource).toContain('.yui-status-toast');
     expect(cssSource).toContain('.yui-artifact-pre.is-capped');
+  });
+
+  it('supports CommandPalette keyboard/ARIA navigation & focus trap, EmptyPanelState starters, and DiffCard copy', async () => {
+    const writeText = vi.fn().mockResolvedValue(undefined);
+    Object.defineProperty(navigator, 'clipboard', {
+      configurable: true,
+      value: { writeText },
+    });
+
+    const onSelectAction = vi.fn();
+    const onClosePalette = vi.fn();
+    const onSelectStarter = vi.fn();
+
+    const actions = [
+      { id: 'cmd-1', label: 'Summarize active tab', group: 'Page', shortcut: ['⌘', 'S'] },
+      { id: 'cmd-2', label: 'Disabled cloud fetch', group: 'Guardrails', disabled: true },
+      { id: 'cmd-3', label: 'Switch local model', group: 'Runtime', shortcut: ['⌘', 'M'] },
+    ];
+
+    const el = renderNode(
+      <div>
+        <button type="button" className="palette-trigger">Open palette</button>
+        <EmptyPanelState
+          starters={[
+            { id: 's1', label: 'Summarize this page', icon: 'document' },
+            { id: 's2', label: 'Compare pricing', icon: 'compare' },
+          ]}
+          onSelectStarter={onSelectStarter}
+        />
+        <DiffCard
+          filename="src/runtime/decode.ts"
+          language="TS"
+          lines={[
+            { type: 'context', content: 'const quant = "Q4F16";' },
+            { type: 'remove', content: 'const maxTokens = 512;' },
+            { type: 'add', content: 'const maxTokens = 2048;' },
+            { type: 'add', content: 'const kvCache = "int8";' },
+          ]}
+        />
+      </div>,
+    );
+
+    // EmptyPanelState renders monogram, starters, and footer
+    expect(el.querySelector('[data-slot="empty-panel-state"]')?.textContent).toContain(
+      'On-device WebGPU',
+    );
+    act(() => {
+      (el.querySelector('.yui-empty-panel-chip') as HTMLButtonElement).click();
+    });
+    expect(onSelectStarter).toHaveBeenCalledWith({
+      id: 's1',
+      label: 'Summarize this page',
+      icon: 'document',
+    });
+
+    // DiffCard computes +2 / -1 and copies patched output without removed lines
+    const diffCard = el.querySelector('[data-slot="diff-card"]') as HTMLElement;
+    expect(diffCard.querySelector('.yui-diff-stat-add')?.textContent).toBe('+2');
+    expect(diffCard.querySelector('.yui-diff-stat-del')?.textContent).toBe('-1');
+    act(() => {
+      (diffCard.querySelector('[data-slot="diff-copy-btn"]') as HTMLButtonElement).click();
+    });
+    expect(writeText).toHaveBeenCalledWith(
+      'const quant = "Q4F16";\nconst maxTokens = 2048;\nconst kvCache = "int8";',
+    );
+
+    // CommandPalette open -> focus trap -> ArrowDown skips disabled -> Enter -> filter empty -> Escape restores focus
+    const trigger = el.querySelector('.palette-trigger') as HTMLButtonElement;
+    trigger.focus();
+    expect(document.activeElement).toBe(trigger);
+
+    rerenderNode(
+      <div>
+        <button type="button" className="palette-trigger">Open palette</button>
+        <CommandPalette
+          open
+          actions={actions}
+          onSelectAction={onSelectAction}
+          onClose={onClosePalette}
+        />
+      </div>,
+    );
+
+    const dialog = el.querySelector('[data-slot="command-palette"]') as HTMLElement;
+    const combobox = dialog.querySelector('[role="combobox"]') as HTMLInputElement;
+    expect(document.activeElement).toBe(combobox);
+    const activeBefore = combobox.getAttribute('aria-activedescendant');
+    expect(activeBefore).toContain('cmd-1');
+
+    act(() => {
+      combobox.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowDown', bubbles: true }));
+    });
+    // Disabled cmd-2 skipped -> lands on cmd-3
+    expect(combobox.getAttribute('aria-activedescendant')).toContain('cmd-3');
+
+    act(() => {
+      combobox.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }));
+    });
+    expect(onSelectAction).toHaveBeenCalledWith(actions[2]);
+
+    // Filter to empty state
+    const valueSetter = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value')?.set;
+    act(() => {
+      valueSetter?.call(combobox, 'zzzzz-no-match');
+      combobox.dispatchEvent(new Event('input', { bubbles: true }));
+    });
+    expect(dialog.querySelector('.yui-palette-empty')?.textContent).toContain('No matching commands');
+
+    act(() => {
+      document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
+    });
+    expect(onClosePalette).toHaveBeenCalledTimes(1);
+
+    rerenderNode(
+      <div>
+        <button type="button" className="palette-trigger">Open palette</button>
+        <CommandPalette
+          open={false}
+          actions={actions}
+          onSelectAction={onSelectAction}
+          onClose={onClosePalette}
+        />
+      </div>,
+    );
+    expect(document.activeElement).toBe(trigger);
+
+    const cssSource = await readSourceFile('../src/styles/components.css');
+    expect(cssSource).toContain('.yui-palette-card');
+    expect(cssSource).toContain('.yui-empty-panel');
+    expect(cssSource).toContain('.yui-diff-card');
   });
 });

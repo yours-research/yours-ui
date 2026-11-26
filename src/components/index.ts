@@ -152,3 +152,19 @@ export {
   type ShortcutSheetProps,
   type StatusToastProps,
 } from './ShortcutAndToast.js';
+export {
+  CommandPalette,
+  type CommandPaletteAction,
+  type CommandPaletteProps,
+} from './CommandPalette.js';
+export {
+  EmptyPanelState,
+  type EmptyPanelStarter,
+  type EmptyPanelStateProps,
+} from './EmptyPanelState.js';
+export {
+  DiffCard,
+  type DiffCardProps,
+  type DiffLine,
+  type DiffLineType,
+} from './DiffCard.js';
