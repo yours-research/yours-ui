@@ -718,24 +718,123 @@ describe('@yours/ui layout & TopNotch primitives', () => {
     expect(onSelectTab).toHaveBeenCalledWith('qwen');
   });
 
-  it('renders soft scroll-stage edge fade wrapper on SidePanelShell by default and supports disabling it', async () => {
+  it('gates scroll-stage edge fade classes dynamically from overflow and scroll position', async () => {
     const el = renderNode(
       <SidePanelShell>
         <div>Scrollable turn</div>
       </SidePanelShell>,
     );
-    expect(el.querySelector('.yui-scroll-wrap.yui-scroll-wrap--fade')).toBeTruthy();
+    const wrap = el.querySelector('.yui-scroll-wrap') as HTMLElement;
+    const scroller = el.querySelector('.yui-scroll-stage') as HTMLElement;
+
+    expect(wrap.classList.contains('yui-scroll-wrap--fade')).toBe(true);
+    expect(wrap.getAttribute('data-fade-top')).toBe('false');
+    expect(wrap.getAttribute('data-fade-bottom')).toBe('false');
+
+    // Simulate scrollable overflow and test top -> middle -> bottom transitions
+    Object.defineProperty(scroller, 'scrollHeight', { configurable: true, value: 600 });
+    Object.defineProperty(scroller, 'clientHeight', { configurable: true, value: 300 });
+    Object.defineProperty(scroller, 'scrollTop', { configurable: true, writable: true, value: 0 });
+
+    act(() => {
+      scroller.dispatchEvent(new Event('scroll'));
+    });
+    expect(wrap.getAttribute('data-fade-top')).toBe('false');
+    expect(wrap.getAttribute('data-fade-bottom')).toBe('true');
+
+    act(() => {
+      scroller.scrollTop = 120;
+      scroller.dispatchEvent(new Event('scroll'));
+    });
+    expect(wrap.getAttribute('data-fade-top')).toBe('true');
+    expect(wrap.getAttribute('data-fade-bottom')).toBe('true');
+
+    act(() => {
+      scroller.scrollTop = 300;
+      scroller.dispatchEvent(new Event('scroll'));
+    });
+    expect(wrap.getAttribute('data-fade-top')).toBe('true');
+    expect(wrap.getAttribute('data-fade-bottom')).toBe('false');
 
     rerenderNode(
       <SidePanelShell scrollEdgeFade={false}>
         <div>Scrollable turn</div>
       </SidePanelShell>,
     );
-    expect(el.querySelector('.yui-scroll-wrap')).toBeTruthy();
     expect(el.querySelector('.yui-scroll-wrap--fade')).toBeNull();
 
     const cssSource = await readStyleFile('../src/styles/components.css');
     expect(cssSource).toContain('.yui-scroll-wrap--fade::before');
     expect(cssSource).toContain('.yui-scroll-wrap--fade::after');
+  });
+
+  it('traps Tab/Shift+Tab inside open TopNotch drawer and restores trigger focus on close', () => {
+    const onClose = vi.fn();
+    const el = renderNode(
+      <div>
+        <TopNotch
+          expandedId={null}
+          onClose={onClose}
+          items={[
+            { id: 'threads', icon: 'history', label: 'Threads' },
+            { id: 'model', icon: 'local-device', label: 'Model' },
+          ]}
+        />
+      </div>,
+    );
+
+    const triggerBtn = el.querySelector('.yui-notch-btn') as HTMLButtonElement;
+    triggerBtn.focus();
+    expect(document.activeElement).toBe(triggerBtn);
+
+    rerenderNode(
+      <div>
+        <TopNotch
+          expandedId="threads"
+          onClose={onClose}
+          items={[
+            { id: 'threads', icon: 'history', label: 'Threads' },
+            { id: 'model', icon: 'local-device', label: 'Model' },
+          ]}
+          drawerContent={
+            <div>
+              <button type="button" className="drawer-first">First</button>
+              <button type="button" className="drawer-last">Last</button>
+            </div>
+          }
+        />
+      </div>,
+    );
+
+    const first = el.querySelector('.drawer-first') as HTMLButtonElement;
+    const last = el.querySelector('.drawer-last') as HTMLButtonElement;
+    expect(document.activeElement).toBe(first);
+
+    act(() => {
+      last.focus();
+      document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Tab', bubbles: true }));
+    });
+    expect(document.activeElement).toBe(first);
+
+    act(() => {
+      document.dispatchEvent(
+        new KeyboardEvent('keydown', { key: 'Tab', shiftKey: true, bubbles: true }),
+      );
+    });
+    expect(document.activeElement).toBe(last);
+
+    rerenderNode(
+      <div>
+        <TopNotch
+          expandedId={null}
+          onClose={onClose}
+          items={[
+            { id: 'threads', icon: 'history', label: 'Threads' },
+            { id: 'model', icon: 'local-device', label: 'Model' },
+          ]}
+        />
+      </div>,
+    );
+    expect(document.activeElement).toBe(triggerBtn);
   });
 });

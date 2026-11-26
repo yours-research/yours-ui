@@ -126,3 +126,11 @@ export {
   type VoiceSessionBarProps,
   type VoiceSessionState,
 } from './VoiceSessionBar.js';
+export {
+  LocalVaultExportCard,
+  SettingsSection,
+  SettingsToggleRow,
+  type LocalVaultExportCardProps,
+  type SettingsSectionProps,
+  type SettingsToggleRowProps,
+} from './SettingsVaultPrimitives.js';

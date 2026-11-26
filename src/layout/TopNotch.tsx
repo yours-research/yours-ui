@@ -1,7 +1,8 @@
-import { useEffect, type ReactNode } from 'react';
+import { useEffect, useRef, type ReactNode } from 'react';
 import { ApertureIcon } from '../icons/ApertureIcon.js';
 import type { ApertureIconName } from '../icons/iconData.js';
 import { NotchEar } from '../icons/NotchEar.js';
+import { useFocusTrap } from '../utils/focusTrap.js';
 
 export interface TopNotchItem {
   id: string;
@@ -37,6 +38,11 @@ export function TopNotch({
   className,
 }: TopNotchProps) {
   const isExpanded = expandedId !== null;
+  const drawerRef = useRef<HTMLDivElement | null>(null);
+  const trapActive = isExpanded && Boolean(drawerContent);
+
+  useFocusTrap(drawerRef, trapActive);
+
   const housingClassName = [
     'yui-notch-housing',
     items.length >= 5 ? 'yui-notch-housing--wide' : '',
@@ -98,7 +104,7 @@ export function TopNotch({
             })}
           </nav>
 
-          <div className="yui-notch-drawer" aria-hidden={!isExpanded}>
+          <div ref={drawerRef} className="yui-notch-drawer" aria-hidden={!isExpanded}>
             <div className="yui-notch-drawer-inner">
               {isExpanded && drawerContent ? (
                 <>

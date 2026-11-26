@@ -17,6 +17,7 @@ import {
   InlineCitationPill,
   InlineCitationPopover,
   KbdHint,
+  LocalVaultExportCard,
   MemoryInspectorList,
   MemoryRecordCard,
   MessageSkeleton,
@@ -28,6 +29,8 @@ import {
   ReasoningTrace,
   ScrollToBottomButton,
   SegmentedControl,
+  SettingsSection,
+  SettingsToggleRow,
   SourcesDrawer,
   StatusBadge,
   StreamingResponse,
@@ -1231,5 +1234,131 @@ describe('@yours/ui chat & runtime primitives', () => {
     expect(cssSource).toContain('.yui-dl-bar-card');
     expect(cssSource).toContain('.yui-voice-bar');
     expect(cssSource).toContain('.yui-scroll-wrap--fade');
+  });
+
+  it('traps focus in FloatingContextSheet & restores trigger focus, plus SettingsSection/SettingsToggleRow & LocalVaultExportCard', async () => {
+    const onToggleTheme = vi.fn();
+    const onExport = vi.fn();
+    const onImport = vi.fn();
+    const onWipe = vi.fn();
+    const onClose = vi.fn();
+
+    const el = renderNode(
+      <div>
+        <button type="button" className="sheet-trigger">Open sheet</button>
+        <SettingsSection title="Local runtime preferences" subtitle="All stored on-device" badge="Local">
+          <SettingsToggleRow
+            label="Thinking trace"
+            description="Show collapsible chain-of-thought during generation"
+            badge="Qwen3.5"
+            shortcut={['⌘', 'T']}
+            checked
+            onCheckedChange={onToggleTheme}
+          />
+          <SettingsToggleRow
+            label="Allow network tools"
+            description="Disabled under Lethal Trifecta strict breaker"
+            checked={false}
+            disabled
+            onCheckedChange={onToggleTheme}
+          />
+        </SettingsSection>
+        <LocalVaultExportCard
+          recordCountLabel="148 records"
+          onExportEncrypted={onExport}
+          onImportEncrypted={onImport}
+          onWipeAll={onWipe}
+        />
+      </div>,
+    );
+
+    // SettingsToggleRow toggle & disabled guard
+    const switches = el.querySelectorAll('[role="switch"]') as NodeListOf<HTMLButtonElement>;
+    expect(switches.length).toBe(2);
+    expect(switches[0].getAttribute('aria-checked')).toBe('true');
+    expect(switches[1].disabled).toBe(true);
+    act(() => {
+      switches[0].click();
+      switches[1].click();
+    });
+    expect(onToggleTheme).toHaveBeenCalledTimes(1);
+    expect(onToggleTheme).toHaveBeenCalledWith(false);
+
+    // LocalVaultExportCard passphrase gating & export/import/wipe confirm
+    const exportBtn = Array.from(el.querySelectorAll('.yui-vault-actions button')).find((b) =>
+      b.textContent?.includes('Export vault'),
+    ) as HTMLButtonElement;
+    const importBtn = Array.from(el.querySelectorAll('.yui-vault-actions button')).find((b) =>
+      b.textContent?.includes('Import'),
+    ) as HTMLButtonElement;
+    expect(exportBtn.disabled).toBe(true);
+    expect(importBtn.disabled).toBe(true);
+
+    const input = el.querySelector('.yui-vault-input') as HTMLInputElement;
+    const valueSetter = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value')?.set;
+    act(() => {
+      valueSetter?.call(input, 'correct-horse-staple');
+      input.dispatchEvent(new Event('input', { bubbles: true }));
+    });
+    expect(exportBtn.disabled).toBe(false);
+    expect(importBtn.disabled).toBe(false);
+
+    act(() => {
+      exportBtn.click();
+      importBtn.click();
+    });
+    expect(onExport).toHaveBeenCalledWith('correct-horse-staple');
+    expect(onImport).toHaveBeenCalledWith('correct-horse-staple');
+
+    act(() => {
+      (el.querySelector('.yui-vault-danger-zone button') as HTMLButtonElement).click();
+    });
+    expect(el.textContent).toContain('Erase all local memory shards?');
+    expect(onWipe).not.toHaveBeenCalled();
+
+    act(() => {
+      (Array.from(el.querySelectorAll('.yui-vault-confirm-row button')).find((b) =>
+        b.textContent?.includes('Confirm wipe'),
+      ) as HTMLButtonElement).click();
+    });
+    expect(onWipe).toHaveBeenCalledTimes(1);
+
+    // Focus trap & trigger restoration on FloatingContextSheet
+    const trigger = el.querySelector('.sheet-trigger') as HTMLButtonElement;
+    trigger.focus();
+    expect(document.activeElement).toBe(trigger);
+
+    rerenderNode(
+      <div>
+        <button type="button" className="sheet-trigger">Open sheet</button>
+        <FloatingContextSheet open title="Keyboard sheet" onClose={onClose}>
+          <button type="button" className="sheet-action">Sheet action</button>
+        </FloatingContextSheet>
+      </div>,
+    );
+
+    const closeBtn = el.querySelector('[aria-label="Close sheet"]') as HTMLButtonElement;
+    const actionBtn = el.querySelector('.sheet-action') as HTMLButtonElement;
+    expect(document.activeElement).toBe(closeBtn);
+
+    act(() => {
+      actionBtn.focus();
+      document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Tab', bubbles: true }));
+    });
+    expect(document.activeElement).toBe(closeBtn);
+
+    rerenderNode(
+      <div>
+        <button type="button" className="sheet-trigger">Open sheet</button>
+        <FloatingContextSheet open={false} title="Keyboard sheet" onClose={onClose}>
+          <button type="button" className="sheet-action">Sheet action</button>
+        </FloatingContextSheet>
+      </div>,
+    );
+    expect(document.activeElement).toBe(trigger);
+
+    const cssSource = await readSourceFile('../src/styles/components.css');
+    expect(cssSource).toContain('.yui-switch');
+    expect(cssSource).toContain('.yui-vault-card');
   });
 });

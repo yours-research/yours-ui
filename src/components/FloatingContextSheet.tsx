@@ -1,5 +1,6 @@
-import { useEffect, type ReactNode } from 'react';
+import { useEffect, useRef, type ReactNode } from 'react';
 import { XIcon } from '../icons/ApertureIcon.js';
+import { useFocusTrap } from '../utils/focusTrap.js';
 
 export interface FloatingContextSheetProps {
   open: boolean;
@@ -30,6 +31,9 @@ export function FloatingContextSheet({
   children,
   className,
 }: FloatingContextSheetProps) {
+  const sheetRef = useRef<HTMLElement | null>(null);
+  useFocusTrap(sheetRef, open);
+
   useEffect(() => {
     if (!open || !onClose) return;
     const onKeyDown = (event: KeyboardEvent) => {
@@ -48,6 +52,7 @@ export function FloatingContextSheet({
 
   return (
     <section
+      ref={sheetRef}
       data-slot="floating-context-sheet"
       role="dialog"
       aria-label={title}
