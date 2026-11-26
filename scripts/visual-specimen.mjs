@@ -74,9 +74,11 @@ import {
   SegmentedControl,
   SettingsSection,
   SettingsToggleRow,
+  ShortcutSheet,
   SidePanelShell,
   SourcesDrawer,
   StatusBadge,
+  StatusToast,
   StreamingResponse,
   ToastPill,
   ToolStepCard,
@@ -625,14 +627,8 @@ function RuntimeAndMemoryPanel({ theme }: { theme: 'light' | 'dark' }) {
             summary: 'Prefers concise table comparisons with tabular telemetry.',
             sourceDomain: 'yours.sh',
             relativeTime: '2m',
+            groupLabel: 'Today',
             scoreLabel: '98% match',
-          },
-          {
-            id: 'm2',
-            tier: 'episodic',
-            summary: 'Verified 20% annual discount above 8 workspace seats.',
-            sourceDomain: 'pricing.yours.sh',
-            relativeTime: '1h',
           },
           {
             id: 'm3',
@@ -640,6 +636,15 @@ function RuntimeAndMemoryPanel({ theme }: { theme: 'light' | 'dark' }) {
             summary: 'Temporary checkout form draft on Kyoto booking tab.',
             sourceDomain: 'stay.jp',
             relativeTime: 'Now',
+            groupLabel: 'Today',
+          },
+          {
+            id: 'm2',
+            tier: 'episodic',
+            summary: 'Verified 20% annual discount above 8 workspace seats.',
+            sourceDomain: 'pricing.yours.sh',
+            relativeTime: '1d',
+            groupLabel: 'Yesterday',
           },
         ]}
       />
@@ -748,10 +753,10 @@ function DataAndArtifactPanel({ theme }: { theme: 'light' | 'dark' }) {
         copyFormat="markdown"
         footerLabel="Tabular WebGPU measurements"
         columns={[
-          { key: 'model', label: 'Checkpoint' },
+          { key: 'model', label: 'Checkpoint', sortable: true },
           { key: 'quant', label: 'Quant' },
-          { key: 'ttft', label: 'TTFT', numeric: true },
-          { key: 'tps', label: 'Decode', numeric: true },
+          { key: 'ttft', label: 'TTFT', numeric: true, sortable: true },
+          { key: 'tps', label: 'Decode', numeric: true, sortable: true },
           { key: 'vram', label: 'VRAM', numeric: true },
         ]}
         rows={[
@@ -785,6 +790,59 @@ function DataAndArtifactPanel({ theme }: { theme: 'light' | 'dark' }) {
   );
 }
 
+function ShortcutAndToastPanel({ theme }: { theme: 'light' | 'dark' }) {
+  const [toastOpen, setToastOpen] = useState(true);
+
+  return (
+    <SidePanelShell
+      theme={theme}
+      notch={<TopNotch items={NOTCH_ITEMS} expandedId={null} />}
+      footer={
+        <div className="yui-spec-foot">
+          <StatusToast
+            open={toastOpen}
+            tone="local"
+            message="Memory snapshot backed up locally"
+            detail="148 records · 420 KB"
+            onUndo={() => {}}
+            onDismiss={() => setToastOpen(false)}
+          />
+          <FloatingComposer
+            value=""
+            onChange={() => {}}
+            onSubmit={() => {}}
+            leftSlot={<StatusBadge tone="muted">Press ? for keys</StatusBadge>}
+          />
+        </div>
+      }
+    >
+      <ShortcutSheet
+        title="Keyboard shortcuts"
+        subtitle="Extension side-panel quick keys"
+        badge="v1.0"
+        groups={[
+          {
+            title: 'Notch & Navigation',
+            items: [
+              { label: 'Focus composer', description: 'Jump directly to prompt bar', keys: ['⌘', 'K'] },
+              { label: 'Toggle threads drawer', keys: ['⌘', 'H'] },
+              { label: 'Close active overlay', keys: 'Esc' },
+            ],
+          },
+          {
+            title: 'Local Runtime',
+            items: [
+              { label: 'Toggle thinking trace', keys: ['⌘', 'T'] },
+              { label: 'Start / stop voice', keys: ['⌘', 'M'] },
+              { label: 'Copy last response', keys: ['⌘', '⇧', 'C'] },
+            ],
+          },
+        ]}
+      />
+    </SidePanelShell>
+  );
+}
+
 function SpecimenApp() {
   const params = new URLSearchParams(window.location.search);
   const mode = params.get('mode') || 'gallery';
@@ -809,6 +867,7 @@ function SpecimenApp() {
         {panel === 'runtime' ? <RuntimeAndMemoryPanel theme={theme} /> : null}
         {panel === 'settings' ? <SettingsAndVaultPanel theme={theme} /> : null}
         {panel === 'data' ? <DataAndArtifactPanel theme={theme} /> : null}
+        {panel === 'shortcuts' ? <ShortcutAndToastPanel theme={theme} /> : null}
         {panel === 'genui' ? <GenUiShowcasePanel theme={theme} /> : null}
       </div>
     );
@@ -824,6 +883,7 @@ function SpecimenApp() {
       <div className="yui-spec-frame"><RuntimeAndMemoryPanel theme={theme} /></div>
       <div className="yui-spec-frame"><SettingsAndVaultPanel theme={theme} /></div>
       <div className="yui-spec-frame"><DataAndArtifactPanel theme={theme} /></div>
+      <div className="yui-spec-frame"><ShortcutAndToastPanel theme={theme} /></div>
       <div className="yui-spec-frame-auto"><GenUiShowcasePanel theme={theme} /></div>
     </div>
   );
@@ -1038,6 +1098,7 @@ async function main() {
       'runtime',
       'settings',
       'data',
+      'shortcuts',
       'genui',
     ];
     for (const theme of ['light', 'dark']) {
@@ -1176,6 +1237,10 @@ async function main() {
         }
 
         if (panel === 'runtime') {
+          const groupCount = await page.locator('[data-slot="memory-group"]').count();
+          if (groupCount !== 2) {
+            throw new Error(`MemoryInspectorList sticky date groups failed (${theme}): ${groupCount}`);
+          }
           await page.click('.yui-mem-filter .yui-seg-btn:nth-of-type(2)');
           await page.waitForTimeout(80);
           const profileCount = await page.locator('[data-slot="memory-record-card"]').count();
@@ -1244,11 +1309,27 @@ async function main() {
             );
           }
 
-          const copyTableBtn = page.locator('[data-slot="data-table-card"] button');
+          const copyTableBtn = page.locator('[data-slot="data-table-card"] button').first();
           await copyTableBtn.click();
           const copiedText = await copyTableBtn.textContent();
           if (!copiedText || !copiedText.includes('Copied')) {
             throw new Error(`DataTableCard Copy button failed (${theme}): ${copiedText}`);
+          }
+
+          const decodeHeader = page.locator('[data-slot="data-table-card"] th:nth-of-type(4)');
+          await decodeHeader.locator('button').click();
+          const ascSort = await decodeHeader.getAttribute('aria-sort');
+          await decodeHeader.locator('button').click();
+          const descSort = await decodeHeader.getAttribute('aria-sort');
+          if (ascSort !== 'ascending' || descSort !== 'descending') {
+            throw new Error(`DataTableCard sort check failed (${theme}): asc=${ascSort}, desc=${descSort}`);
+          }
+
+          const headerCopy = page.locator('[data-slot="artifact-header-copy"]');
+          await headerCopy.click();
+          const headerCopiedText = await headerCopy.textContent();
+          if (!headerCopiedText || !headerCopiedText.includes('Copied')) {
+            throw new Error(`ArtifactPreviewCard header copy failed (${theme}): ${headerCopiedText}`);
           }
         }
 
@@ -1272,25 +1353,27 @@ async function main() {
         }
       }
 
-      // 400px width verification on Data & Artifact panel + reduced-motion audit
+      // 400px width verification on Data & Shortcuts panels + reduced-motion audit
       await page.setViewportSize({ width: 400, height: 828 });
       await page.emulateMedia({ reducedMotion: 'reduce' });
-      await page.goto(`${baseUrl}/?mode=single&theme=${theme}&panel=data&width=400`, {
-        waitUntil: 'networkidle',
-      });
-      await waitForSpecimen(`400/${theme}/data`);
-      const data400Audit = await page.evaluate(() => {
-        const root = document.getElementById('specimen-root');
-        const inlineStyleCount = root ? root.querySelectorAll('[style]').length : -1;
-        const docOverflow = document.documentElement.scrollWidth > 400;
-        return { inlineStyleCount, docOverflow };
-      });
-      if (data400Audit.inlineStyleCount !== 0 || data400Audit.docOverflow) {
-        throw new Error(`400px data check failed (${theme}): ${JSON.stringify(data400Audit)}`);
+      for (const widePanel of ['data', 'shortcuts']) {
+        await page.goto(`${baseUrl}/?mode=single&theme=${theme}&panel=${widePanel}&width=400`, {
+          waitUntil: 'networkidle',
+        });
+        await waitForSpecimen(`400/${theme}/${widePanel}`);
+        const wideAudit = await page.evaluate(() => {
+          const root = document.getElementById('specimen-root');
+          const inlineStyleCount = root ? root.querySelectorAll('[style]').length : -1;
+          const docOverflow = document.documentElement.scrollWidth > 400;
+          return { inlineStyleCount, docOverflow };
+        });
+        if (wideAudit.inlineStyleCount !== 0 || wideAudit.docOverflow) {
+          throw new Error(`400px ${widePanel} check failed (${theme}): ${JSON.stringify(wideAudit)}`);
+        }
+        const widePath = path.join(OUT_DIR, `specimen-${theme}-${widePanel}-400.png`);
+        await page.screenshot({ path: widePath });
+        outputs.push(widePath);
       }
-      const data400Path = path.join(OUT_DIR, `specimen-${theme}-data-400.png`);
-      await page.screenshot({ path: data400Path });
-      outputs.push(data400Path);
       await page.emulateMedia({ reducedMotion: 'no-preference' });
 
       // Narrow 340px stress pass across interactive & dense panels
@@ -1303,6 +1386,7 @@ async function main() {
         'runtime',
         'settings',
         'data',
+        'shortcuts',
         'genui',
       ]) {
         await page.goto(`${baseUrl}/?mode=single&theme=${theme}&panel=${narrowPanel}&narrow=1`, {
@@ -1397,10 +1481,15 @@ async function main() {
           await page.screenshot({ path: dataNarrowPath });
           outputs.push(dataNarrowPath);
         }
+        if (narrowPanel === 'shortcuts') {
+          const shortcutsNarrowPath = path.join(OUT_DIR, `specimen-${theme}-shortcuts-340.png`);
+          await page.screenshot({ path: shortcutsNarrowPath });
+          outputs.push(shortcutsNarrowPath);
+        }
       }
 
-      // Overview 9-up comparison sheet
-      await page.setViewportSize({ width: 3656, height: 900 });
+      // Overview 10-up comparison sheet
+      await page.setViewportSize({ width: 4060, height: 900 });
       await page.goto(`${baseUrl}/?mode=gallery&theme=${theme}`, { waitUntil: 'networkidle' });
       const overviewPath = path.join(OUT_DIR, `specimen-${theme}-overview.png`);
       await page.screenshot({ path: overviewPath, fullPage: true });
