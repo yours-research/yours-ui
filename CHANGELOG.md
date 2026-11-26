@@ -3,14 +3,16 @@
 All notable milestones for **`@yours/ui`** are documented here.
 The library targets Chrome MV3 side panels (`340px–440px`), maintains zero runtime dependencies, zero JSX inline `style` attributes, and zero `dangerouslySetInnerHTML`.
 
-## Unreleased / Milestone 17 (PR #20)
+## Unreleased / Milestone 18 (PR #21)
 
-- Fixed `ExportSessionCard` header layout at `340px` so `title` and `metaLabel` share row 1 cleanly while `subtitle` spans full width underneath.
-- Added **`TimelineCard`** (`TimelineCardProps`, `TimelineStep`, `TimelineStepStatus`) and **`QuoteExcerptCard`** (`QuoteExcerptCardProps`) to `@yours/ui/genui` and `@yours/ui` with `@media (forced-colors: active)` and `340px` support.
-- Extracted shared `useCopyFeedback` hook (`src/utils/clipboard.ts`) to eliminate duplicate clipboard/timer boilerplate across copyable cards, keeping total JS/CSS sizes cleanly under budget.
-- Added `400px` & `340px` Light/Dark `genui` showcase checks in `scripts/visual-specimen.mjs`.
+- Fixed `CompareTable` and `.yui-genui-card` dark-mode ink inheritance so non-emphasized table values (`$200`, `$250`), checked checklist items, secondary key-value labels, and metric deltas maintain full WCAG AA contrast against dark surfaces.
+- Compacted published `dist/` bundles (compact icon path JSON in `generate-icons.mjs`, comment-stripped AST printing on JS + CSS minification in `copy-assets.mjs` while keeping full `.d.ts` comments) down to `80.77 KB` JS gzip (`<= 86.00 KB` guard) and `17.96 KB` CSS gzip (`<= 20.50 KB` guard).
+- Tightened `PromptTemplateList` narrow-viewport (`<= 360px`) spacing for improved row legibility at `340px`.
+- Added automated Light & Dark WCAG AA contrast assertions across all 10 `@yours/ui/genui` cards in `scripts/visual-specimen.mjs`.
 
 ## Milestone History (`v0.1.0`)
+
+- **Milestone 17 (PR #20):** Fixed `ExportSessionCard` `340px` header layout, added `TimelineCard` & `QuoteExcerptCard` to `@yours/ui/genui`, extracted shared `useCopyFeedback` hook (`src/utils/clipboard.ts`), and added `400px` & `340px` Light/Dark `genui` checks in `scripts/visual-specimen.mjs`.
 
 - **Milestone 16 (PR #19):** Polished `VoiceSessionCard` primary control row + full-width `Hold [Space] to talk` bar, added `PromptTemplateList` and `ExportSessionCard`, consolidated CSS card/privacy rules, and added `CHANGELOG.md`.
 
