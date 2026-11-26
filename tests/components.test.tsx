@@ -13,11 +13,15 @@ import {
   FloatingComposer,
   FloatingContextSheet,
   FollowUpSuggestions,
+  HardwareStatusStrip,
   InlineCitationPill,
   InlineCitationPopover,
   KbdHint,
+  MemoryInspectorList,
+  MemoryRecordCard,
   MessageSkeleton,
   ModelDownloadGate,
+  ModelDownloadProgressBar,
   PermissionApprovalCard,
   PromptCapsuleStack,
   QuotedContextBanner,
@@ -33,6 +37,7 @@ import {
   ToolStepCard,
   UserMessageBubble,
   VoiceDictationPill,
+  VoiceSessionBar,
   type StreamingResponseFeedback,
   type StreamingResponseProps,
   type StreamingResponseStatus,
@@ -1088,5 +1093,143 @@ describe('@yours/ui chat & runtime primitives', () => {
     expect(cssSource).toContain('.yui-ctx-sheet');
     expect(cssSource).toContain('.yui-cite-card');
     expect(cssSource).toContain('.yui-sheet-region');
+  });
+
+  it('renders MemoryInspectorList with tier filtering & undo, HardwareStatusStrip, ModelDownloadProgressBar, and VoiceSessionBar', async () => {
+    const onForget = vi.fn();
+    const onUndo = vi.fn();
+    const onPause = vi.fn();
+    const onCancel = vi.fn();
+    const onToggleBargeIn = vi.fn();
+    const onToggleMute = vi.fn();
+    const onEndSession = vi.fn();
+
+    const records = [
+      {
+        id: 'm1',
+        tier: 'profile' as const,
+        summary: 'Prefers concise benchmark deltas over prose',
+        sourceDomain: 'yours.sh',
+        relativeTime: '2m',
+      },
+      {
+        id: 'm2',
+        tier: 'episodic' as const,
+        summary: 'Audited Q3 enterprise billing clauses',
+        sourceDomain: 'pricing.yours.sh',
+        relativeTime: '1h',
+      },
+      {
+        id: 'm3',
+        tier: 'working' as const,
+        summary: 'Comparing 8-seat annual renewal savings',
+        relativeTime: 'Now',
+      },
+    ];
+
+    const el = renderNode(
+      <div>
+        <HardwareStatusStrip
+          tierLabel="WebGPU FP16"
+          adapterLabel="Apple M3 Max"
+          memoryLabel="2.6 GB OPFS"
+          status="ready"
+          sha256Verified
+        />
+        <ModelDownloadProgressBar
+          modelLabel="Qwen3.5-4B · Q4F16"
+          percent={64}
+          state="downloading"
+          hardwareLabel="WebGPU"
+          loadedLabel="1.66 GB"
+          totalLabel="2.60 GB"
+          speedLabel="118 MB/s"
+          etaLabel="8s"
+          onPause={onPause}
+          onCancel={onCancel}
+        />
+        <VoiceSessionBar
+          state="speech-detected"
+          elapsedLabel="0:14"
+          levels={[0.1, 0.35, 0.6, 0.82, 0.95]}
+          bargeInEnabled
+          onToggleBargeIn={onToggleBargeIn}
+          onToggleMute={onToggleMute}
+          onEndSession={onEndSession}
+        />
+        <MemoryInspectorList
+          records={records}
+          forgottenIds={['m3']}
+          onForget={onForget}
+          onUndo={onUndo}
+        />
+      </div>,
+    );
+
+    expect(el.querySelector('[data-slot="hardware-status-strip"]')?.textContent).toContain(
+      'WebGPU FP16',
+    );
+    expect(el.querySelector('[data-slot="hardware-status-strip"]')?.textContent).toContain('SHA-256');
+
+    const progress = el.querySelector('.yui-dl-progress') as HTMLProgressElement;
+    expect(progress.getAttribute('value')).toBe('64');
+    expect(el.querySelector('.yui-dl-bar-card')?.textContent).toContain('118 MB/s');
+
+    act(() => {
+      (Array.from(el.querySelectorAll('.yui-dl-bar-card button')).find((b) =>
+        b.textContent?.includes('Pause'),
+      ) as HTMLButtonElement).click();
+      (el.querySelector('[aria-label="Cancel download"]') as HTMLButtonElement).click();
+    });
+    expect(onPause).toHaveBeenCalledTimes(1);
+    expect(onCancel).toHaveBeenCalledTimes(1);
+
+    // VoiceSessionBar 5-bar meter quantization + controls
+    const bars = Array.from(el.querySelectorAll('.yui-vm-bar')).map((b) => b.className);
+    expect(bars.length).toBe(5);
+    expect(bars[0]).toContain('yui-vm-bar--0');
+    expect(bars[4]).toContain('yui-vm-bar--4');
+
+    act(() => {
+      (Array.from(el.querySelectorAll('.yui-voice-actions button')).find((b) =>
+        b.textContent?.includes('Barge-in'),
+      ) as HTMLButtonElement).click();
+      (el.querySelector('[aria-label="Mute microphone"]') as HTMLButtonElement).click();
+      (el.querySelector('[aria-label="End voice session"]') as HTMLButtonElement).click();
+    });
+    expect(onToggleBargeIn).toHaveBeenCalledTimes(1);
+    expect(onToggleMute).toHaveBeenCalledTimes(1);
+    expect(onEndSession).toHaveBeenCalledTimes(1);
+
+    // MemoryInspectorList filtering & Forget / Undo callbacks
+    expect(el.querySelectorAll('[data-slot="memory-record-card"]').length).toBe(3);
+    act(() => {
+      (el.querySelector('[aria-label="Forget memory"]') as HTMLButtonElement).click();
+      (el.querySelector('[aria-label="Undo forgetting memory"]') as HTMLButtonElement).click();
+    });
+    expect(onForget).toHaveBeenCalledWith('m1');
+    expect(onUndo).toHaveBeenCalledWith('m3');
+
+    const segButtons = el.querySelectorAll('.yui-mem-filter .yui-seg-btn') as NodeListOf<HTMLButtonElement>;
+    act(() => {
+      // Document filter (5th option) has no records -> EmptyState
+      segButtons[4].click();
+    });
+    expect(el.querySelectorAll('[data-slot="memory-record-card"]').length).toBe(0);
+    expect(el.querySelector('[data-slot="empty-state"]')).toBeTruthy();
+
+    act(() => {
+      // Profile filter (2nd option) -> 1 record
+      segButtons[1].click();
+    });
+    expect(el.querySelectorAll('[data-slot="memory-record-card"]').length).toBe(1);
+    expect(MemoryRecordCard).toBeTypeOf('function');
+
+    const cssSource = await readSourceFile('../src/styles/components.css');
+    expect(cssSource).toContain('.yui-mem-card');
+    expect(cssSource).toContain('.yui-hw-strip');
+    expect(cssSource).toContain('.yui-dl-bar-card');
+    expect(cssSource).toContain('.yui-voice-bar');
+    expect(cssSource).toContain('.yui-scroll-wrap--fade');
   });
 });

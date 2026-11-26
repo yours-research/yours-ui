@@ -105,3 +105,24 @@ export {
   FloatingContextSheet,
   type FloatingContextSheetProps,
 } from './FloatingContextSheet.js';
+export {
+  MemoryInspectorList,
+  MemoryRecordCard,
+  type MemoryInspectorListProps,
+  type MemoryRecord,
+  type MemoryRecordCardProps,
+  type MemoryTier,
+} from './MemoryInspector.js';
+export {
+  HardwareStatusStrip,
+  ModelDownloadProgressBar,
+  type HardwareStatusStripProps,
+  type HardwareTierStatus,
+  type ModelDownloadProgressBarProps,
+  type ModelDownloadState,
+} from './RuntimeTelemetry.js';
+export {
+  VoiceSessionBar,
+  type VoiceSessionBarProps,
+  type VoiceSessionState,
+} from './VoiceSessionBar.js';

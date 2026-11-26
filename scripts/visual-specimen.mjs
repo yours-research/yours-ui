@@ -49,13 +49,16 @@ import {
   FloatingComposer,
   FloatingContextSheet,
   FollowUpSuggestions,
+  HardwareStatusStrip,
   HookSidebarList,
   InlineCitationPill,
   InlineCitationPopover,
   MatrixOrb,
+  MemoryInspectorList,
   MetricStripCard,
   MicIcon,
   ModelDownloadGate,
+  ModelDownloadProgressBar,
   NotchDrawerSearch,
   NotchOptionRow,
   PageActionCard,
@@ -74,6 +77,7 @@ import {
   ToolStepCard,
   TopNotch,
   UserMessageBubble,
+  VoiceSessionBar,
 } from '../src/index.js';
 
 const NOTCH_ITEMS = [
@@ -553,6 +557,89 @@ function SheetAndCitationPanel({ theme }: { theme: 'light' | 'dark' }) {
   );
 }
 
+function RuntimeAndMemoryPanel({ theme }: { theme: 'light' | 'dark' }) {
+  const [tier, setTier] = useState<'all' | 'profile' | 'episodic' | 'working' | 'document'>('all');
+  const [forgotten, setForgotten] = useState<string[]>(['m3']);
+  const [bargeIn, setBargeIn] = useState(true);
+
+  return (
+    <SidePanelShell
+      theme={theme}
+      notch={<TopNotch items={NOTCH_ITEMS} expandedId={null} />}
+      footer={
+        <div className="yui-spec-foot">
+          <VoiceSessionBar
+            state="speech-detected"
+            elapsedLabel="0:14"
+            levels={[0.35, 0.72, 0.96, 0.78, 0.44]}
+            bargeInEnabled={bargeIn}
+            onToggleBargeIn={() => setBargeIn((v) => !v)}
+            onToggleMute={() => {}}
+            onEndSession={() => {}}
+          />
+          <FloatingComposer
+            value=""
+            onChange={() => {}}
+            onSubmit={() => {}}
+            leftSlot={<StatusBadge tone="local" dot>SQLite FTS5</StatusBadge>}
+          />
+        </div>
+      }
+    >
+      <HardwareStatusStrip
+        tierLabel="WebGPU FP16"
+        adapterLabel="M3 Max"
+        memoryLabel="2.6 GB"
+        status="ready"
+        sha256Verified
+      />
+      <ModelDownloadProgressBar
+        modelLabel="Qwen3.5-4B · Q4F16"
+        percent={74}
+        state="downloading"
+        hardwareLabel="WGSL"
+        loadedLabel="1.92 GB"
+        totalLabel="2.60 GB"
+        speedLabel="118 MB/s"
+        etaLabel="6s"
+        onPause={() => {}}
+        onCancel={() => {}}
+      />
+      <MemoryInspectorList
+        activeTier={tier}
+        onTierChange={setTier}
+        forgottenIds={forgotten}
+        onForget={(id) => setForgotten((prev) => (prev.includes(id) ? prev : [...prev, id]))}
+        onUndo={(id) => setForgotten((prev) => prev.filter((item) => item !== id))}
+        records={[
+          {
+            id: 'm1',
+            tier: 'profile',
+            summary: 'Prefers concise table comparisons with tabular telemetry.',
+            sourceDomain: 'yours.sh',
+            relativeTime: '2m',
+            scoreLabel: '98% match',
+          },
+          {
+            id: 'm2',
+            tier: 'episodic',
+            summary: 'Verified 20% annual discount above 8 workspace seats.',
+            sourceDomain: 'pricing.yours.sh',
+            relativeTime: '1h',
+          },
+          {
+            id: 'm3',
+            tier: 'working',
+            summary: 'Temporary checkout form draft on Kyoto booking tab.',
+            sourceDomain: 'stay.jp',
+            relativeTime: 'Now',
+          },
+        ]}
+      />
+    </SidePanelShell>
+  );
+}
+
 function SpecimenApp() {
   const params = new URLSearchParams(window.location.search);
   const mode = params.get('mode') || 'gallery';
@@ -568,6 +655,7 @@ function SpecimenApp() {
         {panel === 'chat' ? <ActiveChatPanel theme={theme} /> : null}
         {panel === 'live' ? <LiveStreamPopoverPanel theme={theme} /> : null}
         {panel === 'sheet' ? <SheetAndCitationPanel theme={theme} /> : null}
+        {panel === 'runtime' ? <RuntimeAndMemoryPanel theme={theme} /> : null}
         {panel === 'genui' ? <GenUiShowcasePanel theme={theme} /> : null}
       </div>
     );
@@ -580,6 +668,7 @@ function SpecimenApp() {
       <div className="yui-spec-frame"><LiveStreamPopoverPanel theme={theme} /></div>
       <div className="yui-spec-frame"><ActiveChatPanel theme={theme} /></div>
       <div className="yui-spec-frame"><SheetAndCitationPanel theme={theme} /></div>
+      <div className="yui-spec-frame"><RuntimeAndMemoryPanel theme={theme} /></div>
       <div className="yui-spec-frame-auto"><GenUiShowcasePanel theme={theme} /></div>
     </div>
   );
@@ -781,7 +870,7 @@ async function main() {
       }
     };
 
-    const singlePanels = ['resting', 'notch', 'live', 'chat', 'sheet', 'genui'];
+    const singlePanels = ['resting', 'notch', 'live', 'chat', 'sheet', 'runtime', 'genui'];
     for (const theme of ['light', 'dark']) {
       await page.setViewportSize({ width: 380, height: 828 });
       for (const panel of singlePanels) {
@@ -863,7 +952,7 @@ async function main() {
 
       // Narrow 340px stress pass across interactive & dense panels
       await page.setViewportSize({ width: 340, height: 828 });
-      for (const narrowPanel of ['resting', 'live', 'chat', 'sheet', 'genui']) {
+      for (const narrowPanel of ['resting', 'live', 'chat', 'sheet', 'runtime', 'genui']) {
         await page.goto(`${baseUrl}/?mode=single&theme=${theme}&panel=${narrowPanel}&narrow=1`, {
           waitUntil: 'networkidle',
         });
@@ -914,8 +1003,8 @@ async function main() {
         }
       }
 
-      // Overview 6-up comparison sheet
-      await page.setViewportSize({ width: 2444, height: 900 });
+      // Overview 7-up comparison sheet
+      await page.setViewportSize({ width: 2848, height: 900 });
       await page.goto(`${baseUrl}/?mode=gallery&theme=${theme}`, { waitUntil: 'networkidle' });
       const overviewPath = path.join(OUT_DIR, `specimen-${theme}-overview.png`);
       await page.screenshot({ path: overviewPath, fullPage: true });
