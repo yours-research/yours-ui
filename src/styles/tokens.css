@@ -68,6 +68,7 @@
   --yui-green-text: #15803D;
   --yui-green-soft: rgba(21, 128, 61, 0.14);
   --yui-amber: #B45309;
+  --yui-amber-ink: #92400E;
   --yui-amber-soft: rgba(180, 83, 9, 0.10);
   --yui-warm-wash: rgba(180, 83, 9, 0.06);
   --yui-danger: #B91C1C;
@@ -196,6 +197,7 @@
     --yui-green-text: #7CC99A;
     --yui-green-soft: rgba(74, 222, 128, 0.16);
     --yui-amber: #FBBF24;
+    --yui-amber-ink: #FCD34D;
     --yui-amber-soft: rgba(251, 191, 36, 0.14);
     --yui-warm-wash: rgba(251, 191, 36, 0.08);
     --yui-danger: #F87171;
@@ -274,6 +276,7 @@
   --yui-green-text: #15803D;
   --yui-green-soft: rgba(21, 128, 61, 0.14);
   --yui-amber: #B45309;
+  --yui-amber-ink: #92400E;
   --yui-amber-soft: rgba(180, 83, 9, 0.10);
   --yui-warm-wash: rgba(180, 83, 9, 0.06);
   --yui-danger: #B91C1C;
@@ -351,6 +354,7 @@
   --yui-green-text: #7CC99A;
   --yui-green-soft: rgba(74, 222, 128, 0.16);
   --yui-amber: #FBBF24;
+  --yui-amber-ink: #FCD34D;
   --yui-amber-soft: rgba(251, 191, 36, 0.14);
   --yui-warm-wash: rgba(251, 191, 36, 0.08);
   --yui-danger: #F87171;

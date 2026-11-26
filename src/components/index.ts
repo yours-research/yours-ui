@@ -127,6 +127,15 @@ export {
   type VoiceSessionState,
 } from './VoiceSessionBar.js';
 export {
+  AudioLevelMeter,
+  type AudioLevelMeterProps,
+  type AudioLevelMeterTone,
+} from './AudioLevelMeter.js';
+export {
+  VoiceSessionCard,
+  type VoiceSessionCardProps,
+} from './VoiceSessionCard.js';
+export {
   LocalVaultExportCard,
   SettingsSection,
   SettingsToggleRow,

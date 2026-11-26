@@ -30,7 +30,11 @@
       "types": "./dist/genui/index.d.ts",
       "import": "./dist/genui/index.js"
     },
-    "./styles": "./dist/styles/index.css",
+    "./styles": {
+      "types": "./dist/styles/index.d.ts",
+      "style": "./dist/styles/index.css",
+      "default": "./dist/styles/index.css"
+    },
     "./styles/tokens.css": "./dist/styles/tokens.css",
     "./styles/components.css": "./dist/styles/components.css"
   },
@@ -52,6 +56,7 @@
     "generate:icons": "node scripts/generate-icons.mjs",
     "typecheck": "tsc --noEmit",
     "build": "node scripts/generate-icons.mjs && tsc -p tsconfig.build.json && node scripts/copy-assets.mjs",
+    "check:size": "node scripts/check-size.mjs",
     "test": "vitest run",
     "test:watch": "vitest",
     "verify:visual": "node scripts/visual-specimen.mjs"

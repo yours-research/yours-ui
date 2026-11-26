@@ -13,4 +13,8 @@ for (const file of fs.readdirSync(SRC_STYLES)) {
     fs.copyFileSync(path.join(SRC_STYLES, file), path.join(DIST_STYLES, file));
   }
 }
+fs.writeFileSync(
+  path.join(DIST_STYLES, 'index.d.ts'),
+  '// Side-effect CSS entrypoint declaration for strict TypeScript consumers.\nexport {};\n',
+);
 console.log('Copied CSS design tokens and component styles to dist/styles/');

@@ -99,6 +99,8 @@ import {
   TopNotch,
   UserMessageBubble,
   VoiceSessionBar,
+  VoiceSessionCard,
+  AudioLevelMeter,
 } from '../src/index.js';
 
 const NOTCH_ITEMS = [
@@ -1321,6 +1323,52 @@ function RecoveryAndNoticePanel({ theme }: { theme: 'light' | 'dark' }) {
   );
 }
 
+function VoiceAndComposerPanel({ theme }: { theme: 'light' | 'dark' }) {
+  const [muted, setMuted] = useState(false);
+  const [bargeIn, setBargeIn] = useState(true);
+  const [cmdOpened, setCmdOpened] = useState(false);
+  const [prompt, setPrompt] = useState('Summarize voice transcript locally');
+
+  return (
+    <SidePanelShell
+      theme={theme}
+      notch={<TopNotch items={NOTCH_ITEMS} expandedId={null} />}
+      footer={
+        <FloatingComposer
+          value={prompt}
+          onChange={setPrompt}
+          onSubmit={() => {}}
+          onOpenCommands={() => setCmdOpened((prev) => !prev)}
+          commandsLabel="Open slash commands"
+          contextUsageLabel="6.4k / 8k"
+          contextUsageTone="warning"
+          leftSlot={
+            <StatusBadge tone="local" dot>
+              {cmdOpened ? 'Commands open' : 'Qwen3.5-4B'}
+            </StatusBadge>
+          }
+        />
+      }
+    >
+      <VoiceSessionCard
+        state="speech-detected"
+        elapsedLabel="00:18"
+        transcript="Compare the OPFS weight size"
+        interimTranscript="between Qwen3.5-4B and Gemma"
+        level={0.78}
+        pushToTalkKey="Space"
+        onPushToTalk={() => {}}
+        bargeInEnabled={bargeIn}
+        onToggleBargeIn={() => setBargeIn((prev) => !prev)}
+        muted={muted}
+        onToggleMute={() => setMuted((prev) => !prev)}
+        onEndSession={() => {}}
+      />
+      <AudioLevelMeter level={0.68} tone="speaking" bars={12} animated label="Assistant TTS output level" />
+    </SidePanelShell>
+  );
+}
+
 function ShortcutAndToastPanel({ theme }: { theme: 'light' | 'dark' }) {
   const [toastOpen, setToastOpen] = useState(true);
   const [drawerOpen, setDrawerOpen] = useState(false);
@@ -1437,6 +1485,7 @@ function SpecimenApp() {
         {panel === 'budget' ? <BudgetAndCitationPanel theme={theme} /> : null}
         {panel === 'onboarding' ? <OnboardingAndCodePanel theme={theme} /> : null}
         {panel === 'recovery' ? <RecoveryAndNoticePanel theme={theme} /> : null}
+        {panel === 'voice' ? <VoiceAndComposerPanel theme={theme} /> : null}
         {panel === 'genui' ? <GenUiShowcasePanel theme={theme} /> : null}
       </div>
     );
@@ -1461,6 +1510,7 @@ function SpecimenApp() {
       <div className="yui-spec-frame"><BudgetAndCitationPanel theme={theme} /></div>
       <div className="yui-spec-frame"><OnboardingAndCodePanel theme={theme} /></div>
       <div className="yui-spec-frame"><RecoveryAndNoticePanel theme={theme} /></div>
+      <div className="yui-spec-frame"><VoiceAndComposerPanel theme={theme} /></div>
       <div className="yui-spec-frame-auto"><GenUiShowcasePanel theme={theme} /></div>
     </div>
   );
@@ -1684,6 +1734,7 @@ async function main() {
       'budget',
       'onboarding',
       'recovery',
+      'voice',
       'genui',
     ];
     const blurActive = () =>
@@ -2337,6 +2388,81 @@ async function main() {
           await page.locator('[data-slot="inline-notice"] .yui-notice-action').first().click();
         }
 
+        if (panel === 'voice') {
+          const voiceContrast = await page.evaluate(() => {
+            const parseRgba = (str) => {
+              const m = str.match(/rgba?\(([^)]+)\)/);
+              if (!m) return null;
+              const parts = m[1].split(',').map((x) => parseFloat(x.trim()));
+              return [parts[0], parts[1], parts[2], parts[3] ?? 1];
+            };
+            const relLum = ([r, g, b]) => {
+              const f = (c) => {
+                const s = c / 255;
+                return s <= 0.03928 ? s / 12.92 : Math.pow((s + 0.055) / 1.055, 2.4);
+              };
+              return 0.2126 * f(r) + 0.7152 * f(g) + 0.0722 * f(b);
+            };
+            const compositeOver = (fg, bg) => {
+              const a = fg[3] ?? 1;
+              return [
+                fg[0] * a + bg[0] * (1 - a),
+                fg[1] * a + bg[1] * (1 - a),
+                fg[2] * a + bg[2] * (1 - a),
+                1,
+              ];
+            };
+            const effectiveBg = (el) => {
+              const stack = [];
+              let cur = el;
+              while (cur && cur !== document.documentElement) {
+                const bg = parseRgba(getComputedStyle(cur).backgroundColor);
+                if (bg && bg[3] > 0) stack.unshift(bg);
+                cur = cur.parentElement;
+              }
+              return stack.reduce((acc, layer) => compositeOver(layer, acc), [255, 255, 255, 1]);
+            };
+            const selectors = [
+              '[data-slot="voice-session-card"] .yui-voice-card-title',
+              '[data-slot="voice-session-card"] .yui-voice-committed',
+              '[data-slot="voice-session-card"] .yui-voice-interim',
+              '[data-slot="voice-session-card"] .yui-voice-privacy',
+              '.yui-composer-cmd-btn',
+              '.yui-composer-usage',
+            ];
+            const bad = [];
+            for (const sel of selectors) {
+              for (const node of document.querySelectorAll(sel)) {
+                const fg = parseRgba(getComputedStyle(node).color);
+                const bg = effectiveBg(node);
+                if (!fg) continue;
+                const l1 = Math.max(relLum(fg), relLum(bg));
+                const l2 = Math.min(relLum(fg), relLum(bg));
+                const ratio = (l1 + 0.05) / (l2 + 0.05);
+                if (ratio < 4.5) {
+                  bad.push({ sel, ratio: Number(ratio.toFixed(2)), text: node.textContent });
+                }
+              }
+            }
+            return bad;
+          });
+          if (voiceContrast.length > 0) {
+            throw new Error(`WCAG AA contrast audit failed (${theme}/voice): ${JSON.stringify(voiceContrast)}`);
+          }
+          await page.locator('[data-slot="voice-session-card"] .yui-voice-mute-pill').click();
+          const mutedState = await page
+            .locator('[data-slot="voice-session-card"] [data-slot="audio-level-meter"]')
+            .getAttribute('data-tone');
+          if (mutedState !== 'muted') {
+            throw new Error(`VoiceSessionCard mute toggle failed (${theme}): ${mutedState}`);
+          }
+          await page.locator('.yui-composer-cmd-btn').click();
+          const cmdBadge = await page.locator('.yui-composer .yui-status-badge').textContent();
+          if (!cmdBadge?.includes('Commands open')) {
+            throw new Error(`FloatingComposer slash trigger click failed (${theme}): ${cmdBadge}`);
+          }
+        }
+
         if (panel === 'budget') {
           const budgetContrast = await page.evaluate(() => {
             const parseRgba = (str) => {
@@ -2430,7 +2556,7 @@ async function main() {
       // 400px width verification across key panels + reduced-motion audit
       await page.setViewportSize({ width: 400, height: 828 });
       await page.emulateMedia({ reducedMotion: 'reduce' });
-      for (const widePanel of ['chat', 'data', 'shortcuts', 'welcome', 'palette', 'diff', 'trace', 'drawers', 'budget', 'onboarding', 'recovery']) {
+      for (const widePanel of ['chat', 'data', 'shortcuts', 'welcome', 'palette', 'diff', 'trace', 'drawers', 'budget', 'onboarding', 'recovery', 'voice']) {
         await page.goto(`${baseUrl}/?mode=single&theme=${theme}&panel=${widePanel}&width=400`, {
           waitUntil: 'networkidle',
         });
@@ -2470,6 +2596,7 @@ async function main() {
         'budget',
         'onboarding',
         'recovery',
+        'voice',
         'genui',
       ]) {
         await page.goto(`${baseUrl}/?mode=single&theme=${theme}&panel=${narrowPanel}&narrow=1`, {
@@ -2690,12 +2817,17 @@ async function main() {
           await page.screenshot({ path: recNarrowPath });
           outputs.push(recNarrowPath);
         }
+        if (narrowPanel === 'voice') {
+          const voiceNarrowPath = path.join(OUT_DIR, `specimen-${theme}-voice-340.png`);
+          await page.screenshot({ path: voiceNarrowPath });
+          outputs.push(voiceNarrowPath);
+        }
       }
 
-      // Forced-colors audit at 380px across settings & recovery
+      // Forced-colors audit at 380px across settings, recovery & voice
       await page.setViewportSize({ width: 380, height: 828 });
       await page.emulateMedia({ forcedColors: 'active' });
-      for (const fcPanel of ['settings', 'recovery']) {
+      for (const fcPanel of ['settings', 'recovery', 'voice']) {
         await page.goto(`${baseUrl}/?mode=single&theme=${theme}&panel=${fcPanel}`, {
           waitUntil: 'networkidle',
         });
@@ -2710,8 +2842,8 @@ async function main() {
       }
       await page.emulateMedia({ forcedColors: 'none' });
 
-      // Overview 18-up comparison sheet
-      await page.setViewportSize({ width: 7296, height: 900 });
+      // Overview 19-up comparison sheet
+      await page.setViewportSize({ width: 7700, height: 900 });
       await page.goto(`${baseUrl}/?mode=gallery&theme=${theme}`, { waitUntil: 'networkidle' });
       const overviewPath = path.join(OUT_DIR, `specimen-${theme}-overview.png`);
       await page.screenshot({ path: overviewPath, fullPage: true });
