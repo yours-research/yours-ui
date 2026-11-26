@@ -168,7 +168,7 @@ export function CommandPalette({
     }
   };
 
-  const cardClass = ['yui-palette-card', className].filter(Boolean).join(' ');
+  const cardClass = ['yui-cmd-panel', 'yui-palette-card', className].filter(Boolean).join(' ');
 
   return (
     <div

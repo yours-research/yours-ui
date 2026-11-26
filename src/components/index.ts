@@ -168,3 +168,13 @@ export {
   type DiffLine,
   type DiffLineType,
 } from './DiffCard.js';
+export {
+  ToolTraceList,
+  type ToolTraceListProps,
+  type ToolTraceStatus,
+  type ToolTraceStep,
+} from './ToolTraceList.js';
+export {
+  PermissionCard,
+  type PermissionCardProps,
+} from './PermissionCard.js';

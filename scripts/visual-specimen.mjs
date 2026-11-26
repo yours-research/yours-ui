@@ -71,6 +71,7 @@ import {
   PageBriefCard,
   PageIcon,
   PermissionApprovalCard,
+  PermissionCard,
   PromptCapsuleStack,
   QuotedContextBanner,
   ReasoningTrace,
@@ -85,6 +86,7 @@ import {
   StreamingResponse,
   ToastPill,
   ToolStepCard,
+  ToolTraceList,
   TopNotch,
   UserMessageBubble,
   VoiceSessionBar,
@@ -847,6 +849,40 @@ function CommandPaletteAndDiffPanel({ theme }: { theme: 'light' | 'dark' }) {
       veilOpen={open}
       onVeilClick={() => setOpen(false)}
       notch={<TopNotch items={NOTCH_ITEMS} expandedId={null} />}
+      overlay={
+        <CommandPalette
+          open={open}
+          onClose={() => setOpen(false)}
+          onSelectAction={() => {}}
+          actions={[
+            {
+              id: 'summarize',
+              label: 'Summarize active tab',
+              description: 'Generate structured Page Brief locally',
+              group: 'Page actions',
+              icon: 'document',
+              shortcut: ['⌘', 'S'],
+            },
+            {
+              id: 'switch-model',
+              label: 'Switch checkpoint',
+              description: 'Qwen3.5-4B · Q4F16 (OPFS)',
+              group: 'Runtime',
+              icon: 'local-device',
+              badge: 'Cached',
+              shortcut: ['⌘', 'M'],
+            },
+            {
+              id: 'voice',
+              label: 'Start local voice session',
+              description: 'Silero VAD + Whisper-tiny barge-in',
+              group: 'Runtime',
+              icon: 'mic',
+              shortcut: ['⌘', '⇧', 'V'],
+            },
+          ]}
+        />
+      }
       footer={
         <FloatingComposer
           value=""
@@ -856,38 +892,6 @@ function CommandPaletteAndDiffPanel({ theme }: { theme: 'light' | 'dark' }) {
         />
       }
     >
-      <CommandPalette
-        open={open}
-        onClose={() => setOpen(false)}
-        onSelectAction={() => {}}
-        actions={[
-          {
-            id: 'summarize',
-            label: 'Summarize active tab',
-            description: 'Generate structured Page Brief locally',
-            group: 'Page actions',
-            icon: 'document',
-            shortcut: ['⌘', 'S'],
-          },
-          {
-            id: 'switch-model',
-            label: 'Switch checkpoint',
-            description: 'Qwen3.5-4B · Q4F16 (OPFS)',
-            group: 'Runtime',
-            icon: 'local-device',
-            badge: 'Cached',
-            shortcut: ['⌘', 'M'],
-          },
-          {
-            id: 'voice',
-            label: 'Start local voice session',
-            description: 'Silero VAD + Whisper-tiny barge-in',
-            group: 'Runtime',
-            icon: 'mic',
-            shortcut: ['⌘', '⇧', 'V'],
-          },
-        ]}
-      />
       <DiffCard
         filename="src/runtime/decode.ts"
         language="TS"
@@ -898,6 +902,78 @@ function CommandPaletteAndDiffPanel({ theme }: { theme: 'light' | 'dark' }) {
           { type: 'add', content: 'const kvQuant = "int8"; // 2x context window headroom on OPFS GPUs' },
           { type: 'add', content: 'const subgroupSync = true;' },
         ]}
+      />
+    </SidePanelShell>
+  );
+}
+
+function TraceAndPermissionPanel({ theme }: { theme: 'light' | 'dark' }) {
+  const [decision, setDecision] = useState<'pending' | 'once' | 'always' | 'denied'>('pending');
+
+  return (
+    <SidePanelShell
+      theme={theme}
+      notch={<TopNotch items={NOTCH_ITEMS} expandedId={null} />}
+      footer={
+        <FloatingComposer
+          value=""
+          onChange={() => {}}
+          onSubmit={() => {}}
+          leftSlot={
+            <StatusBadge tone={decision === 'denied' ? 'amber' : 'local'} dot>
+              {decision === 'pending' ? 'Guard checkpoint' : 'Decision: ' + decision}
+            </StatusBadge>
+          }
+        />
+      }
+    >
+      <ToolTraceList
+        steps={[
+          {
+            id: 'read-tab',
+            tool: 'read_tab',
+            label: 'portal.acme.dev/security',
+            status: 'done',
+            latencyLabel: '142ms',
+            input: '{"tabId": 14, "mode": "aom-compact"}',
+            output: '{"nodes": 48, "bytes": 3120}',
+          },
+          {
+            id: 'search-web',
+            tool: 'search_web_tab',
+            label: 'webgpu subgroup barriers',
+            status: 'running',
+            latencyLabel: '18ms',
+            input: '{"query": "WGSL subgroupBroadcast", "limit": 5}',
+          },
+          {
+            id: 'sandbox',
+            tool: 'run_sandbox',
+            label: 'Blocked outbound fetch',
+            status: 'blocked',
+            latencyLabel: 'blocked',
+            output: '@yours/guard: Lethal Trifecta rule prevented exfil to api.external.test',
+            defaultExpanded: true,
+          },
+          {
+            id: 'memory',
+            tool: 'memory_query',
+            label: 'FTS5 + HNSW local recall',
+            status: 'error',
+            latencyLabel: '309ms',
+            output: 'OPFS lock busy; retried with read-only snapshot',
+          },
+        ]}
+      />
+      <PermissionCard
+        title="Allow form action on portal.acme.dev?"
+        domain="portal.acme.dev"
+        scope="Read selected billing fields + submit POST action"
+        ruleLabel="Lethal Trifecta · @yours/guard"
+        reason="Untrusted tab context and local memory index are both active in this turn."
+        onAllowOnce={() => setDecision('once')}
+        onDeny={() => setDecision('denied')}
+        onAlwaysSite={() => setDecision('always')}
       />
     </SidePanelShell>
   );
@@ -1022,6 +1098,7 @@ function SpecimenApp() {
         {panel === 'welcome' ? <WelcomeEmptyPanel theme={theme} /> : null}
         {panel === 'palette' ? <CommandPaletteAndDiffPanel theme={theme} /> : null}
         {panel === 'diff' ? <DiffShowcasePanel theme={theme} /> : null}
+        {panel === 'trace' ? <TraceAndPermissionPanel theme={theme} /> : null}
         {panel === 'genui' ? <GenUiShowcasePanel theme={theme} /> : null}
       </div>
     );
@@ -1041,6 +1118,7 @@ function SpecimenApp() {
       <div className="yui-spec-frame"><WelcomeEmptyPanel theme={theme} /></div>
       <div className="yui-spec-frame"><CommandPaletteAndDiffPanel theme={theme} /></div>
       <div className="yui-spec-frame"><DiffShowcasePanel theme={theme} /></div>
+      <div className="yui-spec-frame"><TraceAndPermissionPanel theme={theme} /></div>
       <div className="yui-spec-frame-auto"><GenUiShowcasePanel theme={theme} /></div>
     </div>
   );
@@ -1259,6 +1337,7 @@ async function main() {
       'welcome',
       'palette',
       'diff',
+      'trace',
       'genui',
     ];
     for (const theme of ['light', 'dark']) {
@@ -1269,7 +1348,7 @@ async function main() {
         });
         await waitForSpecimen(`${theme}/${panel}`);
 
-        if (panel === 'live' || panel === 'sheet') {
+        if (panel === 'live' || panel === 'sheet' || panel === 'palette') {
           await page.waitForTimeout(300);
         }
 
@@ -1501,6 +1580,31 @@ async function main() {
         }
 
         if (panel === 'palette') {
+          // Verify scrim sits strictly BEHIND .yui-cmd-panel and panel is full opacity on top
+          const scrimAudit = await page.evaluate(() => {
+            const panelEl = document.querySelector('.yui-cmd-panel');
+            if (!panelEl) return { missing: true };
+            const style = getComputedStyle(panelEl);
+            const rect = panelEl.getBoundingClientRect();
+            const cx = rect.left + rect.width / 2;
+            const cy = rect.top + rect.height / 2;
+            const hitEl = document.elementFromPoint(cx, cy);
+            return {
+              opacity: style.opacity,
+              hitInsidePanel: Boolean(hitEl && panelEl.contains(hitEl)),
+              hitClass: hitEl?.className ?? null,
+            };
+          });
+          if (
+            scrimAudit.missing ||
+            scrimAudit.opacity !== '1' ||
+            !scrimAudit.hitInsidePanel
+          ) {
+            throw new Error(
+              `CommandPalette scrim stacking check failed (${theme}): ${JSON.stringify(scrimAudit)}`,
+            );
+          }
+
           const paletteInput = page.locator('[data-slot="command-palette"] [role="combobox"]');
           const activeBefore = await paletteInput.getAttribute('aria-activedescendant');
           await page.keyboard.press('ArrowDown');
@@ -1511,7 +1615,7 @@ async function main() {
             );
           }
 
-          // WCAG AA contrast audit across CommandPalette & DiffCard
+          // WCAG AA contrast audit across CommandPalette
           const contrastFailures = await page.evaluate(() => {
             const parseRgba = (str) => {
               const m = str.match(/rgba?\(([^)]+)\)/);
@@ -1561,6 +1665,73 @@ async function main() {
           }
         }
 
+        if (panel === 'trace') {
+          const traceContrast = await page.evaluate(() => {
+            const parseRgba = (str) => {
+              const m = str.match(/rgba?\(([^)]+)\)/);
+              if (!m) return null;
+              const parts = m[1].split(',').map((x) => parseFloat(x.trim()));
+              return [parts[0], parts[1], parts[2], parts[3] ?? 1];
+            };
+            const relLum = ([r, g, b]) => {
+              const f = (c) => {
+                const s = c / 255;
+                return s <= 0.03928 ? s / 12.92 : Math.pow((s + 0.055) / 1.055, 2.4);
+              };
+              return 0.2126 * f(r) + 0.7152 * f(g) + 0.0722 * f(b);
+            };
+            const effectiveBg = (el) => {
+              let cur = el;
+              while (cur && cur !== document.documentElement) {
+                const bg = parseRgba(getComputedStyle(cur).backgroundColor);
+                if (bg && bg[3] >= 0.95) return bg;
+                cur = cur.parentElement;
+              }
+              return [255, 255, 255, 1];
+            };
+            const selectors = [
+              '[data-slot="tool-trace-list"] .yui-trace-tool',
+              '[data-slot="tool-trace-list"] .yui-trace-label',
+              '[data-slot="tool-trace-list"] .yui-trace-latency',
+              '[data-slot="permission-card"] .yui-perm-title',
+              '[data-slot="permission-card"] .yui-perm-reason',
+              '[data-slot="permission-card"] .yui-perm-meta-label',
+              '[data-slot="permission-card"] .yui-perm-meta-val',
+              '[data-slot="permission-card"] .yui-perm-tertiary',
+            ];
+            const bad = [];
+            for (const sel of selectors) {
+              for (const node of document.querySelectorAll(sel)) {
+                const fg = parseRgba(getComputedStyle(node).color);
+                const bg = effectiveBg(node);
+                if (!fg) continue;
+                const l1 = Math.max(relLum(fg), relLum(bg));
+                const l2 = Math.min(relLum(fg), relLum(bg));
+                const ratio = (l1 + 0.05) / (l2 + 0.05);
+                if (ratio < 4.5) {
+                  bad.push({ sel, ratio: Number(ratio.toFixed(2)), text: node.textContent });
+                }
+              }
+            }
+            return bad;
+          });
+          if (traceContrast.length > 0) {
+            throw new Error(`WCAG AA contrast audit failed (${theme}/trace): ${JSON.stringify(traceContrast)}`);
+          }
+
+          const firstTrigger = page.locator('[data-slot="tool-trace-list"] .yui-trace-trigger').first();
+          await firstTrigger.click();
+          const expanded = await firstTrigger.getAttribute('aria-expanded');
+          if (expanded !== 'true') {
+            throw new Error(`Expected ToolTraceList step to expand on click (${theme})`);
+          }
+          await page.locator('[data-slot="permission-card"] .yui-pill-btn--primary').click();
+          const badgeText = await page.locator('.yui-composer .yui-status-badge').textContent();
+          if (!badgeText?.includes('once')) {
+            throw new Error(`PermissionCard Allow once action did not update badge (${theme}): ${badgeText}`);
+          }
+        }
+
         if (panel === 'diff') {
           const capFade = await page
             .locator('[data-slot="artifact-preview-card"] .yui-artifact-scroll-wrap')
@@ -1590,10 +1761,10 @@ async function main() {
         }
       }
 
-      // 400px width verification on Data, Shortcuts, Welcome, Palette & Diff panels + reduced-motion audit
+      // 400px width verification on Data, Shortcuts, Welcome, Palette, Diff & Trace panels + reduced-motion audit
       await page.setViewportSize({ width: 400, height: 828 });
       await page.emulateMedia({ reducedMotion: 'reduce' });
-      for (const widePanel of ['data', 'shortcuts', 'welcome', 'palette', 'diff']) {
+      for (const widePanel of ['data', 'shortcuts', 'welcome', 'palette', 'diff', 'trace']) {
         await page.goto(`${baseUrl}/?mode=single&theme=${theme}&panel=${widePanel}&width=400`, {
           waitUntil: 'networkidle',
         });
@@ -1627,6 +1798,7 @@ async function main() {
         'welcome',
         'palette',
         'diff',
+        'trace',
         'genui',
       ]) {
         await page.goto(`${baseUrl}/?mode=single&theme=${theme}&panel=${narrowPanel}&narrow=1`, {
@@ -1747,10 +1919,15 @@ async function main() {
           await page.screenshot({ path: diffNarrowPath });
           outputs.push(diffNarrowPath);
         }
+        if (narrowPanel === 'trace') {
+          const traceNarrowPath = path.join(OUT_DIR, `specimen-${theme}-trace-340.png`);
+          await page.screenshot({ path: traceNarrowPath });
+          outputs.push(traceNarrowPath);
+        }
       }
 
-      // Overview 13-up comparison sheet
-      await page.setViewportSize({ width: 5272, height: 900 });
+      // Overview 14-up comparison sheet
+      await page.setViewportSize({ width: 5680, height: 900 });
       await page.goto(`${baseUrl}/?mode=gallery&theme=${theme}`, { waitUntil: 'networkidle' });
       const overviewPath = path.join(OUT_DIR, `specimen-${theme}-overview.png`);
       await page.screenshot({ path: overviewPath, fullPage: true });
