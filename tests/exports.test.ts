@@ -86,6 +86,8 @@ describe('@yours/ui built ESM & CSS exports smoke test', () => {
     expect(typeof rootMod.CitationFootnoteList).toBe('function');
     expect(typeof rootMod.CodeBlockCard).toBe('function');
     expect(typeof rootMod.OnboardingCard).toBe('function');
+    expect(typeof rootMod.ErrorRecoveryCard).toBe('function');
+    expect(typeof rootMod.InlineNotice).toBe('function');
 
     expect(typeof iconsMod.ApertureIcon).toBe('function');
     expect(typeof iconsMod.MatrixOrb).toBe('function');
@@ -107,6 +109,8 @@ describe('@yours/ui built ESM & CSS exports smoke test', () => {
     expect(typeof componentsMod.CitationFootnoteList).toBe('function');
     expect(typeof componentsMod.CodeBlockCard).toBe('function');
     expect(typeof componentsMod.OnboardingCard).toBe('function');
+    expect(typeof componentsMod.ErrorRecoveryCard).toBe('function');
+    expect(typeof componentsMod.InlineNotice).toBe('function');
     expect(typeof genuiMod.CompareTable).toBe('function');
     expect(typeof genuiMod.MetricStripCard).toBe('function');
   });

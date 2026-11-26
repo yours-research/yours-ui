@@ -173,9 +173,9 @@ export function SidePanelApp() {
 ### `@yours/ui/components` Inventory
 
 - **Shell, Overlay & Navigation:** `CommandPalette`, `ContextCommandPopover`, `FloatingComposer`, `FloatingContextSheet`, `EmptyPanelState`, `EmptyState`, `KbdHint`, `OnboardingCard`, `PromptCapsuleStack`, `QuotedContextBanner`, `ScrollToBottomButton`, `SegmentedControl`, `ShortcutSheet`, `StatusBadge`, `StatusToast`, `SuggestionChipRow`, `ThreadHistoryDrawer`, `ThreadHistoryList`, `ToastPill`.
-- **Conversation, Citations & Diffs:** `ActionBar`, `AssistantMessage`, `AttachmentDropzone`, `AttachmentStrip`, `BranchPicker`, `CitationFootnoteList`, `CodeBlock`, `CodeBlockCard`, `DiffCard`, `FollowUpSuggestions`, `InlineCitationPill`, `InlineCitationPopover`, `MessageSkeleton`, `SourcesDrawer`, `StreamingResponse`, `UserMessageBubble`, `VoiceDictationPill`, `VoiceSessionBar`.
+- **Conversation, Citations & Diffs:** `ActionBar`, `AssistantMessage`, `AttachmentDropzone`, `AttachmentStrip`, `BranchPicker`, `CitationFootnoteList`, `CodeBlock`, `CodeBlockCard`, `DiffCard`, `FollowUpSuggestions`, `InlineCitationPill`, `InlineCitationPopover`, `InlineNotice`, `MessageSkeleton`, `SourcesDrawer`, `StreamingResponse`, `UserMessageBubble`, `VoiceDictationPill`, `VoiceSessionBar`.
 - **Reasoning, Tools, Context & Guard:** `ContextBudgetMeter`, `PermissionApprovalCard`, `PermissionCard`, `ReasoningTrace`, `TabContextList`, `ToolStepCard`, `ToolTraceList`.
-- **Local Runtime, Models, Memory, Data & Settings:** `ArtifactPreviewCard`, `DataTableCard`, `ErrorRecoveryBanner`, `HardwareStatusStrip`, `LocalVaultExportCard`, `MemoryInspectorList`, `MemoryRecordCard`, `ModelDownloadGate`, `ModelDownloadProgressBar`, `ModelRosterList`, `SettingsSection`, `SettingsToggleRow`.
+- **Local Runtime, Models, Memory, Data & Settings:** `ArtifactPreviewCard`, `DataTableCard`, `ErrorRecoveryBanner`, `ErrorRecoveryCard`, `HardwareStatusStrip`, `LocalVaultExportCard`, `MemoryInspectorList`, `MemoryRecordCard`, `ModelDownloadGate`, `ModelDownloadProgressBar`, `ModelRosterList`, `SettingsSection`, `SettingsToggleRow`.
 
 ---
 

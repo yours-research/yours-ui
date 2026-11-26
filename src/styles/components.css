@@ -183,8 +183,13 @@
 
 .yui-scroll-wrap--fade::before {
   top: 0;
-  height: 54px;
-  background: linear-gradient(to bottom, var(--yui-stage-bg) 0%, var(--yui-stage-bg) 36px, transparent 54px);
+  height: 84px;
+  background: linear-gradient(
+    to bottom,
+    var(--yui-stage-bg) 0%,
+    var(--yui-stage-bg) 52%,
+    transparent 100%
+  );
 }
 
 .yui-scroll-wrap--fade::after {
@@ -6605,13 +6610,336 @@ span.yui-citation-pill {
   flex-shrink: 0;
 }
 
+/* ==========================================================================
+ * ErrorRecoveryCard & InlineNotice (Milestone 14)
+ * ========================================================================== */
+.yui-recovery-card {
+  width: 100%;
+  box-sizing: border-box;
+  flex-shrink: 0;
+  background-color: var(--yui-capsule-bg);
+  border: 1px solid var(--yui-capsule-border);
+  border-radius: 14px;
+  padding: 12px 13px;
+  box-shadow: var(--yui-capsule-shadow);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.yui-recovery-top {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.yui-recovery-head {
+  display: flex;
+  align-items: flex-start;
+  gap: 9px;
+  min-width: 0;
+}
+
+.yui-recovery-icon {
+  width: 26px;
+  height: 26px;
+  border-radius: 8px;
+  background-color: var(--yui-danger-soft);
+  color: var(--yui-danger-ink);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+
+.yui-recovery-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 2px 7px;
+  border-radius: 9999px;
+  background-color: var(--yui-danger-soft);
+  color: var(--yui-danger-ink);
+  font-family: var(--font-mono);
+  font-size: 9.5px;
+  line-height: 13px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  margin-bottom: 4px;
+}
+
+.yui-recovery-badge-dot {
+  width: 5px;
+  height: 5px;
+  border-radius: 9999px;
+  background-color: currentColor;
+  flex-shrink: 0;
+}
+
+.yui-recovery-title {
+  margin: 0;
+  font-size: 13px;
+  line-height: 17px;
+  font-weight: 600;
+  letter-spacing: var(--tracking-tight);
+  color: var(--yui-ink);
+}
+
+.yui-recovery-diagnosis {
+  margin: 0;
+  font-size: 12px;
+  line-height: 17px;
+  color: var(--yui-secondary);
+}
+
+.yui-recovery-trace-wrap {
+  border: 1px solid var(--yui-hairline);
+  border-radius: 10px;
+  background-color: var(--yui-well-bg);
+  overflow: hidden;
+}
+
+.yui-recovery-toggle {
+  width: 100%;
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 7px 10px;
+  border: none;
+  background: transparent;
+  color: var(--yui-secondary);
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  line-height: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  text-align: left;
+  transition: background-color 140ms ease, color 140ms ease;
+}
+
+.yui-recovery-toggle:hover {
+  background-color: var(--yui-hover-bg);
+  color: var(--yui-ink);
+}
+
+.yui-recovery-toggle-label {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.yui-recovery-chevron {
+  flex-shrink: 0;
+  transition: transform 160ms var(--yui-spring);
+}
+
+.yui-recovery-chevron.is-open {
+  transform: rotate(180deg);
+}
+
+.yui-recovery-trace {
+  border-top: 1px solid var(--yui-hairline);
+  animation: yuiFadeUp 160ms var(--yui-spring);
+}
+
+.yui-recovery-trace-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 5px 10px;
+  border-bottom: 1px solid var(--yui-hairline);
+  background-color: var(--yui-chip-bg);
+}
+
+.yui-recovery-trace-cap {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  line-height: 12px;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  color: var(--yui-secondary);
+}
+
+.yui-recovery-copy {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 7px;
+  border-radius: 6px;
+  border: 1px solid var(--yui-hairline);
+  background-color: var(--yui-capsule-bg);
+  color: var(--yui-secondary);
+  font-family: var(--font-sans);
+  font-size: 10.5px;
+  line-height: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: color 140ms ease, background-color 140ms ease, border-color 140ms ease;
+}
+
+.yui-recovery-copy:hover {
+  color: var(--yui-ink);
+  background-color: var(--yui-hover-bg);
+}
+
+.yui-recovery-pre {
+  margin: 0;
+  padding: 8px 10px;
+  overflow-x: auto;
+  scrollbar-width: thin;
+  scrollbar-color: var(--yui-strong) transparent;
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  line-height: 15px;
+  color: var(--yui-ink);
+  white-space: pre;
+}
+
+.yui-recovery-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.yui-recovery-switch,
+.yui-recovery-retry {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+}
+
+.yui-notice {
+  width: 100%;
+  box-sizing: border-box;
+  flex-shrink: 0;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px 10px;
+  padding: 7px 11px;
+  border-radius: 10px;
+  border: 1px solid var(--yui-hairline);
+  background-color: var(--yui-well-bg);
+  font-family: var(--font-sans);
+  font-size: 11.5px;
+  line-height: 16px;
+  color: var(--yui-secondary);
+}
+
+.yui-notice--compact {
+  padding: 5px 9px;
+  font-size: 11px;
+  line-height: 15px;
+}
+
+.yui-notice--info {
+  background-color: var(--yui-cobalt-soft);
+  color: var(--yui-ink);
+}
+
+.yui-notice--warning {
+  background-color: var(--yui-warm-wash);
+  color: var(--yui-ink);
+}
+
+.yui-notice--success {
+  background-color: var(--yui-green-soft);
+  color: var(--yui-ink);
+}
+
+.yui-notice-body {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  flex: 1 1 180px;
+  min-width: 0;
+}
+
+.yui-notice-dot {
+  width: 5px;
+  height: 5px;
+  border-radius: 9999px;
+  background-color: var(--yui-secondary);
+  flex-shrink: 0;
+}
+
+.yui-notice--info .yui-notice-dot {
+  background-color: var(--yui-cobalt);
+}
+
+.yui-notice-icon {
+  flex-shrink: 0;
+  color: var(--yui-secondary);
+}
+
+.yui-notice--info .yui-notice-icon {
+  color: var(--yui-cobalt);
+}
+
+.yui-notice--warning .yui-notice-icon {
+  color: var(--yui-amber);
+}
+
+.yui-notice--success .yui-notice-icon {
+  color: var(--yui-green-ink);
+}
+
+.yui-notice-text {
+  min-width: 0;
+  word-break: break-word;
+}
+
+.yui-notice-action {
+  border: none;
+  background: transparent;
+  padding: 1px 4px;
+  margin-left: auto;
+  border-radius: 6px;
+  font-family: var(--font-sans);
+  font-size: 11px;
+  line-height: 15px;
+  font-weight: 500;
+  color: var(--yui-ink);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  cursor: pointer;
+  white-space: nowrap;
+  flex-shrink: 0;
+  transition: color 140ms ease, background-color 140ms ease;
+}
+
+.yui-notice--info .yui-notice-action {
+  color: var(--yui-cobalt);
+}
+
+.yui-notice--success .yui-notice-action {
+  color: var(--yui-green-ink);
+}
+
+.yui-notice-action:hover {
+  background-color: var(--yui-hover-bg);
+}
+
 .yui-icon-btn:focus-visible,
 .yui-pill-btn:focus-visible,
 .yui-seg-btn:focus-visible,
 .yui-notch-btn:focus-visible,
 .yui-micro-pill:focus-visible,
 .yui-citation-pill:focus-visible,
-.yui-notch-opt-row:focus-visible {
+.yui-notch-opt-row:focus-visible,
+.yui-recovery-toggle:focus-visible,
+.yui-recovery-copy:focus-visible,
+.yui-notice-action:focus-visible {
   outline: 2px solid var(--focus-ring);
   outline-offset: 2px;
 }
@@ -6660,6 +6988,11 @@ span.yui-citation-pill {
   .yui-fn-btn,
   .yui-onb-cta,
   .yui-onb-secondary,
+  .yui-recovery-toggle,
+  .yui-recovery-chevron,
+  .yui-recovery-trace,
+  .yui-recovery-copy,
+  .yui-notice-action,
   .yui-cmd-popover,
   .yui-cmd-item,
   .yui-seg-btn,
@@ -6686,8 +7019,177 @@ span.yui-citation-pill {
   .yui-sr-action-btn,
   .yui-sr-action-btn.is-active .yui-icon,
   .yui-sr-retry-icon.is-spinning,
-  .yui-sr-icon-swap {
+  .yui-sr-icon-swap,
+  .yui-voice-bar,
+  .yui-voice-bar.is-live,
+  .yui-check-progress-track::-webkit-progress-value {
     transition: none;
     animation: none;
+  }
+}
+
+@media (forced-colors: active) {
+  .yui-shell,
+  .yui-stage,
+  .yui-notch-housing,
+  .yui-notch-drawer,
+  .yui-composer,
+  .yui-prompt-capsule,
+  .yui-ctx-sheet,
+  .yui-cite-card,
+  .yui-mem-card,
+  .yui-cmd-panel,
+  .yui-palette-card,
+  .yui-error-card,
+  .yui-recovery-card,
+  .yui-recovery-trace-wrap,
+  .yui-onb-card,
+  .yui-onb-spec,
+  .yui-codecard,
+  .yui-sr-code,
+  .yui-perm-card,
+  .yui-budget-card,
+  .yui-diff-card,
+  .yui-trace-card,
+  .yui-th-list,
+  .yui-model-list,
+  .yui-tabctx-list,
+  .yui-fn-list,
+  .yui-notice {
+    border: 1px solid CanvasText;
+  }
+
+  .yui-scroll-wrap--fade::before {
+    background: linear-gradient(to bottom, Canvas 0%, Canvas 52%, transparent 100%);
+  }
+
+  .yui-scroll-wrap--fade::after {
+    background: linear-gradient(to top, Canvas 20%, transparent 100%);
+  }
+
+  .yui-data-scroll-wrap::after,
+  .yui-artifact-scroll-wrap::after {
+    display: none;
+  }
+
+  .yui-send-btn,
+  .yui-onb-cta,
+  .yui-pill-btn,
+  .yui-pill-btn--primary,
+  .yui-icon-btn,
+  .yui-chip-btn,
+  .yui-model-dl-btn,
+  .yui-tabctx-mute-btn,
+  .yui-sr-code-copy,
+  .yui-recovery-toggle,
+  .yui-recovery-copy,
+  .yui-notice-action,
+  .yui-seg-btn {
+    border: 1px solid ButtonText;
+    color: ButtonText;
+    background-color: ButtonFace;
+    forced-color-adjust: none;
+  }
+
+  .yui-send-btn:disabled,
+  .yui-onb-cta:disabled,
+  .yui-pill-btn:disabled {
+    border-color: GrayText;
+    color: GrayText;
+  }
+
+  .yui-seg-btn.is-active,
+  .yui-sr-action-btn.is-active,
+  .yui-tabctx-mute-btn.is-muted {
+    border-color: Highlight;
+    background-color: Highlight;
+    color: HighlightText;
+    forced-color-adjust: none;
+  }
+
+  .yui-switch {
+    border: 2px solid ButtonText;
+    background-color: ButtonFace;
+    forced-color-adjust: none;
+  }
+
+  .yui-switch-thumb {
+    background-color: ButtonText;
+  }
+
+  .yui-switch.is-checked {
+    border-color: Highlight;
+    background-color: Highlight;
+  }
+
+  .yui-switch.is-checked .yui-switch-thumb {
+    background-color: HighlightText;
+  }
+
+  .yui-model-dot {
+    border: 2px solid ButtonText;
+    background-color: Canvas;
+    forced-color-adjust: none;
+  }
+
+  .yui-model-dot.is-checked {
+    border-color: Highlight;
+    box-shadow: inset 0 0 0 3px Highlight;
+  }
+
+  .yui-download-progress,
+  .yui-check-progress-track,
+  .yui-dl-progress,
+  .yui-budget-progress {
+    border: 1px solid CanvasText;
+    background-color: Canvas;
+    forced-color-adjust: none;
+  }
+
+  .yui-download-progress::-webkit-progress-bar,
+  .yui-check-progress-track::-webkit-progress-bar,
+  .yui-dl-progress::-webkit-progress-bar,
+  .yui-budget-progress::-webkit-progress-bar {
+    background-color: Canvas;
+  }
+
+  .yui-download-progress::-webkit-progress-value,
+  .yui-check-progress-track::-webkit-progress-value,
+  .yui-dl-progress::-webkit-progress-value,
+  .yui-budget-progress::-webkit-progress-value,
+  .yui-download-progress::-moz-progress-bar,
+  .yui-dl-progress::-moz-progress-bar,
+  .yui-budget-progress::-moz-progress-bar {
+    background-color: Highlight;
+  }
+
+  .yui-status-badge,
+  .yui-recovery-badge,
+  .yui-tabctx-kind,
+  .yui-codecard-lang,
+  .yui-sr-code-lang {
+    border: 1px solid CanvasText;
+    color: CanvasText;
+    background-color: Canvas;
+  }
+
+  .yui-icon-btn:focus-visible,
+  .yui-pill-btn:focus-visible,
+  .yui-seg-btn:focus-visible,
+  .yui-notch-btn:focus-visible,
+  .yui-micro-pill:focus-visible,
+  .yui-citation-pill:focus-visible,
+  .yui-notch-opt-row:focus-visible,
+  .yui-switch:focus-visible,
+  .yui-onb-cta:focus-visible,
+  .yui-onb-secondary:focus-visible,
+  .yui-recovery-toggle:focus-visible,
+  .yui-recovery-copy:focus-visible,
+  .yui-notice-action:focus-visible,
+  .yui-model-radio-btn:focus-visible,
+  .yui-tabctx-main-btn:focus-visible,
+  .yui-tabctx-mute-btn:focus-visible {
+    outline: 2px solid Highlight;
+    outline-offset: 2px;
   }
 }
