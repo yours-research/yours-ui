@@ -298,7 +298,14 @@ function ActiveChatPanel({ theme }: { theme: 'light' | 'dark' }) {
               onThumbDown={() => {}}
               onSave={() => {}}
               onSpeak={() => {}}
-              speedMetrics={{ tokensPerSec: 86.4, ttftMs: 74, outputTokens: 142 }}
+              speedMetrics={{
+                tokensPerSec: 86.4,
+                ttftMs: 74,
+                outputTokens: 142,
+                speedupMultiplier: 1.58,
+                acceptedTokPerStep: 3.4,
+                vramDeltaLabel: '-254 MiB',
+              }}
             />
           </div>
         }
@@ -675,6 +682,8 @@ function RuntimeAndMemoryPanel({ theme }: { theme: 'light' | 'dark' }) {
         tierLabel="WebGPU FP16"
         adapterLabel="M3 Max"
         memoryLabel="2.6 GB"
+        speedupLabel={1.58}
+        vramDeltaLabel="-254 MiB"
         status="ready"
         sha256Verified
       />
@@ -826,6 +835,8 @@ function DataAndArtifactPanel({ theme }: { theme: 'light' | 'dark' }) {
         tierLabel="WebGPU FP16"
         adapterLabel="M3 Max"
         memoryLabel="2.6 GB"
+        speedupLabel={1.58}
+        vramDeltaLabel="-254 MiB"
         status="ready"
         sha256Verified
       />
@@ -2322,6 +2333,11 @@ html, body {
   font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
 }
 
+html:has([data-theme="dark"]),
+body:has([data-theme="dark"]) {
+  background: #121215;
+}
+
 .yui-spec-single {
   width: 380px;
   min-height: 828px;
@@ -2353,6 +2369,10 @@ html, body {
   display: flex;
   flex-direction: row;
   align-items: flex-start;
+  width: max-content;
+  min-width: 100%;
+  min-height: 100vh;
+  box-sizing: border-box;
   gap: 24px;
   padding: 24px;
   background: var(--bg-canvas);
@@ -4218,7 +4238,7 @@ async function main() {
 
       // 320px compact Chrome side-panel audit (overflow, zero inline styles, WCAG AA contrast)
       await page.setViewportSize({ width: 320, height: 828 });
-      for (const compactPanel of ['permissions', 'shimmer', 'storage', 'controls', 'templates', 'voice', 'preflight', 'resilience']) {
+      for (const compactPanel of ['chat', 'runtime', 'drawers', 'genui', 'permissions', 'shimmer', 'storage', 'controls', 'templates', 'voice', 'preflight', 'resilience']) {
         await page.goto(`${baseUrl}/?mode=single&theme=${theme}&panel=${compactPanel}&width=320`, {
           waitUntil: 'networkidle',
         });
@@ -4232,7 +4252,13 @@ async function main() {
           throw new Error(`320px compact audit failed (${theme}/${compactPanel}): ${JSON.stringify(compactCheck)}`);
         }
         await blurActive();
-        if (compactPanel === 'preflight' || compactPanel === 'permissions' || compactPanel === 'resilience') {
+        if (
+          compactPanel === 'drawers' ||
+          compactPanel === 'runtime' ||
+          compactPanel === 'preflight' ||
+          compactPanel === 'permissions' ||
+          compactPanel === 'resilience'
+        ) {
           const compactPath = path.join(OUT_DIR, `specimen-${theme}-${compactPanel}-320.png`);
           await page.screenshot({ path: compactPath });
           outputs.push(compactPath);
@@ -4680,9 +4706,26 @@ async function main() {
         await page.emulateMedia({ forcedColors: 'none', reducedMotion: 'no-preference' });
       }
 
-      // Overview 20-up comparison sheet
+      // Overview full-width comparison sheet
       await page.setViewportSize({ width: 8104, height: 900 });
       await page.goto(`${baseUrl}/?mode=gallery&theme=${theme}`, { waitUntil: 'networkidle' });
+      const galleryAudit = await page.evaluate((t) => {
+        const grid = document.querySelector('.yui-spec-grid');
+        const bodyBg = getComputedStyle(document.body).backgroundColor;
+        const gridRect = grid?.getBoundingClientRect();
+        return {
+          gridCoversScroll: Boolean(
+            gridRect &&
+              gridRect.width >= document.documentElement.scrollWidth - 1 &&
+              gridRect.height >= document.documentElement.scrollHeight - 1,
+          ),
+          bodyIsDark: t === 'dark' ? bodyBg === 'rgb(18, 18, 21)' : true,
+          bodyBg,
+        };
+      }, theme);
+      if (!galleryAudit.gridCoversScroll || !galleryAudit.bodyIsDark) {
+        throw new Error(`Overview canvas coverage failed (${theme}): ${JSON.stringify(galleryAudit)}`);
+      }
       const overviewPath = path.join(OUT_DIR, `specimen-${theme}-overview.png`);
       await page.screenshot({ path: overviewPath, fullPage: true });
       outputs.push(overviewPath);
