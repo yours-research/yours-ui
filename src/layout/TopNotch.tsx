@@ -36,6 +36,13 @@ export function TopNotch({
   className,
 }: TopNotchProps) {
   const isExpanded = expandedId !== null;
+  const housingClassName = [
+    'yui-notch-housing',
+    items.length >= 5 ? 'yui-notch-housing--wide' : '',
+    isExpanded ? 'is-expanded' : '',
+  ]
+    .filter(Boolean)
+    .join(' ');
 
   useEffect(() => {
     if (!isExpanded || !onClose) return;
@@ -52,7 +59,7 @@ export function TopNotch({
     <div className={className ? `yui-notch-overlay ${className}` : 'yui-notch-overlay'}>
       <div className="yui-notch-assembly">
         <NotchEar side="left" />
-        <div className={isExpanded ? 'yui-notch-housing is-expanded' : 'yui-notch-housing'}>
+        <div className={housingClassName}>
           <nav className="yui-notch-bar" aria-label="Panel controls">
             {items.map((item) => {
               const active = expandedId === item.id;

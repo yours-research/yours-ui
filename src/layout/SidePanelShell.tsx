@@ -2,6 +2,7 @@ import type { ReactNode } from 'react';
 
 export interface SidePanelShellProps {
   theme?: 'system' | 'light' | 'dark';
+  bleed?: boolean;
   notch?: ReactNode;
   veilOpen?: boolean;
   onVeilClick?: () => void;
@@ -17,6 +18,7 @@ export interface SidePanelShellProps {
  */
 export function SidePanelShell({
   theme = 'system',
+  bleed = false,
   notch,
   veilOpen = false,
   onVeilClick,
@@ -25,9 +27,12 @@ export function SidePanelShell({
   className,
 }: SidePanelShellProps) {
   const dataTheme = theme === 'system' ? undefined : theme;
+  const shellClassName = ['yui-shell', bleed ? 'yui-shell--bleed' : '', className]
+    .filter(Boolean)
+    .join(' ');
   return (
     <div
-      className={className ? `yui-shell ${className}` : 'yui-shell'}
+      className={shellClassName}
       data-theme={dataTheme}
     >
       <div className="yui-stage">

@@ -20,8 +20,10 @@ export function ReasoningTrace({
   defaultExpanded = false,
 }: ReasoningTraceProps) {
   const [expanded, setExpanded] = useState(defaultExpanded);
+  const hasContent = Boolean(content && content.trim().length > 0);
+  const isThinking = status === 'thinking';
 
-  if (status === 'thinking') {
+  if (isThinking && !hasContent) {
     return (
       <div className="yui-reasoning">
         <div className="yui-reasoning-trigger">
@@ -41,11 +43,21 @@ export function ReasoningTrace({
         aria-expanded={expanded}
         onClick={() => setExpanded((prev) => !prev)}
       >
-        <CheckIcon size={13} />
-        <span>Thought{durationLabel ? ` for ${durationLabel}` : ''}</span>
+        {isThinking ? (
+          <>
+            <MatrixOrb state="thinking" size={15} />
+            <span>Thinking</span>
+            {durationLabel ? <span className="yui-speed-readout">{durationLabel}</span> : null}
+          </>
+        ) : (
+          <>
+            <CheckIcon size={13} />
+            <span>Thought{durationLabel ? ` for ${durationLabel}` : ''}</span>
+          </>
+        )}
         {expanded ? <ChevronUpIcon size={12} /> : <ChevronDownIcon size={12} />}
       </button>
-      {expanded && content ? (
+      {expanded && hasContent ? (
         <div className="yui-reasoning-body">
           <div className="yui-reasoning-rail" aria-hidden="true" />
           <div className="yui-reasoning-text">{content}</div>
