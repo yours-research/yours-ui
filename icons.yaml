@@ -1,0 +1,20 @@
+product: Yours — local-first Chromium side panel AI assistant
+personality: [confident, tactile, minimal]
+sizes: [16, 20, 24]
+dir: src/icons
+avoid: [generic sparkles for AI, loud gradients, tiny gaps under 2 units, text inside icons]
+
+dna:
+  style: outline
+  stroke: 1.75
+  grid: 24
+  padding: 1
+  keylines: { circle: 20, square: 18, portrait: [16, 20], landscape: [20, 16] }
+  corners: { family: circular, radius: { large: 2.5, small: 1.25 }, largeThreshold: 8 }
+  caps: round
+  joins: round
+  angles: [0, 45, 90]
+  detail: low
+  minGap: 2
+  badge: { position: bottom-right, size: 8, gap: 2 }
+  signature: "Calibrated 45-degree top-right chamfer on enclosed containers"
