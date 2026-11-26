@@ -149,6 +149,8 @@ describe('@yours/ui built ESM & CSS exports smoke test', () => {
     expect(typeof componentsMod.ConfirmActionCard).toBe('function');
     expect(typeof componentsMod.PageSelectionCard).toBe('function');
     expect(typeof componentsMod.DeviceCapabilityCard).toBe('function');
+    expect(typeof componentsMod.OfflineStatusBanner).toBe('function');
+    expect(typeof componentsMod.SessionCheckpointCard).toBe('function');
     expect(typeof rootMod.ModelParametersCard).toBe('function');
     expect(typeof rootMod.NetworkAuditCard).toBe('function');
     expect(typeof rootMod.SitePermissionsList).toBe('function');
@@ -156,6 +158,8 @@ describe('@yours/ui built ESM & CSS exports smoke test', () => {
     expect(typeof rootMod.ConfirmActionCard).toBe('function');
     expect(typeof rootMod.PageSelectionCard).toBe('function');
     expect(typeof rootMod.DeviceCapabilityCard).toBe('function');
+    expect(typeof rootMod.OfflineStatusBanner).toBe('function');
+    expect(typeof rootMod.SessionCheckpointCard).toBe('function');
     expect(typeof genuiMod.CompareTable).toBe('function');
     expect(typeof genuiMod.MetricStripCard).toBe('function');
     expect(typeof genuiMod.TimelineCard).toBe('function');
@@ -216,7 +220,7 @@ describe('@yours/ui built ESM & CSS exports smoke test', () => {
         "import { MicIcon, YoursMark } from '@yours/ui/icons';",
         "import { SidePanelShell, TopNotch } from '@yours/ui/layout';",
         "import { ErrorRecoveryCard, FloatingComposer, InlineNotice } from '@yours/ui/components';",
-        "import { PromptTemplateList, ExportSessionCard, FindInThreadBar, StorageQuotaCard, ModelParametersCard, NetworkAuditCard, SitePermissionsList, AgentHandoffCard, ConfirmActionCard, PageSelectionCard, DeviceCapabilityCard } from '@yours/ui/components';",
+        "import { PromptTemplateList, ExportSessionCard, FindInThreadBar, StorageQuotaCard, ModelParametersCard, NetworkAuditCard, SitePermissionsList, AgentHandoffCard, ConfirmActionCard, PageSelectionCard, DeviceCapabilityCard, OfflineStatusBanner, SessionCheckpointCard } from '@yours/ui/components';",
         "import { CompareTable, MetricStripCard, QuoteExcerptCard, TimelineCard } from '@yours/ui/genui';",
         '',
         'export function ConsumerExample(props: FloatingComposerProps) {',
@@ -243,6 +247,8 @@ describe('@yours/ui built ESM & CSS exports smoke test', () => {
         '      <ConfirmActionCard title="Reset local workspace" description="Erase indexed files and chat transcripts." rows={[{ label: "Scope", value: "OPFS · 2.4 GB" }]} confirmPhrase="RESET" holdDurationMs={500} onConfirm={() => {}} onCancel={() => {}} />',
         '      <PageSelectionCard origin="docs.yours.sh" locator="§2" tokenEstimate="~40 tok" excerpt="Selected quote excerpt from the active browser tab." onLocate={() => {}} onDismiss={() => {}} />',
         '      <DeviceCapabilityCard status="ready" adapterName="Apple M2" vramLabel="16 GB" ramLabel="16 GB" diskLabel="6 GB free" headroom={{ usedGb: 4.2, neededGb: 2.4, freeGb: 11.8 }} tiers={[{ id: "4b", label: "4B Q4", recommended: true }]} onSelectTier={() => {}} onRecheck={() => {}} />',
+        '      <OfflineStatusBanner status="offline-ready" onLocalOnly={() => {}} onRetry={() => {}} />',
+        '      <SessionCheckpointCard timestamp="10:18 AM" turnCount={12} pinnedTabCount={2} contextSnapshot="4.8k / 16k" onRestore={() => {}} onBranch={() => {}} />',
         '      <MetricStripCard label="VRAM" primaryValue="2.4 GB" values={[2.1, 2.3, 2.4]} />',
         '      <CompareTable title="Bench" leftColumnTitle="A" rightColumnTitle="B" rows={[{ feature: "Speed", leftValue: "44", rightValue: "39" }]} />',
         '      <TimelineCard title="Plan" steps={[{ id: "s1", label: "Step 1", status: "done" }]} />',
@@ -316,9 +322,9 @@ describe('@yours/ui built ESM & CSS exports smoke test', () => {
         `const genui = await bundle("import { QuoteExcerptCard } from '@yours/ui/genui'; console.log(QuoteExcerptCard);");`,
         `assert(genui.includes('yui-qec-quote') && !genui.includes('yui-shell') && !genui.includes('yui-cmd-panel'));`,
         `const comp = await bundle("import { FindInThreadBar } from '@yours/ui/components'; console.log(FindInThreadBar);");`,
-        `assert(comp.includes('yui-find-bar') && !comp.includes('yui-shell') && !comp.includes('yui-qec-quote') && !comp.includes('yui-handoff-card') && !comp.includes('yui-confirm-card') && !comp.includes('yui-sel-card') && !comp.includes('yui-devcap-card'));`,
-        `const handoff = await bundle("import { AgentHandoffCard, SitePermissionsList, ConfirmActionCard, PageSelectionCard, DeviceCapabilityCard } from '@yours/ui/components'; console.log(AgentHandoffCard, SitePermissionsList, ConfirmActionCard, PageSelectionCard, DeviceCapabilityCard);");`,
-        `assert(handoff.includes('yui-handoff-card') && handoff.includes('yui-sperm-card') && handoff.includes('yui-confirm-card') && handoff.includes('yui-sel-card') && handoff.includes('yui-devcap-card') && !handoff.includes('yui-shell') && !handoff.includes('yui-qec-quote'));`,
+        `assert(comp.includes('yui-find-bar') && !comp.includes('yui-shell') && !comp.includes('yui-qec-quote') && !comp.includes('yui-handoff-card') && !comp.includes('yui-confirm-card') && !comp.includes('yui-sel-card') && !comp.includes('yui-devcap-card') && !comp.includes('yui-offline-banner') && !comp.includes('yui-ckpt-card'));`,
+        `const handoff = await bundle("import { AgentHandoffCard, SitePermissionsList, ConfirmActionCard, PageSelectionCard, DeviceCapabilityCard, OfflineStatusBanner, SessionCheckpointCard } from '@yours/ui/components'; console.log(AgentHandoffCard, SitePermissionsList, ConfirmActionCard, PageSelectionCard, DeviceCapabilityCard, OfflineStatusBanner, SessionCheckpointCard);");`,
+        `assert(handoff.includes('yui-handoff-card') && handoff.includes('yui-sperm-card') && handoff.includes('yui-confirm-card') && handoff.includes('yui-sel-card') && handoff.includes('yui-devcap-card') && handoff.includes('yui-offline-banner') && handoff.includes('yui-ckpt-card') && !handoff.includes('yui-shell') && !handoff.includes('yui-qec-quote'));`,
       ].join('\n'),
     );
 

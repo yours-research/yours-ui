@@ -288,3 +288,12 @@ export {
   type DeviceCapabilityStatus,
   type DeviceCapabilityTierOption,
 } from './DeviceCapabilityCard.js';
+export {
+  OfflineStatusBanner,
+  type OfflineStatus,
+  type OfflineStatusBannerProps,
+} from './OfflineStatusBanner.js';
+export {
+  SessionCheckpointCard,
+  type SessionCheckpointCardProps,
+} from './SessionCheckpointCard.js';

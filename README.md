@@ -165,8 +165,8 @@ All public subpaths (`@yours/ui`, `@yours/ui/icons`, `@yours/ui/layout`, `@yours
 
 | Entrypoint | Raw | Gzip | Budget Guard |
 | :--- | :---: | :---: | :---: |
-| Total `dist/` JS (`79` ESM modules) | `185.93 KB` | `75.05 KB` | `<= 80.00 KB` |
-| `@yours/ui/styles` (`tokens.css` + `components.css` + `index.css`) | `116.89 KB` | `18.00 KB` | `<= 19.00 KB` |
+| Total `dist/` JS (`81` ESM modules) | `190.17 KB` | `76.93 KB` | `<= 80.00 KB` |
+| `@yours/ui/styles` (`tokens.css` + `components.css` + `index.css`) | `117.52 KB` | `18.14 KB` | `<= 19.00 KB` |
 
 Run `npm run build && npm run check:size` to inspect live raw and gzipped sizes per entrypoint.
 
@@ -185,8 +185,8 @@ Run `npm run build && npm run check:size` to inspect live raw and gzipped sizes 
 
 ### `@yours/ui/components` Inventory
 
-- **Shell, Overlay & Navigation:** `CommandPalette`, `ContextCommandPopover`, `FindInThreadBar`, `FloatingComposer`, `FloatingContextSheet`, `EmptyPanelState`, `EmptyState`, `KbdHint`, `OnboardingCard`, `PromptCapsuleStack`, `PromptTemplateList`, `QuotedContextBanner`, `ScrollToBottomButton`, `SegmentedControl`, `ShortcutSheet`, `StatusBadge`, `StatusToast`, `SuggestionChipRow`, `ThreadHistoryDrawer`, `ThreadHistoryList`, `ToastPill`.
-- **Conversation, Citations & Diffs:** `ActionBar`, `AssistantMessage`, `AttachmentDropzone`, `AttachmentStrip`, `AudioLevelMeter`, `BranchPicker`, `CitationFootnoteList`, `CodeBlock`, `CodeBlockCard`, `DiffCard`, `FollowUpSuggestions`, `InlineCitationPill`, `InlineCitationPopover`, `InlineNotice`, `MessageSkeleton`, `SourcesDrawer`, `StreamingResponse`, `UserMessageBubble`, `VoiceDictationPill`, `VoiceSessionBar`, `VoiceSessionCard`.
+- **Shell, Overlay & Navigation:** `CommandPalette`, `ContextCommandPopover`, `FindInThreadBar`, `FloatingComposer`, `FloatingContextSheet`, `EmptyPanelState`, `EmptyState`, `KbdHint`, `OfflineStatusBanner`, `OnboardingCard`, `PromptCapsuleStack`, `PromptTemplateList`, `QuotedContextBanner`, `ScrollToBottomButton`, `SegmentedControl`, `ShortcutSheet`, `StatusBadge`, `StatusToast`, `SuggestionChipRow`, `ThreadHistoryDrawer`, `ThreadHistoryList`, `ToastPill`.
+- **Conversation, Citations & Diffs:** `ActionBar`, `AssistantMessage`, `AttachmentDropzone`, `AttachmentStrip`, `AudioLevelMeter`, `BranchPicker`, `CitationFootnoteList`, `CodeBlock`, `CodeBlockCard`, `DiffCard`, `FollowUpSuggestions`, `InlineCitationPill`, `InlineCitationPopover`, `InlineNotice`, `MessageSkeleton`, `SessionCheckpointCard`, `SourcesDrawer`, `StreamingResponse`, `UserMessageBubble`, `VoiceDictationPill`, `VoiceSessionBar`, `VoiceSessionCard`.
 - **Reasoning, Tools, Context & Guard:** `AgentHandoffCard`, `ConfirmActionCard`, `ContextBudgetMeter`, `PageSelectionCard`, `PermissionApprovalCard`, `PermissionCard`, `ReasoningTrace`, `SitePermissionsList`, `TabContextList`, `ToolStepCard`, `ToolTraceList`.
 - **Local Runtime, Models, Memory, Data & Settings:** `ArtifactPreviewCard`, `DataTableCard`, `DeviceCapabilityCard`, `ErrorRecoveryBanner`, `ErrorRecoveryCard`, `ExportSessionCard`, `HardwareStatusStrip`, `LocalVaultExportCard`, `MemoryInspectorList`, `MemoryRecordCard`, `ModelDownloadGate`, `ModelDownloadProgressBar`, `ModelParametersCard`, `ModelRosterList`, `NetworkAuditCard`, `SettingsSection`, `SettingsToggleRow`, `StorageQuotaCard`.
 

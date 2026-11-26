@@ -98,6 +98,8 @@ import {
   ConfirmActionCard,
   PageSelectionCard,
   DeviceCapabilityCard,
+  OfflineStatusBanner,
+  SessionCheckpointCard,
   SourcesDrawer,
   StatusBadge,
   StatusToast,
@@ -1901,6 +1903,47 @@ function PreflightAndSelectionPanel({ theme }: { theme: 'light' | 'dark' }) {
   );
 }
 
+function SessionAndOfflinePanel({ theme }: { theme: 'light' | 'dark' }) {
+  const [localOnly, setLocalOnly] = useState(false);
+  const [statusMsg, setStatusMsg] = useState('Local WebGPU active · Checkpoint #08 saved');
+
+  return (
+    <SidePanelShell
+      theme={theme}
+      notch={<TopNotch items={NOTCH_ITEMS} expandedId={null} />}
+      footer={
+        <FloatingComposer
+          value=""
+          onChange={() => {}}
+          onSubmit={() => {}}
+          leftSlot={<StatusBadge tone="local" dot>{statusMsg}</StatusBadge>}
+        />
+      }
+    >
+      <OfflineStatusBanner
+        status={localOnly ? 'offline-ready' : 'offline-degraded'}
+        localOnlyActive={localOnly}
+        onLocalOnly={() => {
+          setLocalOnly((prev) => !prev);
+          setStatusMsg('Switched to 100% local-only mode');
+        }}
+        onRetry={() => setStatusMsg('Retrying network connectivity')}
+      />
+      <SessionCheckpointCard
+        title="Session checkpoint"
+        summary="Before DOM extraction refactor"
+        timestamp="10:18 AM"
+        checkpointLabel="cp-08"
+        turnCount={12}
+        pinnedTabCount={2}
+        contextSnapshot="4.8k / 16k tok · 30%"
+        onBranch={() => setStatusMsg('Branched new thread from cp-08')}
+        onRestore={() => setStatusMsg('Restored checkpoint cp-08')}
+      />
+    </SidePanelShell>
+  );
+}
+
 function RtlShowcasePanel({ theme }: { theme: 'light' | 'dark' }) {
   return (
     <SidePanelShell
@@ -2050,9 +2093,11 @@ function SpecimenApp() {
       ? 'yui-spec-single yui-spec-single--compact'
       : widthMode === '340'
         ? 'yui-spec-single yui-spec-single--narrow'
-        : widthMode === '400'
-          ? 'yui-spec-single yui-spec-single--wide'
-          : 'yui-spec-single';
+        : widthMode === '360'
+          ? 'yui-spec-single yui-spec-single--container360'
+          : widthMode === '400'
+            ? 'yui-spec-single yui-spec-single--wide'
+            : 'yui-spec-single';
 
   if (mode === 'single') {
     return (
@@ -2081,6 +2126,7 @@ function SpecimenApp() {
         {panel === 'controls' ? <ControlsAndAuditPanel theme={theme} /> : null}
         {panel === 'permissions' ? <PermissionsAndHandoffPanel theme={theme} /> : null}
         {panel === 'preflight' ? <PreflightAndSelectionPanel theme={theme} /> : null}
+        {panel === 'resilience' ? <SessionAndOfflinePanel theme={theme} /> : null}
         {panel === 'rtl' ? <RtlShowcasePanel theme={theme} /> : null}
       </div>
     );
@@ -2111,6 +2157,7 @@ function SpecimenApp() {
       <div className="yui-spec-frame"><ControlsAndAuditPanel theme={theme} /></div>
       <div className="yui-spec-frame"><PermissionsAndHandoffPanel theme={theme} /></div>
       <div className="yui-spec-frame"><PreflightAndSelectionPanel theme={theme} /></div>
+      <div className="yui-spec-frame"><SessionAndOfflinePanel theme={theme} /></div>
       <div className="yui-spec-frame-auto"><GenUiShowcasePanel theme={theme} /></div>
     </div>
   );
@@ -2142,6 +2189,10 @@ html, body {
 
 .yui-spec-single--narrow {
   width: 340px;
+}
+
+.yui-spec-single--container360 {
+  width: 360px;
 }
 
 .yui-spec-single--wide {
@@ -3566,7 +3617,7 @@ async function main() {
       // 400px width verification across key panels + reduced-motion audit
       await page.setViewportSize({ width: 400, height: 828 });
       await page.emulateMedia({ reducedMotion: 'reduce' });
-      for (const widePanel of ['chat', 'data', 'shortcuts', 'welcome', 'palette', 'diff', 'trace', 'drawers', 'budget', 'onboarding', 'recovery', 'voice', 'templates', 'genui', 'storage', 'controls', 'permissions', 'preflight']) {
+      for (const widePanel of ['chat', 'data', 'shortcuts', 'welcome', 'palette', 'diff', 'trace', 'drawers', 'budget', 'onboarding', 'recovery', 'voice', 'templates', 'genui', 'storage', 'controls', 'permissions', 'preflight', 'resilience']) {
         await page.goto(`${baseUrl}/?mode=single&theme=${theme}&panel=${widePanel}&width=400`, {
           waitUntil: 'networkidle',
         });
@@ -3913,7 +3964,7 @@ async function main() {
 
       // 320px compact Chrome side-panel audit (overflow, zero inline styles, WCAG AA contrast)
       await page.setViewportSize({ width: 320, height: 828 });
-      for (const compactPanel of ['permissions', 'storage', 'controls', 'templates', 'voice', 'preflight']) {
+      for (const compactPanel of ['permissions', 'storage', 'controls', 'templates', 'voice', 'preflight', 'resilience']) {
         await page.goto(`${baseUrl}/?mode=single&theme=${theme}&panel=${compactPanel}&width=320`, {
           waitUntil: 'networkidle',
         });
@@ -3927,7 +3978,7 @@ async function main() {
           throw new Error(`320px compact audit failed (${theme}/${compactPanel}): ${JSON.stringify(compactCheck)}`);
         }
         await blurActive();
-        if (compactPanel === 'preflight' || compactPanel === 'permissions') {
+        if (compactPanel === 'preflight' || compactPanel === 'permissions' || compactPanel === 'resilience') {
           const compactPath = path.join(OUT_DIR, `specimen-${theme}-${compactPanel}-320.png`);
           await page.screenshot({ path: compactPath });
           outputs.push(compactPath);
@@ -3981,7 +4032,7 @@ async function main() {
       // Forced-colors audit at 380px across settings, recovery, voice, templates, genui, storage & controls
       await page.setViewportSize({ width: 380, height: 828 });
       await page.emulateMedia({ forcedColors: 'active' });
-      for (const fcPanel of ['settings', 'recovery', 'voice', 'templates', 'genui', 'storage', 'controls', 'permissions', 'preflight']) {
+      for (const fcPanel of ['settings', 'recovery', 'voice', 'templates', 'genui', 'storage', 'controls', 'permissions', 'preflight', 'resilience']) {
         await page.goto(`${baseUrl}/?mode=single&theme=${theme}&panel=${fcPanel}`, {
           waitUntil: 'networkidle',
         });
@@ -4266,6 +4317,96 @@ async function main() {
       await page.keyboard.press('Space');
       if ((await selToggle.getAttribute('aria-expanded')) !== 'false') {
         throw new Error(`PageSelectionCard keyboard Collapse toggle failed (${theme})`);
+      }
+
+      // OfflineStatusBanner & SessionCheckpointCard interactive keyboard & ARIA checks
+      await page.goto(`${baseUrl}/?mode=single&theme=${theme}&panel=resilience`, { waitUntil: 'networkidle' });
+      await waitForSpecimen(`a11y/${theme}/resilience`);
+      await auditPanelContrast(theme, 'resilience');
+      const resCheck = await page.evaluate(() => {
+        const banner = document.querySelector('[data-slot="offline-status-banner"]');
+        const ckpt = document.querySelector('[data-slot="session-checkpoint-card"]');
+        return {
+          bannerRole: banner?.getAttribute('role'),
+          bannerLive: banner?.getAttribute('aria-live'),
+          bannerText: banner?.textContent ?? '',
+          ckptText: ckpt?.textContent ?? '',
+        };
+      });
+      if (
+        resCheck.bannerRole !== 'status' ||
+        resCheck.bannerLive !== 'polite' ||
+        !resCheck.bannerText.includes('100% local WebGPU') ||
+        !resCheck.ckptText.includes('10:18 AM') ||
+        !resCheck.ckptText.includes('12 turns') ||
+        !resCheck.ckptText.includes('2 pinned')
+      ) {
+        throw new Error(`Resilience panel ARIA/metadata check failed (${theme}): ${JSON.stringify(resCheck)}`);
+      }
+      const restoreBtn = page.locator('[data-slot="session-checkpoint-card"] button:has-text("Restore checkpoint")');
+      await restoreBtn.focus();
+      await page.keyboard.press('Enter');
+      const ckptCancelFocused = await page.evaluate(() => {
+        const grp = document.querySelector('[data-slot="session-checkpoint-card"] [role="group"]');
+        return Boolean(grp && document.activeElement && grp.contains(document.activeElement) && document.activeElement.textContent?.trim() === 'Cancel');
+      });
+      if (!ckptCancelFocused) {
+        throw new Error(`SessionCheckpointCard inline confirm did not focus Cancel (${theme})`);
+      }
+      await page.keyboard.press('Escape');
+      const ckptRestored = await page.evaluate(
+        () => document.activeElement?.textContent?.includes('Restore checkpoint') ?? false,
+      );
+      if (!ckptRestored) {
+        throw new Error(`SessionCheckpointCard Escape did not restore focus to Restore checkpoint (${theme})`);
+      }
+
+      // CSS @container audit: 320px & 360px containers inside wide 1280px browser viewport across normal/RTL/forced-colors/reduced-motion
+      await page.setViewportSize({ width: 1280, height: 828 });
+      for (const cw of [320, 360]) {
+        const containerMatrix = [
+          { tag: 'normal', dir: '', fc: 'none', rm: 'no-preference', panel: 'drawers' },
+          { tag: 'normal', dir: '', fc: 'none', rm: 'no-preference', panel: 'runtime' },
+          { tag: 'normal', dir: '', fc: 'none', rm: 'no-preference', panel: 'resilience' },
+          { tag: 'rtl', dir: '&dir=rtl', fc: 'none', rm: 'no-preference', panel: 'rtl' },
+          { tag: 'forced', dir: '', fc: 'active', rm: 'no-preference', panel: 'resilience' },
+          { tag: 'reduced', dir: '', fc: 'none', rm: 'reduce', panel: 'permissions' },
+        ];
+        for (const variant of containerMatrix) {
+          await page.emulateMedia({ forcedColors: variant.fc, reducedMotion: variant.rm });
+          await page.goto(
+            `${baseUrl}/?mode=single&theme=${theme}&panel=${variant.panel}&width=${cw}${variant.dir}`,
+            { waitUntil: 'networkidle' },
+          );
+          await waitForSpecimen(`container-${cw}/${theme}/${variant.tag}/${variant.panel}`);
+          const cqAudit = await page.evaluate((targetW) => {
+            const box = document.querySelector('.yui-spec-single');
+            const root = document.getElementById('specimen-root');
+            const sep = document.querySelector('[data-slot="model-roster-list"] .yui-model-spec-sep');
+            const vbar = document.querySelector('[data-slot="voice-session-bar"]');
+            return {
+              innerWidth: window.innerWidth,
+              boxScrollWidth: box ? box.scrollWidth : -1,
+              docOverflow: document.documentElement.scrollWidth > 1280,
+              inlineStyles: root ? root.querySelectorAll('[style]').length : -1,
+              sepDisplay: sep ? getComputedStyle(sep).display : null,
+              vbarWrap: vbar ? getComputedStyle(vbar).flexWrap : null,
+            };
+          }, cw);
+          if (
+            cqAudit.innerWidth !== 1280 ||
+            cqAudit.boxScrollWidth > cw ||
+            cqAudit.docOverflow ||
+            cqAudit.inlineStyles !== 0 ||
+            (variant.panel === 'drawers' && cqAudit.sepDisplay !== 'none') ||
+            (variant.panel === 'runtime' && cqAudit.vbarWrap !== 'wrap')
+          ) {
+            throw new Error(
+              `1280px @container (${cw}px) audit failed (${theme}/${variant.tag}/${variant.panel}): ${JSON.stringify(cqAudit)}`,
+            );
+          }
+        }
+        await page.emulateMedia({ forcedColors: 'none', reducedMotion: 'no-preference' });
       }
 
       // Overview 20-up comparison sheet

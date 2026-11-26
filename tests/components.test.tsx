@@ -42,6 +42,7 @@ import {
   ModelParametersCard,
   ModelRosterList,
   NetworkAuditCard,
+  OfflineStatusBanner,
   OnboardingCard,
   PageSelectionCard,
   PermissionApprovalCard,
@@ -52,6 +53,7 @@ import {
   ReasoningTrace,
   ScrollToBottomButton,
   SegmentedControl,
+  SessionCheckpointCard,
   SettingsSection,
   SettingsToggleRow,
   ShortcutSheet,
@@ -2133,7 +2135,8 @@ describe('@yours/ui chat & runtime primitives', () => {
     expect(cssSource).toContain('.yui-toast-overlay');
     expect(cssSource).toContain('z-index: 45');
     expect(cssSource).toContain('.yui-sr-table');
-    expect(cssSource).toContain('@media (max-width: 360px)');
+    expect(cssSource).toContain('container-type: inline-size');
+    expect(cssSource).toContain('@container (max-width: 340px)');
   });
 
   it('renders CodeBlockCard with language badge, line numbers & copy feedback, and OnboardingCard setup CTA', async () => {
@@ -3308,5 +3311,101 @@ describe('@yours/ui chat & runtime primitives', () => {
     expect(el.querySelector('[data-slot="find-in-thread-bar"] [aria-live="polite"]')?.textContent).toBe('2 / 4');
     const recheckBtn = Array.from(el.querySelectorAll('[data-slot="device-capability-card"] button')).at(-1);
     expect(recheckBtn?.getAttribute('aria-busy')).toBe('true');
+  });
+
+  it('renders OfflineStatusBanner, SessionCheckpointCard (inline confirm + Cancel focus + Escape restore + Branch), and @container rules without inline styles', async () => {
+    const onRetry = vi.fn();
+    const onLocalOnly = vi.fn();
+    const onRestore = vi.fn();
+    const onBranch = vi.fn();
+
+    const el = renderNode(
+      <div className="yui-surface">
+        <OfflineStatusBanner
+          status="offline-degraded"
+          localOnlyActive
+          retrying
+          onLocalOnly={onLocalOnly}
+          onRetry={onRetry}
+        />
+        <SessionCheckpointCard
+          timestamp="10:18 AM"
+          turnCount={12}
+          pinnedTabCount={2}
+          contextSnapshot="4.8k / 16k tok"
+          checkpointLabel="cp-08"
+          onRestore={onRestore}
+          onBranch={onBranch}
+        />
+      </div>,
+    );
+
+    expect(el.querySelectorAll('[style]').length).toBe(0);
+    const banner = el.querySelector('[data-slot="offline-status-banner"]') as HTMLElement;
+    expect(banner.getAttribute('role')).toBe('status');
+    expect(banner.getAttribute('data-status')).toBe('offline-degraded');
+    expect(banner.textContent).toContain('100% local WebGPU inference');
+
+    const localBtn = banner.querySelector('button[aria-pressed="true"]') as HTMLButtonElement;
+    const retryBtn = banner.querySelector('button[aria-busy="true"]') as HTMLButtonElement;
+    expect(localBtn).not.toBeNull();
+    expect(retryBtn.disabled).toBe(true);
+    act(() => {
+      localBtn.click();
+    });
+    expect(onLocalOnly).toHaveBeenCalledTimes(1);
+
+    const ckpt = el.querySelector('[data-slot="session-checkpoint-card"]') as HTMLElement;
+    expect(ckpt.textContent).toContain('10:18 AM');
+    expect(ckpt.textContent).toContain('12 turns');
+    expect(ckpt.textContent).toContain('2 pinned');
+    expect(ckpt.textContent).toContain('4.8k / 16k tok');
+
+    const branchBtn = Array.from(ckpt.querySelectorAll('button')).find((b) =>
+      b.textContent?.includes('Branch from here'),
+    ) as HTMLButtonElement;
+    const restoreBtn = Array.from(ckpt.querySelectorAll('button')).find((b) =>
+      b.textContent?.includes('Restore checkpoint'),
+    ) as HTMLButtonElement;
+    act(() => {
+      branchBtn.click();
+    });
+    expect(onBranch).toHaveBeenCalledTimes(1);
+
+    // Inline confirmation focuses Cancel and restores to Restore checkpoint on Escape
+    act(() => {
+      restoreBtn.click();
+    });
+    expect(ckpt.getAttribute('data-confirming')).toBe('true');
+    expect(document.activeElement?.textContent).toBe('Cancel');
+    const grp = ckpt.querySelector('[role="group"]') as HTMLElement;
+    act(() => {
+      grp.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
+    });
+    expect(ckpt.getAttribute('data-confirming')).toBe('false');
+    expect(document.activeElement).toBe(restoreBtn);
+    expect(onRestore).not.toHaveBeenCalled();
+
+    // Confirming triggers onRestore
+    act(() => {
+      restoreBtn.click();
+    });
+    const confirmBtn = Array.from(ckpt.querySelectorAll('button')).find((b) =>
+      b.textContent?.includes('Confirm restore'),
+    ) as HTMLButtonElement;
+    act(() => {
+      confirmBtn.click();
+    });
+    expect(onRestore).toHaveBeenCalledTimes(1);
+
+    const cssSource = await readSourceFile('../src/styles/components.css');
+    expect(cssSource).toContain('.yui-surface');
+    expect(cssSource).toContain('container-type: inline-size');
+    expect(cssSource).toContain('@container (max-width: 340px)');
+    expect(cssSource).toContain('@container (max-width: 380px)');
+    expect(cssSource).toContain('@container (max-width: 420px)');
+    const forced = cssSource.slice(cssSource.indexOf('@media (forced-colors: active)'));
+    expect(forced).toContain('.yui-offline-banner');
+    expect(forced).toContain('.yui-ckpt-card');
   });
 });

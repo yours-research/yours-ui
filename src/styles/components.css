@@ -206,7 +206,11 @@ progress[class*="yui-"]::-webkit-progress-value, progress[class*="yui-"]::-moz-p
 }
 
 .yui-shell {
-  position: relative; width: 100%; height: 100%; min-height: 0; box-sizing: border-box; display: flex; flex-direction: column; background-color: var(--yui-outer-bg); border: 1px solid var(--yui-outer-border); border-radius: 22px; padding: 10px; box-shadow: var(--yui-lift-shadow); overflow: hidden; color: var(--yui-ink); font-family: var(--font-sans);
+  position: relative; width: 100%; height: 100%; min-height: 0; box-sizing: border-box; container-type: inline-size; display: flex; flex-direction: column; background-color: var(--yui-outer-bg); border: 1px solid var(--yui-outer-border); border-radius: 22px; padding: 10px; box-shadow: var(--yui-lift-shadow); overflow: hidden; color: var(--yui-ink); font-family: var(--font-sans);
+}
+
+.yui-surface {
+  container-type: inline-size; width: 100%; min-width: 0; box-sizing: border-box;
 }
 
 .yui-shell--bleed {
@@ -1718,7 +1722,7 @@ span.yui-citation-pill {
 }
 
 .yui-cite-card {
-  position: absolute; bottom: calc(100% + 7px); inset-inline-start: 0; z-index: 26; width: 276px; max-width: calc(100vw - 44px); box-sizing: border-box; background-color: var(--yui-capsule-bg); border: 1px solid var(--yui-capsule-border); border-radius: 14px; box-shadow: var(--yui-notch-shadow); padding: 10px 11px; display: flex; flex-direction: column; gap: 8px; animation: yuiFadeUp 170ms var(--yui-spring);
+  position: absolute; bottom: calc(100% + 7px); inset-inline-start: 0; z-index: 26; width: 276px; max-width: calc(100vw - 44px); max-width: calc(100cqi - 36px); box-sizing: border-box; background-color: var(--yui-capsule-bg); border: 1px solid var(--yui-capsule-border); border-radius: 14px; box-shadow: var(--yui-notch-shadow); padding: 10px 11px; display: flex; flex-direction: column; gap: 8px; animation: yuiFadeUp 170ms var(--yui-spring);
 }
 
 .yui-cite-head,
@@ -3042,7 +3046,8 @@ textarea,
 .yui-handoff-card,
 .yui-confirm-card,
 .yui-sel-card,
-.yui-devcap-card {
+.yui-devcap-card,
+.yui-ckpt-card {
   border-radius: 15px; padding: 13px 14px; gap: 10px;
 }
 
@@ -3647,7 +3652,41 @@ textarea,
   color: var(--yui-secondary);
 }
 
-@media (max-width: 360px) {
+.yui-offline-banner {
+  border-radius: 13px; padding: 10px 12px; gap: 6px;
+}
+
+.yui-offline-banner.is-offline-degraded,
+.yui-offline-banner.is-sync-paused {
+  border-inline-start: 2.5px solid var(--yui-amber);
+}
+
+.yui-m-0 {
+  margin: 0;
+}
+
+.yui-offline-foot {
+  gap: 8px;
+}
+
+@container (max-width: 420px) {
+  .yui-storage-foot {
+    gap: 8px;
+  }
+}
+
+@container (max-width: 380px) {
+  .yui-dl-foot,
+  .yui-offline-foot {
+    flex-wrap: wrap; row-gap: 6px;
+  }
+
+  .yui-ckpt-card .yui-storage-foot {
+    flex-wrap: wrap; row-gap: 7px;
+  }
+}
+
+@container (max-width: 340px) {
   .yui-hw-strip {
     flex-wrap: wrap; row-gap: 4px; padding: 6px 8px;
   }
@@ -3707,7 +3746,8 @@ textarea,
   .yui-handoff-card,
   .yui-confirm-card,
   .yui-sel-card,
-  .yui-devcap-card {
+  .yui-devcap-card,
+  .yui-ckpt-card {
     padding: 11px 12px;
   }
 
@@ -3768,6 +3808,8 @@ textarea,
   .yui-confirm-card,
   .yui-sel-card,
   .yui-devcap-card,
+  .yui-offline-banner,
+  .yui-ckpt-card,
   .yui-well,
   .yui-empty-box,
   .yui-storage-list {
