@@ -65,6 +65,7 @@ import {
   MicIcon,
   ModelDownloadGate,
   ModelDownloadProgressBar,
+  ModelRosterList,
   NotchDrawerSearch,
   NotchOptionRow,
   PageActionCard,
@@ -84,6 +85,8 @@ import {
   StatusBadge,
   StatusToast,
   StreamingResponse,
+  TabContextList,
+  ThreadHistoryList,
   ToastPill,
   ToolStepCard,
   ToolTraceList,
@@ -1017,6 +1020,124 @@ function DiffShowcasePanel({ theme }: { theme: 'light' | 'dark' }) {
   );
 }
 
+function DrawerAndContextPanel({ theme }: { theme: 'light' | 'dark' }) {
+  const [activeThreadId, setActiveThreadId] = useState('th-1');
+  const [pinnedIds, setPinnedIds] = useState<Record<string, boolean>>({ 'th-1': true });
+  const [selectedModelId, setSelectedModelId] = useState('qwen-4b');
+  const [mutedIds, setMutedIds] = useState<Record<string, boolean>>({ 'tab-3': true });
+  const [tabItems, setTabItems] = useState([
+    {
+      id: 'tab-1',
+      domain: 'docs.rs',
+      title: 'wgpu ComputePassEncoder & subgroup barriers guide',
+      tokenLabel: '1.4k tok',
+      kind: 'tab' as const,
+    },
+    {
+      id: 'tab-2',
+      domain: 'github.com/yours-research',
+      title: 'Strict Chrome MV3 CSP architecture checklist',
+      tokenLabel: '840 tok',
+      kind: 'tab' as const,
+    },
+    {
+      id: 'tab-3',
+      domain: 'yours.sh',
+      title: 'Selected shader memory layout table snippet',
+      tokenLabel: '320 tok',
+      kind: 'snippet' as const,
+    },
+  ]);
+
+  return (
+    <SidePanelShell
+      theme={theme}
+      notch={<TopNotch items={NOTCH_ITEMS} expandedId={null} />}
+      sheet={
+        <FloatingContextSheet
+          open
+          title="Attached tab context"
+          badge={String(tabItems.length)}
+        >
+          <TabContextList
+            items={tabItems.map((item) => ({ ...item, muted: Boolean(mutedIds[item.id]) }))}
+            onToggleMute={(id) => setMutedIds((prev) => ({ ...prev, [id]: !prev[id] }))}
+            onDetach={(id) => setTabItems((prev) => prev.filter((item) => item.id !== id))}
+          />
+        </FloatingContextSheet>
+      }
+      footer={
+        <FloatingComposer
+          value=""
+          onChange={() => {}}
+          onSubmit={() => {}}
+          leftSlot={<StatusBadge tone="local" dot>Drawers ready</StatusBadge>}
+        />
+      }
+    >
+      <ThreadHistoryList
+        activeId={activeThreadId}
+        onSelect={setActiveThreadId}
+        onTogglePin={(id) => setPinnedIds((prev) => ({ ...prev, [id]: !prev[id] }))}
+        onDelete={() => {}}
+        items={[
+          {
+            id: 'th-1',
+            title: 'WebGPU subgroup reduction tuning',
+            preview: 'KV int8 quantization freed 2x window headroom on M3 GPU.',
+            timestamp: '2m ago',
+            turnCount: 6,
+            groupLabel: 'Today',
+            pinned: Boolean(pinnedIds['th-1']),
+          },
+          {
+            id: 'th-2',
+            title: 'Lethal Trifecta guard policy review',
+            preview: 'Inline PermissionCard requires host + scope confirmation.',
+            timestamp: 'Yesterday',
+            turnCount: 4,
+            groupLabel: 'Yesterday',
+            pinned: Boolean(pinnedIds['th-2']),
+          },
+        ]}
+      />
+      <ModelRosterList
+        selectedId={selectedModelId}
+        onSelectModel={setSelectedModelId}
+        onDownloadModel={() => {}}
+        models={[
+          {
+            id: 'qwen-4b',
+            name: 'Qwen3.5-4B',
+            quantLabel: 'Q4F16',
+            sizeLabel: '2.4 GB',
+            vramLabel: '3.1 GB VRAM',
+            speedLabel: '44 tok/s',
+            state: selectedModelId === 'qwen-4b' ? 'active' : 'cached',
+          },
+          {
+            id: 'gemma-4',
+            name: 'Gemma 4 E4B',
+            quantLabel: 'Q4',
+            sizeLabel: '2.7 GB',
+            vramLabel: '3.4 GB VRAM',
+            speedLabel: '39 tok/s',
+            state: selectedModelId === 'gemma-4' ? 'active' : 'cached',
+          },
+          {
+            id: 'llama-3b',
+            name: 'Llama-3.2-3B',
+            quantLabel: 'Q4',
+            sizeLabel: '1.9 GB',
+            vramLabel: '2.4 GB VRAM',
+            state: 'download',
+          },
+        ]}
+      />
+    </SidePanelShell>
+  );
+}
+
 function ShortcutAndToastPanel({ theme }: { theme: 'light' | 'dark' }) {
   const [toastOpen, setToastOpen] = useState(true);
 
@@ -1099,6 +1220,7 @@ function SpecimenApp() {
         {panel === 'palette' ? <CommandPaletteAndDiffPanel theme={theme} /> : null}
         {panel === 'diff' ? <DiffShowcasePanel theme={theme} /> : null}
         {panel === 'trace' ? <TraceAndPermissionPanel theme={theme} /> : null}
+        {panel === 'drawers' ? <DrawerAndContextPanel theme={theme} /> : null}
         {panel === 'genui' ? <GenUiShowcasePanel theme={theme} /> : null}
       </div>
     );
@@ -1119,6 +1241,7 @@ function SpecimenApp() {
       <div className="yui-spec-frame"><CommandPaletteAndDiffPanel theme={theme} /></div>
       <div className="yui-spec-frame"><DiffShowcasePanel theme={theme} /></div>
       <div className="yui-spec-frame"><TraceAndPermissionPanel theme={theme} /></div>
+      <div className="yui-spec-frame"><DrawerAndContextPanel theme={theme} /></div>
       <div className="yui-spec-frame-auto"><GenUiShowcasePanel theme={theme} /></div>
     </div>
   );
@@ -1338,6 +1461,7 @@ async function main() {
       'palette',
       'diff',
       'trace',
+      'drawers',
       'genui',
     ];
     for (const theme of ['light', 'dark']) {
@@ -1348,7 +1472,7 @@ async function main() {
         });
         await waitForSpecimen(`${theme}/${panel}`);
 
-        if (panel === 'live' || panel === 'sheet' || panel === 'palette') {
+        if (panel === 'live' || panel === 'sheet' || panel === 'palette' || panel === 'drawers') {
           await page.waitForTimeout(300);
         }
 
@@ -1732,6 +1856,80 @@ async function main() {
           }
         }
 
+        if (panel === 'drawers') {
+          const drawerContrast = await page.evaluate(() => {
+            const parseRgba = (str) => {
+              const m = str.match(/rgba?\(([^)]+)\)/);
+              if (!m) return null;
+              const parts = m[1].split(',').map((x) => parseFloat(x.trim()));
+              return [parts[0], parts[1], parts[2], parts[3] ?? 1];
+            };
+            const relLum = ([r, g, b]) => {
+              const f = (c) => {
+                const s = c / 255;
+                return s <= 0.03928 ? s / 12.92 : Math.pow((s + 0.055) / 1.055, 2.4);
+              };
+              return 0.2126 * f(r) + 0.7152 * f(g) + 0.0722 * f(b);
+            };
+            const effectiveBg = (el) => {
+              let cur = el;
+              while (cur && cur !== document.documentElement) {
+                const bg = parseRgba(getComputedStyle(cur).backgroundColor);
+                if (bg && bg[3] >= 0.95) return bg;
+                cur = cur.parentElement;
+              }
+              return [255, 255, 255, 1];
+            };
+            const selectors = [
+              '[data-slot="thread-history-list"] .yui-th-title',
+              '[data-slot="thread-history-list"] .yui-th-preview',
+              '[data-slot="thread-history-list"] .yui-th-meta',
+              '[data-slot="model-roster-list"] .yui-model-name',
+              '[data-slot="model-roster-list"] .yui-model-specs',
+              '[data-slot="tab-context-list"] .yui-tabctx-domain',
+              '[data-slot="tab-context-list"] .yui-tabctx-title',
+              '[data-slot="tab-context-list"] .yui-tabctx-tok',
+            ];
+            const bad = [];
+            for (const sel of selectors) {
+              for (const node of document.querySelectorAll(sel)) {
+                const fg = parseRgba(getComputedStyle(node).color);
+                const bg = effectiveBg(node);
+                if (!fg) continue;
+                const l1 = Math.max(relLum(fg), relLum(bg));
+                const l2 = Math.min(relLum(fg), relLum(bg));
+                const ratio = (l1 + 0.05) / (l2 + 0.05);
+                if (ratio < 4.5) {
+                  bad.push({ sel, ratio: Number(ratio.toFixed(2)), text: node.textContent });
+                }
+              }
+            }
+            return bad;
+          });
+          if (drawerContrast.length > 0) {
+            throw new Error(`WCAG AA contrast audit failed (${theme}/drawers): ${JSON.stringify(drawerContrast)}`);
+          }
+
+          // Interactive checks: ModelRosterList ArrowDown switches active radio, TabContextList Mute toggles, ThreadHistoryList two-step delete opens confirm
+          const radios = page.locator('[data-slot="model-roster-list"] [role="radio"]');
+          await radios.nth(0).focus();
+          await page.keyboard.press('ArrowDown');
+          const secondChecked = await radios.nth(1).getAttribute('aria-checked');
+          if (secondChecked !== 'true') {
+            throw new Error(`ModelRosterList ArrowDown did not check second radio (${theme}): ${secondChecked}`);
+          }
+          const muteBtn = page.locator('[data-slot="tab-context-list"] .yui-tabctx-mute-btn').first();
+          await muteBtn.click();
+          if ((await muteBtn.getAttribute('aria-pressed')) !== 'true') {
+            throw new Error(`TabContextList mute button did not toggle aria-pressed (${theme})`);
+          }
+          const delInit = page.locator('[data-slot="thread-history-list"] [aria-label^="Delete "]').first();
+          await delInit.click();
+          if ((await page.locator('[data-slot="thread-history-list"] .yui-th-confirm-btn').count()) !== 1) {
+            throw new Error(`ThreadHistoryList delete did not show two-step confirmation (${theme})`);
+          }
+        }
+
         if (panel === 'diff') {
           const capFade = await page
             .locator('[data-slot="artifact-preview-card"] .yui-artifact-scroll-wrap')
@@ -1761,10 +1959,10 @@ async function main() {
         }
       }
 
-      // 400px width verification on Data, Shortcuts, Welcome, Palette, Diff & Trace panels + reduced-motion audit
+      // 400px width verification on Data, Shortcuts, Welcome, Palette, Diff, Trace & Drawers panels + reduced-motion audit
       await page.setViewportSize({ width: 400, height: 828 });
       await page.emulateMedia({ reducedMotion: 'reduce' });
-      for (const widePanel of ['data', 'shortcuts', 'welcome', 'palette', 'diff', 'trace']) {
+      for (const widePanel of ['data', 'shortcuts', 'welcome', 'palette', 'diff', 'trace', 'drawers']) {
         await page.goto(`${baseUrl}/?mode=single&theme=${theme}&panel=${widePanel}&width=400`, {
           waitUntil: 'networkidle',
         });
@@ -1799,6 +1997,7 @@ async function main() {
         'palette',
         'diff',
         'trace',
+        'drawers',
         'genui',
       ]) {
         await page.goto(`${baseUrl}/?mode=single&theme=${theme}&panel=${narrowPanel}&narrow=1`, {
@@ -1920,14 +2119,29 @@ async function main() {
           outputs.push(diffNarrowPath);
         }
         if (narrowPanel === 'trace') {
+          const permAlign = await page.evaluate(() => {
+            const vals = Array.from(document.querySelectorAll('[data-slot="permission-card"] .yui-perm-meta-val'));
+            if (vals.length < 2) return null;
+            const dLeft = Math.round(vals[0].getBoundingClientRect().left);
+            const sLeft = Math.round(vals[1].getBoundingClientRect().left);
+            return { dLeft, sLeft, delta: Math.abs(dLeft - sLeft) };
+          });
+          if (!permAlign || permAlign.delta > 2) {
+            throw new Error(`PermissionCard 340px DOMAIN/SCOPE alignment failed (${theme}): ${JSON.stringify(permAlign)}`);
+          }
           const traceNarrowPath = path.join(OUT_DIR, `specimen-${theme}-trace-340.png`);
           await page.screenshot({ path: traceNarrowPath });
           outputs.push(traceNarrowPath);
         }
+        if (narrowPanel === 'drawers') {
+          const drawersNarrowPath = path.join(OUT_DIR, `specimen-${theme}-drawers-340.png`);
+          await page.screenshot({ path: drawersNarrowPath });
+          outputs.push(drawersNarrowPath);
+        }
       }
 
-      // Overview 14-up comparison sheet
-      await page.setViewportSize({ width: 5680, height: 900 });
+      // Overview 15-up comparison sheet
+      await page.setViewportSize({ width: 6084, height: 900 });
       await page.goto(`${baseUrl}/?mode=gallery&theme=${theme}`, { waitUntil: 'networkidle' });
       const overviewPath = path.join(OUT_DIR, `specimen-${theme}-overview.png`);
       await page.screenshot({ path: overviewPath, fullPage: true });
