@@ -22,6 +22,9 @@ async function readStyleFile(relativePath: string): Promise<string> {
 (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
 
 let mounted: { container: HTMLElement; root: Root } | null = null;
+const origElementAnimate = Element.prototype.animate;
+const origMatchMedia = window.matchMedia;
+const origResizeObserver = globalThis.ResizeObserver;
 
 function renderNode(node: React.ReactNode) {
   const container = document.createElement('div');
@@ -34,6 +37,16 @@ function renderNode(node: React.ReactNode) {
   return container;
 }
 
+function rerenderNode(node: React.ReactNode) {
+  if (!mounted) {
+    return renderNode(node);
+  }
+  act(() => {
+    mounted!.root.render(node);
+  });
+  return mounted.container;
+}
+
 afterEach(() => {
   if (mounted) {
     const { container, root } = mounted;
@@ -43,6 +56,19 @@ afterEach(() => {
     container.remove();
     mounted = null;
   }
+  Object.defineProperty(Element.prototype, 'animate', {
+    configurable: true,
+    writable: true,
+    value: origElementAnimate,
+  });
+  Object.defineProperty(window, 'matchMedia', {
+    configurable: true,
+    writable: true,
+    value: origMatchMedia,
+  });
+  globalThis.ResizeObserver = origResizeObserver;
+  vi.useRealTimers();
+  vi.restoreAllMocks();
 });
 
 describe('@yours/ui layout & TopNotch primitives', () => {
@@ -110,8 +136,38 @@ describe('@yours/ui layout & TopNotch primitives', () => {
     );
 
     expect(el.querySelector('.yui-drawer-count')?.textContent).toBe('2');
-    expect(el.querySelector('.yui-hook-active')).toBeTruthy();
-    const secondRow = el.querySelectorAll('.yui-hook-row')[1] as HTMLButtonElement;
+
+    const nav = el.querySelector('[data-slot="hook-sidebar"]');
+    expect(nav?.tagName).toBe('NAV');
+    expect(nav?.getAttribute('aria-label')).toBe('Threads');
+
+    const hoverRail = el.querySelector('.yui-hook-rail-layer--hover');
+    const activeRail = el.querySelector('.yui-hook-rail-layer--active');
+    expect(hoverRail).toBeTruthy();
+    expect(activeRail).toBeTruthy();
+    expect(hoverRail?.getAttribute('aria-hidden')).toBe('true');
+    expect(activeRail?.getAttribute('aria-hidden')).toBe('true');
+    expect(hoverRail?.getAttribute('data-visible')).toBe('false');
+    expect(activeRail?.getAttribute('data-visible')).toBe('true');
+
+    const paths = el.querySelectorAll('.yui-hook-corner path');
+    expect(paths.length).toBe(2);
+    expect(paths[0].getAttribute('d')).toBe('M0.5 0a6 6 0 0 0 6 6H12');
+    expect(paths[1].getAttribute('d')).toBe('M0.5 0a6 6 0 0 0 6 6H12');
+    expect(paths[1].getAttribute('stroke-dasharray')).toBe('2 2');
+    expect(el.querySelectorAll('.yui-hook-stem--dashed').length).toBe(2);
+
+    const rows = el.querySelectorAll('[data-slot="hook-sidebar-item"]');
+    expect(rows.length).toBe(2);
+    expect(rows[0].getAttribute('data-active')).toBe('true');
+    expect(rows[0].getAttribute('aria-current')).toBe('true');
+    expect(rows[1].getAttribute('data-active')).toBe('false');
+    expect(rows[1].getAttribute('aria-current')).toBeNull();
+    expect(rows[0].querySelector('.yui-status-dot--sm')).toBeTruthy();
+    expect(rows[0].querySelector('.yui-hook-row-title')?.textContent).toBe('Pro vs. Team pricing');
+    expect(rows[0].querySelector('.yui-hook-row-meta')?.textContent).toBe('Now');
+
+    const secondRow = rows[1] as HTMLButtonElement;
     act(() => {
       secondRow.click();
     });
@@ -211,5 +267,383 @@ describe('@yours/ui layout & TopNotch primitives', () => {
     expect(componentsCss).toContain('.yui-notch-housing--wide');
     expect(componentsCss).toContain('.yui-chip-btn.is-active');
     expect(componentsCss).toContain('.yui-chip-btn.is-recording');
+  });
+
+  it('tracks pointer hover, smart hoverFrom above/below active row, keyboard focus, and mouseleave', () => {
+    const items = [
+      { id: 'a', title: 'Alpha' },
+      { id: 'b', title: 'Beta' },
+      { id: 'c', title: 'Gamma' },
+    ];
+    const el = renderNode(<HookSidebarList items={items} activeId="b" />);
+
+    const wrap = el.querySelector('.yui-hook-wrap') as HTMLDivElement;
+    const rows = Array.from(el.querySelectorAll('[data-slot="hook-sidebar-item"]')) as HTMLButtonElement[];
+    const hoverRail = el.querySelector('.yui-hook-rail-layer--hover') as HTMLElement;
+    const hoverStem = hoverRail.querySelector('.yui-hook-stem') as HTMLElement;
+    const hoverCorner = hoverRail.querySelector('.yui-hook-corner') as SVGElement;
+    const activeRail = el.querySelector('.yui-hook-rail-layer--active') as HTMLElement;
+
+    // Default active row is index 1 (center = 1 * 32 + 15 = 47)
+    expect(activeRail.getAttribute('data-visible')).toBe('true');
+    expect(activeRail.getAttribute('data-y')).toBe('47');
+    expect(activeRail.querySelector('.yui-hook-stem')?.getAttribute('data-top')).toBe('0');
+    expect(activeRail.querySelector('.yui-hook-stem')?.getAttribute('data-height')).toBe('41');
+    expect(activeRail.querySelector('.yui-hook-corner')?.getAttribute('data-top')).toBe('41');
+
+    // Hover below active row (idx 2, center = 79): stem runs from activeY (47) down to 73
+    act(() => {
+      rows[2].dispatchEvent(new MouseEvent('mouseover', { bubbles: true }));
+    });
+    expect(hoverRail.getAttribute('data-visible')).toBe('true');
+    expect(hoverRail.getAttribute('data-from')).toBe('47');
+    expect(hoverStem.getAttribute('data-top')).toBe('47');
+    expect(hoverStem.getAttribute('data-height')).toBe('26');
+    expect(hoverCorner.getAttribute('data-top')).toBe('73');
+
+    // Hover above active row (idx 0, center = 15): hoverFrom = max(0, 15 - 6) = 9 -> corner-only (height = 0)
+    act(() => {
+      rows[0].dispatchEvent(new MouseEvent('mouseover', { bubbles: true }));
+    });
+    expect(hoverRail.getAttribute('data-visible')).toBe('true');
+    expect(hoverRail.getAttribute('data-from')).toBe('9');
+    expect(hoverStem.getAttribute('data-top')).toBe('9');
+    expect(hoverStem.getAttribute('data-height')).toBe('0');
+    expect(hoverCorner.getAttribute('data-top')).toBe('9');
+
+    // Hovering active row hides hover rail
+    act(() => {
+      rows[1].dispatchEvent(new MouseEvent('mouseover', { bubbles: true }));
+    });
+    expect(hoverRail.getAttribute('data-visible')).toBe('false');
+
+    // Re-hover row 2, then leave wrapper -> hides hover rail
+    act(() => {
+      rows[2].dispatchEvent(new MouseEvent('mouseover', { bubbles: true }));
+    });
+    expect(hoverRail.getAttribute('data-visible')).toBe('true');
+    act(() => {
+      wrap.dispatchEvent(new MouseEvent('mouseout', { bubbles: true, relatedTarget: document.body }));
+    });
+    expect(hoverRail.getAttribute('data-visible')).toBe('false');
+
+    // Keyboard focus on non-active row reveals hover rail, blur hides it
+    act(() => {
+      rows[0].focus();
+    });
+    expect(hoverRail.getAttribute('data-visible')).toBe('true');
+    expect(hoverCorner.getAttribute('data-top')).toBe('9');
+    act(() => {
+      rows[0].blur();
+    });
+    expect(hoverRail.getAttribute('data-visible')).toBe('false');
+
+    // Focus row 2, hover row 0, then mouseleave wrapper -> hover rail stays on focused row 2 until blur
+    act(() => {
+      rows[2].focus();
+    });
+    act(() => {
+      rows[0].dispatchEvent(new MouseEvent('mouseover', { bubbles: true }));
+    });
+    expect(hoverCorner.getAttribute('data-top')).toBe('9');
+    act(() => {
+      wrap.dispatchEvent(new MouseEvent('mouseout', { bubbles: true, relatedTarget: document.body }));
+    });
+    expect(hoverRail.getAttribute('data-visible')).toBe('true');
+    expect(hoverCorner.getAttribute('data-top')).toBe('73');
+    act(() => {
+      rows[2].blur();
+    });
+    expect(hoverRail.getAttribute('data-visible')).toBe('false');
+  });
+
+  it('supports label, dashed={false}, custom color, className, emptyText, and unmatched activeId', () => {
+    const cancelSpy = vi.fn();
+    const animateSpy = vi.fn(() => ({ cancel: cancelSpy }) as unknown as Animation);
+    Object.defineProperty(Element.prototype, 'animate', {
+      configurable: true,
+      writable: true,
+      value: animateSpy,
+    });
+
+    const items = [
+      { id: 'a', title: 'Alpha' },
+      { id: 'b', title: 'Beta' },
+    ];
+    const el = renderNode(
+      <HookSidebarList
+        items={items}
+        activeId="b"
+        label="Recent"
+        dashed={false}
+        color="#059669"
+        className="custom-hook-nav"
+      />,
+    );
+
+    const nav = el.querySelector('[data-slot="hook-sidebar"]') as HTMLElement;
+    expect(nav.getAttribute('aria-label')).toBe('Recent');
+    expect(nav.classList.contains('custom-hook-nav')).toBe(true);
+
+    const labelEl = el.querySelector('[data-slot="hook-sidebar-label"]');
+    expect(labelEl?.classList.contains('yui-hook-label')).toBe(true);
+    expect(labelEl?.textContent).toBe('Recent');
+
+    expect(el.querySelectorAll('.yui-hook-stem--solid').length).toBe(2);
+    expect(el.querySelectorAll('.yui-hook-stem--dashed').length).toBe(0);
+    const paths = el.querySelectorAll('.yui-hook-corner path');
+    expect(paths[0].getAttribute('stroke-dasharray')).toBeNull();
+    expect(paths[1].getAttribute('stroke-dasharray')).toBeNull();
+
+    // Custom color applied via 0ms forwards WAAPI animation without JSX style=
+    expect(animateSpy).toHaveBeenCalledWith(
+      [{ color: '#059669' }, { color: '#059669' }],
+      { duration: 0, fill: 'forwards' },
+    );
+
+    // Unmatched activeId hides active rail and marks no rows active
+    rerenderNode(
+      <HookSidebarList items={items} activeId="missing" label="Recent" dashed={false} />,
+    );
+    expect(cancelSpy).toHaveBeenCalled();
+    expect(el.querySelector('.yui-hook-rail-layer--active')?.getAttribute('data-visible')).toBe(
+      'false',
+    );
+    expect(el.querySelectorAll('[data-active="true"]').length).toBe(0);
+    expect(el.querySelectorAll('[aria-current="true"]').length).toBe(0);
+
+    // Empty list preserves root nav, label, and emptyText
+    rerenderNode(<HookSidebarList items={[]} label="Recent" emptyText="Nothing yet" />);
+    expect(el.querySelector('[data-slot="hook-sidebar"]')).toBeTruthy();
+    expect(el.querySelector('.yui-genui-muted')?.textContent).toBe('Nothing yet');
+  });
+
+  it('animates via WAAPI damped spring, avoids snap-back on rapid changes, and respects prefers-reduced-motion', () => {
+    vi.useFakeTimers();
+    const cancelSpy = vi.fn();
+    const animateCalls: Array<{
+      target: Element;
+      keyframes: Keyframe[];
+      options: KeyframeAnimationOptions;
+    }> = [];
+
+    const animateSpy = vi.fn(function (
+      this: Element,
+      keyframes: Keyframe[] | PropertyIndexedKeyframes | null,
+      options?: number | KeyframeAnimationOptions,
+    ) {
+      animateCalls.push({
+        target: this,
+        keyframes: (Array.isArray(keyframes) ? keyframes : []) as Keyframe[],
+        options: (typeof options === 'object' ? options : {}) as KeyframeAnimationOptions,
+      });
+      return { cancel: cancelSpy } as unknown as Animation;
+    });
+    Object.defineProperty(Element.prototype, 'animate', {
+      configurable: true,
+      writable: true,
+      value: animateSpy,
+    });
+
+    const items = [
+      { id: 'a', title: 'Alpha' },
+      { id: 'b', title: 'Beta' },
+      { id: 'c', title: 'Gamma' },
+      { id: 'd', title: 'Delta' },
+    ];
+    const el = renderNode(<HookSidebarList items={items} activeId="a" />);
+    const rows = Array.from(el.querySelectorAll('[data-slot="hook-sidebar-item"]')) as HTMLButtonElement[];
+    const activeRail = el.querySelector('.yui-hook-rail-layer--active') as HTMLElement;
+    const activeStem = activeRail.querySelector('.yui-hook-stem') as HTMLElement;
+    const activeCorner = activeRail.querySelector('.yui-hook-corner') as SVGElement;
+    const hoverRail = el.querySelector('.yui-hook-rail-layer--hover') as HTMLElement;
+    const hoverStem = hoverRail.querySelector('.yui-hook-stem') as HTMLElement;
+
+    // Initial mount calls 0ms forwards WAAPI animations
+    expect(animateCalls.length).toBeGreaterThan(0);
+
+    // Hover row 1 (appears from hidden -> 200ms opacity fade-in), then move to row 2 (360ms spring)
+    animateCalls.length = 0;
+    act(() => {
+      rows[1].dispatchEvent(new MouseEvent('mouseover', { bubbles: true }));
+    });
+    expect(
+      animateCalls.some(
+        (c) =>
+          c.target === hoverRail &&
+          c.options.duration === 200 &&
+          c.options.fill === 'forwards',
+      ),
+    ).toBe(true);
+
+    animateCalls.length = 0;
+    act(() => {
+      rows[2].dispatchEvent(new MouseEvent('mouseover', { bubbles: true }));
+    });
+    const hoverStemSpring = animateCalls.find(
+      (c) => c.target === hoverStem && c.options.duration === 360,
+    );
+    expect(hoverStemSpring).toBeTruthy();
+    expect(hoverStemSpring?.keyframes.length).toBe(25);
+    expect(hoverStemSpring?.options.fill).toBe('forwards');
+    expect(hoverStemSpring?.keyframes[0]).toEqual({ top: '15px', height: '26px' });
+    expect(hoverStemSpring?.keyframes[24]).toEqual({ top: '15px', height: '58px' });
+
+    // Click to change activeId 'a' -> 'd' (center 15 -> 111)
+    animateCalls.length = 0;
+    rerenderNode(<HookSidebarList items={items} activeId="d" />);
+    const firstActiveSpring = animateCalls.find(
+      (c) => c.target === activeStem && c.options.duration === 360,
+    );
+    expect(firstActiveSpring?.keyframes[0]).toEqual({ top: '0px', height: '9px' });
+    expect(firstActiveSpring?.keyframes[24]).toEqual({ top: '0px', height: '105px' });
+    expect(
+      animateCalls.some((c) => c.target === activeCorner && c.options.duration === 360),
+    ).toBe(true);
+
+    // Advance 120ms mid-flight and immediately reverse activeId 'd' -> 'a'
+    act(() => {
+      vi.advanceTimersByTime(120);
+    });
+    animateCalls.length = 0;
+    cancelSpy.mockClear();
+    rerenderNode(<HookSidebarList items={items} activeId="a" />);
+    expect(cancelSpy).toHaveBeenCalled();
+    const interruptSpring = animateCalls.find(
+      (c) => c.target === activeStem && c.options.duration === 360,
+    );
+    expect(interruptSpring).toBeTruthy();
+    const midHeight = Number.parseFloat(String(interruptSpring?.keyframes[0].height));
+    expect(midHeight).toBeGreaterThan(9);
+    expect(midHeight).toBeLessThan(105);
+    expect(interruptSpring?.keyframes[24]).toEqual({ top: '0px', height: '9px' });
+  });
+
+  it('collapses all WAAPI animation durations to 0ms under prefers-reduced-motion: reduce', () => {
+    const animateCalls: Array<{
+      target: Element;
+      keyframes: Keyframe[];
+      options: KeyframeAnimationOptions;
+    }> = [];
+    Object.defineProperty(Element.prototype, 'animate', {
+      configurable: true,
+      writable: true,
+      value: vi.fn(function (
+        this: Element,
+        keyframes: Keyframe[] | PropertyIndexedKeyframes | null,
+        options?: number | KeyframeAnimationOptions,
+      ) {
+        animateCalls.push({
+          target: this,
+          keyframes: (Array.isArray(keyframes) ? keyframes : []) as Keyframe[],
+          options: (typeof options === 'object' ? options : {}) as KeyframeAnimationOptions,
+        });
+        return { cancel: vi.fn() } as unknown as Animation;
+      }),
+    });
+
+    Object.defineProperty(window, 'matchMedia', {
+      configurable: true,
+      writable: true,
+      value: vi.fn().mockImplementation((query: string) => ({
+        matches: query === '(prefers-reduced-motion: reduce)',
+        media: query,
+        addEventListener: vi.fn(),
+        removeEventListener: vi.fn(),
+      })),
+    });
+
+    const items = [
+      { id: 'a', title: 'Alpha' },
+      { id: 'b', title: 'Beta' },
+      { id: 'c', title: 'Gamma' },
+    ];
+    const reducedEl = renderNode(<HookSidebarList items={items} activeId="a" />);
+    const reducedRows = Array.from(
+      reducedEl.querySelectorAll('[data-slot="hook-sidebar-item"]'),
+    ) as HTMLButtonElement[];
+
+    animateCalls.length = 0;
+    act(() => {
+      reducedRows[1].dispatchEvent(new MouseEvent('mouseover', { bubbles: true }));
+    });
+    act(() => {
+      reducedRows[2].dispatchEvent(new MouseEvent('mouseover', { bubbles: true }));
+    });
+    rerenderNode(<HookSidebarList items={items} activeId="c" />);
+    expect(animateCalls.length).toBeGreaterThan(0);
+    expect(animateCalls.every((c) => c.options.duration === 0)).toBe(true);
+  });
+
+  it('measures live row centers via ResizeObserver and falls back smoothly when ResizeObserver is absent', () => {
+    let roCallback: ResizeObserverCallback | null = null;
+    const observeSpy = vi.fn();
+    const disconnectSpy = vi.fn();
+
+    class MockResizeObserver implements ResizeObserver {
+      constructor(cb: ResizeObserverCallback) {
+        roCallback = cb;
+      }
+      observe = observeSpy;
+      unobserve = vi.fn();
+      disconnect = disconnectSpy;
+    }
+    globalThis.ResizeObserver = MockResizeObserver;
+
+    const items = [
+      { id: 'a', title: 'Alpha' },
+      { id: 'b', title: 'Beta' },
+    ];
+    const el = renderNode(<HookSidebarList items={items} activeId="b" />);
+    expect(observeSpy).toHaveBeenCalledTimes(1);
+
+    const rows = Array.from(el.querySelectorAll('[data-slot="hook-sidebar-item"]')) as HTMLElement[];
+    Object.defineProperty(rows[0], 'offsetTop', { configurable: true, value: 0 });
+    Object.defineProperty(rows[0], 'offsetHeight', { configurable: true, value: 40 });
+    Object.defineProperty(rows[1], 'offsetTop', { configurable: true, value: 44 });
+    Object.defineProperty(rows[1], 'offsetHeight', { configurable: true, value: 40 });
+
+    act(() => {
+      roCallback?.([], {} as ResizeObserver);
+    });
+
+    const activeRail = el.querySelector('.yui-hook-rail-layer--active') as HTMLElement;
+    // Live row 1 center = 44 + 40 / 2 = 64 -> stem height = 64 - 6 = 58
+    expect(activeRail.getAttribute('data-y')).toBe('64');
+    expect(activeRail.querySelector('.yui-hook-stem')?.getAttribute('data-height')).toBe('58');
+    expect(activeRail.querySelector('.yui-hook-corner')?.getAttribute('data-top')).toBe('58');
+
+    // Fallback when ResizeObserver is absent and offsetHeight === 0 with custom rowHeight & gap
+    (globalThis as { ResizeObserver?: typeof ResizeObserver }).ResizeObserver = undefined;
+    Object.defineProperty(rows[0], 'offsetHeight', { configurable: true, value: 0 });
+    Object.defineProperty(rows[1], 'offsetHeight', { configurable: true, value: 0 });
+    rerenderNode(<HookSidebarList items={items} activeId="b" rowHeight={36} gap={4} />);
+    // Fallback row 1 center = 1 * (36 + 4) + 18 = 58 -> stem height = 58 - 6 = 52
+    expect(activeRail.getAttribute('data-y')).toBe('58');
+    expect(activeRail.querySelector('.yui-hook-stem')?.getAttribute('data-height')).toBe('52');
+  });
+
+  it('satisfies strict Chrome MV3 CSP (zero JSX style= and zero dangerouslySetInnerHTML) and defines .yui-hook-* CSS', async () => {
+    const tsxSource = await readStyleFile('../src/layout/HookSidebarList.tsx');
+    expect(tsxSource).not.toContain('style={');
+    expect(tsxSource).not.toContain('dangerouslySetInnerHTML');
+
+    const cssSource = await readStyleFile('../src/styles/components.css');
+    expect(cssSource).toContain('.yui-hook-label');
+    expect(cssSource).toContain('.yui-hook-rail-layer');
+    expect(cssSource).toContain('.yui-hook-rail-layer--hover');
+    expect(cssSource).toContain('.yui-hook-rail-layer--active');
+    expect(cssSource).toContain('.yui-hook-stem');
+    expect(cssSource).toContain('.yui-hook-stem--dashed');
+    expect(cssSource).toContain('repeating-linear-gradient(');
+    expect(cssSource).toContain('transparent 0 2px,');
+    expect(cssSource).toContain('currentColor 2px 4px');
+    expect(cssSource).toContain('.yui-hook-stem--solid');
+    expect(cssSource).toContain('.yui-hook-corner');
+
+    const reducedIdx = cssSource.indexOf('@media (prefers-reduced-motion: reduce)');
+    expect(reducedIdx).toBeGreaterThan(-1);
+    expect(cssSource.slice(reducedIdx)).toContain('.yui-hook-rail-layer');
+    expect(cssSource.slice(reducedIdx)).toContain('.yui-hook-row');
   });
 });
