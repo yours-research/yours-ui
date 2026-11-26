@@ -12,6 +12,7 @@ export interface MemoryRecord {
   summary: string;
   sourceDomain?: string;
   relativeTime: string;
+  groupLabel?: string;
   detail?: string;
   scoreLabel?: string;
 }
@@ -179,6 +180,24 @@ export function MemoryInspectorList({
   const forgottenSet = new Set(forgottenIds ?? []);
   const filtered =
     resolvedTier === 'all' ? records : records.filter((item) => item.tier === resolvedTier);
+  const hasGroups = filtered.some((item) => Boolean(item.groupLabel));
+
+  const grouped: { label: string; items: MemoryRecord[] }[] = [];
+  if (hasGroups) {
+    const byLabel = new Map<string, MemoryRecord[]>();
+    for (const record of filtered) {
+      const label = record.groupLabel ?? 'Earlier';
+      const bucket = byLabel.get(label);
+      if (bucket) {
+        bucket.push(record);
+      } else {
+        byLabel.set(label, [record]);
+      }
+    }
+    for (const [label, items] of byLabel.entries()) {
+      grouped.push({ label, items });
+    }
+  }
 
   const listClass = ['yui-mem-inspector', className].filter(Boolean).join(' ');
 
@@ -195,6 +214,34 @@ export function MemoryInspectorList({
       </div>
       {filtered.length === 0 ? (
         <EmptyState title={emptyTitle} subtitle={emptySubtitle} orbState="idle" orbSize={20} />
+      ) : hasGroups ? (
+        <div className="yui-mem-groups">
+          {grouped.map((group) => (
+            <section
+              key={group.label}
+              data-slot="memory-group"
+              aria-label={group.label}
+              className="yui-mem-group"
+            >
+              <div className="yui-mem-group-head">
+                <span className="yui-mem-group-title">{group.label}</span>
+                <span className="yui-mem-group-count">{group.items.length}</span>
+              </div>
+              <div className="yui-mem-list">
+                {group.items.map((record) => (
+                  <MemoryRecordCard
+                    key={record.id}
+                    record={record}
+                    isForgotten={forgottenSet.has(record.id)}
+                    onForget={onForget}
+                    onUndo={onUndo}
+                    onSelect={onSelectRecord}
+                  />
+                ))}
+              </div>
+            </section>
+          ))}
+        </div>
       ) : (
         <div className="yui-mem-list">
           {filtered.map((record) => (

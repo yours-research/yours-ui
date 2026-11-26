@@ -4189,6 +4189,50 @@ span.yui-citation-pill {
   white-space: nowrap;
 }
 
+.yui-data-th.is-sortable {
+  padding: 0;
+}
+
+.yui-data-sort-btn {
+  appearance: none;
+  border: none;
+  background: transparent;
+  width: 100%;
+  padding: 7px 12px;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  color: inherit;
+  font: inherit;
+  letter-spacing: inherit;
+  text-transform: inherit;
+  cursor: pointer;
+}
+
+.yui-data-th.is-right .yui-data-sort-btn {
+  justify-content: flex-end;
+}
+
+.yui-data-sort-btn:hover {
+  color: var(--yui-ink);
+}
+
+.yui-data-sort-btn:focus-visible {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: -2px;
+}
+
+.yui-data-sort-icon {
+  opacity: 0.4;
+  flex-shrink: 0;
+  transition: opacity 140ms ease;
+}
+
+.yui-data-sort-icon.is-active {
+  opacity: 1;
+  color: var(--yui-ink);
+}
+
 .yui-data-td {
   padding: 8px 12px;
   color: var(--yui-ink);
@@ -4240,6 +4284,27 @@ span.yui-citation-pill {
   transform: rotate(180deg);
 }
 
+.yui-artifact-scroll-wrap {
+  position: relative;
+}
+
+.yui-artifact-scroll-wrap::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 24px;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 150ms ease;
+  background: linear-gradient(to top, var(--yui-well-bg) 18%, transparent 100%);
+}
+
+.yui-artifact-scroll-wrap.has-bottom-fade::after {
+  opacity: 1;
+}
+
 .yui-artifact-pre {
   margin: 0;
   padding: 9px 13px;
@@ -4252,6 +4317,225 @@ span.yui-citation-pill {
   overflow-x: auto;
   white-space: pre-wrap;
   word-break: break-word;
+}
+
+.yui-artifact-pre.is-capped {
+  max-height: 210px;
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: var(--yui-strong) transparent;
+}
+
+/* ==========================================================================
+ * MemoryInspector Sticky Dividers, ShortcutSheet & StatusToast
+ * ========================================================================== */
+.yui-mem-groups {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  width: 100%;
+  min-width: 0;
+}
+
+.yui-mem-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.yui-mem-group-head {
+  position: sticky;
+  top: 0;
+  z-index: 3;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 4px 2px;
+  background-color: var(--yui-stage-bg);
+  border-bottom: 1px solid var(--yui-hairline);
+}
+
+.yui-mem-group-title,
+.yui-mem-group-count {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  line-height: 13px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--yui-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.yui-shortcut-sheet {
+  width: 100%;
+  box-sizing: border-box;
+  flex-shrink: 0;
+  background-color: var(--yui-capsule-bg);
+  border: 1px solid var(--yui-capsule-border);
+  border-radius: 14px;
+  box-shadow: var(--yui-capsule-shadow);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.yui-shortcut-sheet .yui-genui-title,
+.yui-shortcut-sheet .yui-genui-muted {
+  margin: 0;
+}
+
+.yui-shortcut-head {
+  padding: 11px 13px 9px 13px;
+  border-bottom: 1px solid var(--yui-hairline);
+}
+
+.yui-shortcut-groups {
+  display: flex;
+  flex-direction: column;
+}
+
+.yui-shortcut-group + .yui-shortcut-group {
+  border-top: 1px solid var(--yui-hairline);
+}
+
+.yui-shortcut-group-title {
+  padding: 7px 13px 3px 13px;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  line-height: 13px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--yui-muted);
+}
+
+.yui-shortcut-list {
+  display: flex;
+  flex-direction: column;
+}
+
+.yui-shortcut-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 7px 13px;
+  min-width: 0;
+}
+
+.yui-shortcut-row + .yui-shortcut-row {
+  border-top: 1px solid var(--yui-hairline);
+}
+
+.yui-shortcut-copy {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  min-width: 0;
+}
+
+.yui-shortcut-label {
+  font-size: 12px;
+  line-height: 16px;
+  font-weight: 500;
+  color: var(--yui-ink);
+}
+
+.yui-shortcut-desc {
+  font-size: 11px;
+  line-height: 14px;
+  color: var(--yui-muted);
+}
+
+@keyframes yuiStatusToastIn {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.yui-status-toast {
+  width: 100%;
+  box-sizing: border-box;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  min-width: 0;
+  padding: 8px 10px 8px 12px;
+  background-color: var(--yui-capsule-bg);
+  border: 1px solid var(--yui-strong);
+  border-radius: 12px;
+  box-shadow: var(--yui-capsule-shadow);
+  animation: yuiStatusToastIn 170ms var(--yui-spring);
+}
+
+.yui-status-toast-main {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.yui-status-toast-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 9999px;
+  background-color: var(--yui-secondary);
+  flex-shrink: 0;
+}
+
+.yui-status-toast--local .yui-status-toast-dot {
+  background-color: var(--yui-green);
+}
+
+.yui-status-toast--accent .yui-status-toast-dot {
+  background-color: var(--yui-cobalt);
+}
+
+.yui-status-toast--amber .yui-status-toast-dot {
+  background-color: var(--yui-amber);
+}
+
+.yui-status-toast--danger .yui-status-toast-dot {
+  background-color: var(--yui-danger);
+}
+
+.yui-status-toast-copy {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  min-width: 0;
+}
+
+.yui-status-toast-msg {
+  font-size: 12px;
+  line-height: 16px;
+  font-weight: 500;
+  color: var(--yui-ink);
+  word-break: break-word;
+}
+
+.yui-status-toast-detail {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  line-height: 13px;
+  color: var(--yui-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.yui-status-toast-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  flex-shrink: 0;
 }
 
 .yui-icon-btn:focus-visible,
@@ -4288,7 +4572,10 @@ span.yui-citation-pill {
   .yui-vault-drop,
   .yui-vault-input,
   .yui-data-scroll-wrap::after,
+  .yui-data-sort-icon,
+  .yui-artifact-scroll-wrap::after,
   .yui-artifact-chevron,
+  .yui-status-toast,
   .yui-cmd-popover,
   .yui-cmd-item,
   .yui-seg-btn,

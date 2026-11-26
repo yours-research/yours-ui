@@ -33,8 +33,10 @@ import {
   SegmentedControl,
   SettingsSection,
   SettingsToggleRow,
+  ShortcutSheet,
   SourcesDrawer,
   StatusBadge,
+  StatusToast,
   StreamingResponse,
   SuggestionChipRow,
   ThreadHistoryDrawer,
@@ -1458,5 +1460,133 @@ describe('@yours/ui chat & runtime primitives', () => {
     expect(cssSource).toContain('.yui-artifact-card');
     expect(cssSource).toContain('.yui-vault-drop');
     expect(cssSource).toContain('.yui-dl-sep');
+  });
+
+  it('supports DataTableCard column sorting (aria-sort), ArtifactPreviewCard header Copy & capped scroll, MemoryInspectorList date dividers, ShortcutSheet, and StatusToast', async () => {
+    vi.useFakeTimers();
+    const writeText = vi.fn().mockResolvedValue(undefined);
+    Object.defineProperty(navigator, 'clipboard', {
+      configurable: true,
+      value: { writeText },
+    });
+
+    const onUndoToast = vi.fn();
+    const onDismissToast = vi.fn();
+
+    const el = renderNode(
+      <div>
+        <DataTableCard
+          title="Sortable Decode Matrix"
+          columns={[
+            { key: 'model', label: 'Checkpoint', sortable: true },
+            { key: 'tps', label: 'Decode', numeric: true, sortable: true },
+          ]}
+          rows={[
+            { model: 'Qwen3.5-4B', tps: 91.6 },
+            { model: 'Pragma-1.5B', tps: 142.4 },
+            { model: 'Gemma-2B', tps: 118.0 },
+          ]}
+        />
+        <ArtifactPreviewCard
+          title="long-trace.log"
+          fileType="LOG"
+          meta="120 lines"
+          capped
+          preview={'line 1\nline 2\nline 3'}
+        />
+        <MemoryInspectorList
+          records={[
+            { id: 'm1', tier: 'profile', summary: 'Prefers tables', relativeTime: '2m', groupLabel: 'Today' },
+            { id: 'm2', tier: 'episodic', summary: 'Reviewed Q3 billing', relativeTime: '1d', groupLabel: 'Yesterday' },
+          ]}
+        />
+        <ShortcutSheet
+          subtitle="Side-panel navigation"
+          badge="MV3"
+          groups={[
+            {
+              title: 'Navigation',
+              items: [
+                { label: 'Focus composer', description: 'Jump straight to prompt', keys: ['⌘', 'K'] },
+                { label: 'Toggle thinking', keys: ['⌘', 'T'] },
+              ],
+            },
+          ]}
+        />
+        <StatusToast
+          message="2 memory items forgotten"
+          detail="SQLite FTS5"
+          tone="local"
+          onUndo={onUndoToast}
+          onDismiss={onDismissToast}
+        />
+      </div>,
+    );
+
+    // DataTableCard sorting cycle: none -> ascending -> descending -> none
+    const sortHeaders = el.querySelectorAll('.yui-data-th.is-sortable');
+    const tpsTh = sortHeaders[1] as HTMLElement;
+    const tpsBtn = tpsTh.querySelector('.yui-data-sort-btn') as HTMLButtonElement;
+    expect(tpsTh.getAttribute('aria-sort')).toBe('none');
+
+    act(() => {
+      tpsBtn.click();
+    });
+    expect(tpsTh.getAttribute('aria-sort')).toBe('ascending');
+    const ascCells = Array.from(el.querySelectorAll('.yui-data-tr td:first-child')).map((c) => c.textContent);
+    expect(ascCells).toEqual(['Qwen3.5-4B', 'Gemma-2B', 'Pragma-1.5B']);
+
+    act(() => {
+      tpsBtn.click();
+    });
+    expect(tpsTh.getAttribute('aria-sort')).toBe('descending');
+    const descCells = Array.from(el.querySelectorAll('.yui-data-tr td:first-child')).map((c) => c.textContent);
+    expect(descCells).toEqual(['Pragma-1.5B', 'Gemma-2B', 'Qwen3.5-4B']);
+
+    act(() => {
+      tpsBtn.click();
+    });
+    expect(tpsTh.getAttribute('aria-sort')).toBe('none');
+
+    // ArtifactPreviewCard header Copy & capped body
+    expect(el.querySelector('.yui-artifact-pre.is-capped')).toBeTruthy();
+    const headerCopy = el.querySelector('[data-slot="artifact-header-copy"]') as HTMLButtonElement;
+    act(() => {
+      headerCopy.click();
+    });
+    expect(writeText).toHaveBeenCalledWith('line 1\nline 2\nline 3');
+    expect(headerCopy.textContent).toContain('Copied');
+
+    // MemoryInspectorList grouped sticky dividers
+    const groups = Array.from(el.querySelectorAll('[data-slot="memory-group"]'));
+    expect(groups.length).toBe(2);
+    expect(groups[0].querySelector('.yui-mem-group-title')?.textContent).toBe('Today');
+    expect(groups[1].querySelector('.yui-mem-group-title')?.textContent).toBe('Yesterday');
+
+    // ShortcutSheet & StatusToast
+    expect(el.querySelector('[data-slot="shortcut-sheet"]')?.textContent).toContain('Focus composer');
+    expect(el.querySelectorAll('[data-slot="shortcut-sheet"] .yui-kbd').length).toBe(4);
+
+    const toast = el.querySelector('[data-slot="status-toast"]') as HTMLElement;
+    expect(toast.getAttribute('role')).toBe('status');
+    expect(toast.getAttribute('aria-live')).toBe('polite');
+    act(() => {
+      (Array.from(toast.querySelectorAll('button')).find((b) =>
+        b.textContent?.includes('Undo'),
+      ) as HTMLButtonElement).click();
+      (toast.querySelector('[aria-label="Dismiss notification"]') as HTMLButtonElement).click();
+    });
+    expect(onUndoToast).toHaveBeenCalledTimes(1);
+    expect(onDismissToast).toHaveBeenCalledTimes(1);
+
+    rerenderNode(<StatusToast open={false} message="Hidden" />);
+    expect(el.querySelector('[data-slot="status-toast"]')).toBeNull();
+
+    const cssSource = await readSourceFile('../src/styles/components.css');
+    expect(cssSource).toContain('.yui-data-sort-btn');
+    expect(cssSource).toContain('.yui-mem-group-head');
+    expect(cssSource).toContain('.yui-shortcut-sheet');
+    expect(cssSource).toContain('.yui-status-toast');
+    expect(cssSource).toContain('.yui-artifact-pre.is-capped');
   });
 });

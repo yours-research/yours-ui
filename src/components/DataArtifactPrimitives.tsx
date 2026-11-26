@@ -1,8 +1,9 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   BookmarkIcon,
   CheckIcon,
   ChevronDownIcon,
+  ChevronUpIcon,
   CompareIcon,
   CopyIcon,
   DocumentIcon,
@@ -13,9 +14,15 @@ export interface DataTableColumn {
   label: string;
   align?: 'left' | 'right';
   numeric?: boolean;
+  sortable?: boolean;
 }
 
 export type DataTableRow = Record<string, string | number>;
+
+export interface DataTableSortState {
+  key: string;
+  direction: 'asc' | 'desc';
+}
 
 export interface DataTableCardProps {
   title?: string;
@@ -23,6 +30,9 @@ export interface DataTableCardProps {
   badge?: string;
   columns: readonly DataTableColumn[];
   rows: readonly DataTableRow[];
+  sort?: DataTableSortState | null;
+  defaultSort?: DataTableSortState | null;
+  onSortChange?: (next: DataTableSortState | null) => void;
   copyFormat?: 'markdown' | 'csv';
   copyLabel?: string;
   onCopy?: (formatted: string) => void;
@@ -57,9 +67,25 @@ export function formatTableData(
   return [headLine, divider, ...rowLines].join('\n');
 }
 
+function compareCells(aRaw: string | number | undefined, bRaw: string | number | undefined): number {
+  if (typeof aRaw === 'number' && typeof bRaw === 'number') {
+    return aRaw - bRaw;
+  }
+  const aStr = String(aRaw ?? '');
+  const bStr = String(bRaw ?? '');
+  const aNumMatch = aStr.match(/^[-+]?\d+(?:\.\d+)?/);
+  const bNumMatch = bStr.match(/^[-+]?\d+(?:\.\d+)?/);
+  if (aNumMatch && bNumMatch && aNumMatch[0].length === aStr.replace(/[^\d.-].*$/, '').length) {
+    const diff = Number(aNumMatch[0]) - Number(bNumMatch[0]);
+    if (diff !== 0) return diff;
+  }
+  return aStr.localeCompare(bStr, undefined, { numeric: true, sensitivity: 'base' });
+}
+
 /**
- * Clean hairline-ruled table card with `tabular-nums`, dynamic horizontal scroll
- * edge fade at narrow `340px` widths, and quiet one-click Markdown/CSV copy.
+ * Clean hairline-ruled table card with `tabular-nums`, optional client-side
+ * column sorting (`aria-sort`), dynamic horizontal scroll fade at `340px`,
+ * and quiet one-click Markdown/CSV copy.
  */
 export function DataTableCard({
   title,
@@ -67,6 +93,9 @@ export function DataTableCard({
   badge,
   columns,
   rows,
+  sort: controlledSort,
+  defaultSort = null,
+  onSortChange,
   copyFormat = 'markdown',
   copyLabel = 'Copy',
   onCopy,
@@ -77,6 +106,32 @@ export function DataTableCard({
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [copied, setCopied] = useState(false);
   const [canScrollRight, setCanScrollRight] = useState(false);
+  const [uncontrolledSort, setUncontrolledSort] = useState<DataTableSortState | null>(defaultSort);
+
+  const activeSort = controlledSort !== undefined ? controlledSort : uncontrolledSort;
+
+  const sortedRows = useMemo(() => {
+    if (!activeSort) return rows;
+    const col = columns.find((item) => item.key === activeSort.key);
+    if (!col) return rows;
+    const mult = activeSort.direction === 'asc' ? 1 : -1;
+    return [...rows].sort((a, b) => compareCells(a[col.key], b[col.key]) * mult);
+  }, [activeSort, columns, rows]);
+
+  const toggleSort = (key: string) => {
+    let next: DataTableSortState | null;
+    if (!activeSort || activeSort.key !== key) {
+      next = { key, direction: 'asc' };
+    } else if (activeSort.direction === 'asc') {
+      next = { key, direction: 'desc' };
+    } else {
+      next = null;
+    }
+    if (controlledSort === undefined) {
+      setUncontrolledSort(next);
+    }
+    onSortChange?.(next);
+  };
 
   const syncHorizontalFade = useCallback(() => {
     const el = scrollRef.current;
@@ -110,7 +165,7 @@ export function DataTableCard({
         window.removeEventListener('resize', onScroll);
       }
     };
-  }, [syncHorizontalFade, columns, rows]);
+  }, [syncHorizontalFade, columns, sortedRows]);
 
   useEffect(() => {
     return () => {
@@ -119,7 +174,7 @@ export function DataTableCard({
   }, []);
 
   const handleCopy = () => {
-    const formatted = formatTableData(columns, rows, copyFormat);
+    const formatted = formatTableData(columns, sortedRows, copyFormat);
     void navigator.clipboard?.writeText(formatted).catch(() => {});
     onCopy?.(formatted);
     setCopied(true);
@@ -172,22 +227,51 @@ export function DataTableCard({
             <thead>
               <tr>
                 {columns.map((col) => {
+                  const isSorted = activeSort?.key === col.key;
+                  const ariaSort: 'ascending' | 'descending' | 'none' | undefined = col.sortable
+                    ? isSorted
+                      ? activeSort.direction === 'asc'
+                        ? 'ascending'
+                        : 'descending'
+                      : 'none'
+                    : undefined;
                   const thClass = [
                     'yui-data-th',
                     col.align === 'right' || col.numeric ? 'is-right' : '',
+                    col.sortable ? 'is-sortable' : '',
                   ]
                     .filter(Boolean)
                     .join(' ');
                   return (
-                    <th key={col.key} scope="col" className={thClass}>
-                      {col.label}
+                    <th key={col.key} scope="col" className={thClass} aria-sort={ariaSort}>
+                      {col.sortable ? (
+                        <button
+                          type="button"
+                          className="yui-data-sort-btn"
+                          onClick={() => toggleSort(col.key)}
+                        >
+                          <span>{col.label}</span>
+                          {isSorted && activeSort.direction === 'asc' ? (
+                            <ChevronUpIcon size={11} className="yui-data-sort-icon is-active" />
+                          ) : (
+                            <ChevronDownIcon
+                              size={11}
+                              className={
+                                isSorted ? 'yui-data-sort-icon is-active' : 'yui-data-sort-icon'
+                              }
+                            />
+                          )}
+                        </button>
+                      ) : (
+                        col.label
+                      )}
                     </th>
                   );
                 })}
               </tr>
             </thead>
             <tbody>
-              {rows.map((row, rowIdx) => (
+              {sortedRows.map((row, rowIdx) => (
                 <tr key={rowIdx} className="yui-data-tr">
                   {columns.map((col) => {
                     const tdClass = [
@@ -238,6 +322,7 @@ export interface ArtifactPreviewCardProps {
   collapsible?: boolean;
   defaultExpanded?: boolean;
   expanded?: boolean;
+  capped?: boolean;
   onExpandedChange?: (expanded: boolean) => void;
   onCopy?: (content: string) => void;
   onSave?: () => void;
@@ -247,8 +332,8 @@ export interface ArtifactPreviewCardProps {
 }
 
 /**
- * Minimalist local artifact/note/snippet preview card with file-type badge,
- * tabular metadata line, collapsible CSS grid body, and quiet copy/save actions.
+ * Minimalist local artifact/note/snippet preview card with quick header copy,
+ * file-type badge, optional capped scroll fade, and collapsible CSS grid body.
  */
 export function ArtifactPreviewCard({
   title,
@@ -258,6 +343,7 @@ export function ArtifactPreviewCard({
   collapsible = true,
   defaultExpanded = true,
   expanded: controlledExpanded,
+  capped = false,
   onExpandedChange,
   onCopy,
   onSave,
@@ -265,11 +351,38 @@ export function ArtifactPreviewCard({
   copyLabel = 'Copy',
   className,
 }: ArtifactPreviewCardProps) {
+  const preRef = useRef<HTMLPreElement | null>(null);
   const [uncontrolledExpanded, setUncontrolledExpanded] = useState(defaultExpanded);
   const [copied, setCopied] = useState(false);
+  const [hasBottomFade, setHasBottomFade] = useState(false);
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const isExpanded = controlledExpanded ?? uncontrolledExpanded;
+
+  const syncPreviewFade = useCallback(() => {
+    const el = preRef.current;
+    if (!capped || !isExpanded || !el) {
+      setHasBottomFade(false);
+      return;
+    }
+    setHasBottomFade(el.scrollHeight - el.clientHeight - el.scrollTop > 2);
+  }, [capped, isExpanded]);
+
+  useEffect(() => {
+    syncPreviewFade();
+    const el = preRef.current;
+    if (!capped || !isExpanded || !el) return;
+    el.addEventListener('scroll', syncPreviewFade, { passive: true });
+    let ro: ResizeObserver | undefined;
+    if (typeof ResizeObserver !== 'undefined') {
+      ro = new ResizeObserver(() => syncPreviewFade());
+      ro.observe(el);
+    }
+    return () => {
+      el.removeEventListener('scroll', syncPreviewFade);
+      ro?.disconnect();
+    };
+  }, [capped, isExpanded, preview, syncPreviewFade]);
 
   useEffect(() => {
     return () => {
@@ -295,18 +408,19 @@ export function ArtifactPreviewCard({
   };
 
   const cardClass = ['yui-artifact-card', className].filter(Boolean).join(' ');
-  const disclosureClass = [
-    'yui-disclosure',
-    isExpanded ? 'is-open' : '',
+  const disclosureClass = ['yui-disclosure', isExpanded ? 'is-open' : '']
+    .filter(Boolean)
+    .join(' ');
+  const chevronClass = ['yui-artifact-chevron', isExpanded ? 'is-open' : '']
+    .filter(Boolean)
+    .join(' ');
+  const scrollWrapClass = [
+    'yui-artifact-scroll-wrap',
+    hasBottomFade ? 'has-bottom-fade' : '',
   ]
     .filter(Boolean)
     .join(' ');
-  const chevronClass = [
-    'yui-artifact-chevron',
-    isExpanded ? 'is-open' : '',
-  ]
-    .filter(Boolean)
-    .join(' ');
+  const preClass = ['yui-artifact-pre', capped ? 'is-capped' : ''].filter(Boolean).join(' ');
 
   return (
     <article
@@ -323,45 +437,52 @@ export function ArtifactPreviewCard({
           </div>
           {meta ? <div className="yui-artifact-meta">{meta}</div> : null}
         </div>
-        {collapsible ? (
-          <button
-            type="button"
-            className="yui-icon-btn"
-            aria-expanded={isExpanded}
-            aria-label={isExpanded ? `Collapse ${title}` : `Expand ${title}`}
-            onClick={toggleExpanded}
-          >
-            <ChevronDownIcon size={13} className={chevronClass} />
-          </button>
-        ) : null}
-      </div>
-
-      <div className={disclosureClass} aria-hidden={!isExpanded}>
-        <div className="yui-disclosure-inner">
-          <pre className="yui-artifact-pre">{preview}</pre>
-        </div>
-      </div>
-
-      <div className="yui-genui-foot">
-        <span className="yui-genui-muted">Local artifact</span>
         <div className="yui-action-group">
           <button
             type="button"
             className="yui-micro-pill"
-            aria-label={copied ? 'Copied artifact' : `${copyLabel} artifact`}
+            data-slot="artifact-header-copy"
+            aria-label={copied ? 'Copied artifact' : `${copyLabel} ${title}`}
             onClick={handleCopy}
           >
             {copied ? <CheckIcon size={11} /> : <CopyIcon size={11} />}
             <span>{copied ? 'Copied' : copyLabel}</span>
           </button>
-          {onSave ? (
-            <button type="button" className="yui-micro-pill" onClick={onSave}>
-              <BookmarkIcon size={11} />
-              <span>{saveLabel}</span>
+          {collapsible ? (
+            <button
+              type="button"
+              className="yui-icon-btn"
+              aria-expanded={isExpanded}
+              aria-label={isExpanded ? `Collapse ${title}` : `Expand ${title}`}
+              onClick={toggleExpanded}
+            >
+              <ChevronDownIcon size={13} className={chevronClass} />
             </button>
           ) : null}
         </div>
       </div>
+
+      <div className={disclosureClass} aria-hidden={!isExpanded}>
+        <div className="yui-disclosure-inner">
+          <div className={scrollWrapClass} data-bottom-fade={hasBottomFade ? 'true' : 'false'}>
+            <pre ref={preRef} className={preClass}>
+              {preview}
+            </pre>
+          </div>
+        </div>
+      </div>
+
+      {onSave ? (
+        <div className="yui-genui-foot">
+          <span className="yui-genui-muted">Local artifact</span>
+          <div className="yui-action-group">
+            <button type="button" className="yui-micro-pill" onClick={onSave}>
+              <BookmarkIcon size={11} />
+              <span>{saveLabel}</span>
+            </button>
+          </div>
+        </div>
+      ) : null}
     </article>
   );
 }
