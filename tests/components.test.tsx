@@ -1,4 +1,4 @@
-import { act } from 'react';
+import { act, useState } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import {
@@ -21,6 +21,7 @@ import {
   ErrorRecoveryBanner,
   ErrorRecoveryCard,
   ExportSessionCard,
+  FindInThreadBar,
   FloatingComposer,
   FloatingContextSheet,
   FollowUpSuggestions,
@@ -51,6 +52,7 @@ import {
   SourcesDrawer,
   StatusBadge,
   StatusToast,
+  StorageQuotaCard,
   StreamingResponse,
   SuggestionChipRow,
   TabContextList,
@@ -2470,5 +2472,239 @@ describe('@yours/ui chat & runtime primitives', () => {
     expect(cssSource).toContain('.yui-export-card');
     expect(cssSource).toContain('.yui-voice-card-btns');
     expect(cssSource.slice(cssSource.indexOf('@media (forced-colors: active)'))).toContain('.yui-export-card');
+  });
+
+  it('renders FindInThreadBar and StorageQuotaCard with zero inline styles and full actions', async () => {
+    const onQueryChange = vi.fn();
+    const onPrev = vi.fn();
+    const onNext = vi.fn();
+    const onToggleCase = vi.fn();
+    const onClose = vi.fn();
+    const onVerify = vi.fn();
+    const onClearEntry = vi.fn();
+    const onClearAll = vi.fn();
+
+    const el = renderNode(
+      <div>
+        <FindInThreadBar
+          query="local"
+          totalMatches={7}
+          currentMatch={2}
+          onQueryChange={onQueryChange}
+          onPrev={onPrev}
+          onNext={onNext}
+          caseSensitive={false}
+          onToggleCaseSensitive={onToggleCase}
+          onClose={onClose}
+        />
+        <FindInThreadBar
+          query="missing"
+          totalMatches={0}
+          onPrev={onPrev}
+          onNext={onNext}
+        />
+        <StorageQuotaCard
+          usedLabel="2.6 GB"
+          quotaLabel="12.0 GB"
+          entries={[
+            {
+              id: 'weights',
+              label: 'Cached WGSL weights',
+              detail: 'Qwen3.5-4B · INT4 OPFS',
+              sizeLabel: '2.4 GB',
+              percent: 20,
+              tone: 'weights',
+              status: 'verified',
+              onVerify,
+              onClear: onClearEntry,
+            },
+            {
+              id: 'vault',
+              label: 'Encrypted memory vault',
+              detail: 'IndexedDB AES-GCM',
+              sizeLabel: '160 MB',
+              percent: 1.5,
+              tone: 'vault',
+              onClear: onClearEntry,
+            },
+          ]}
+          onClearAll={onClearAll}
+        />
+      </div>,
+    );
+
+    expect(el.querySelectorAll('[style]').length).toBe(0);
+
+    const bars = el.querySelectorAll('[data-slot="find-in-thread-bar"]');
+    expect(bars[0].querySelector('.yui-find-count')?.textContent).toBe('2 / 7');
+    expect(bars[1].querySelector('.yui-find-count')?.textContent).toBe('No matches');
+    expect(
+      (bars[1].querySelector('[aria-label="Next match"]') as HTMLButtonElement).disabled,
+    ).toBe(true);
+
+    const input = bars[0].querySelector('.yui-find-input') as HTMLInputElement;
+    act(() => {
+      input.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }));
+      input.dispatchEvent(
+        new KeyboardEvent('keydown', { key: 'Enter', shiftKey: true, bubbles: true }),
+      );
+      input.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
+      (bars[0].querySelector('[aria-label="Match case"]') as HTMLButtonElement).click();
+    });
+    expect(onNext).toHaveBeenCalledTimes(1);
+    expect(onPrev).toHaveBeenCalledTimes(1);
+    expect(onClose).toHaveBeenCalledTimes(1);
+    expect(onToggleCase).toHaveBeenCalledTimes(1);
+
+    const quota = el.querySelector('[data-slot="storage-quota-card"]') as HTMLElement;
+    expect(quota.textContent).toContain('2.6 GB');
+    expect(quota.textContent).toContain('12.0 GB');
+    expect(quota.textContent).toContain('100% local browser storage');
+    expect(quota.querySelectorAll('.yui-storage-seg').length).toBe(2);
+    expect(quota.querySelector('.yui-storage-seg')?.getAttribute('width')).toBe('20');
+
+    act(() => {
+      (quota.querySelector('.yui-storage-action-btn') as HTMLButtonElement).click();
+      (quota.querySelector('.yui-storage-clear-btn') as HTMLButtonElement).click();
+      (quota.querySelector('.yui-storage-clear-all') as HTMLButtonElement).click();
+    });
+    expect(onVerify).toHaveBeenCalledTimes(1);
+    expect(onClearEntry).toHaveBeenCalledTimes(1);
+    expect(onClearAll).toHaveBeenCalledTimes(1);
+
+    const cssSource = await readSourceFile('../src/styles/components.css');
+    expect(cssSource).toContain('.yui-find-bar');
+    expect(cssSource).toContain('.yui-storage-card');
+    expect(cssSource.slice(cssSource.indexOf('@media (forced-colors: active)'))).toContain(
+      '.yui-storage-card',
+    );
+  });
+
+  it('contains Tab/Shift+Tab focus and restores trigger focus on Escape or veil click across modal overlays', () => {
+    function OverlayHarness({ mode }: { mode: 'palette' | 'shortcut' | 'sheet' }) {
+      const [open, setOpen] = useState(false);
+      return (
+        <div>
+          <button
+            type="button"
+            data-testid="trigger-btn"
+            onClick={() => setOpen(true)}
+          >
+            Open overlay
+          </button>
+          <SidePanelShell
+            veilOpen={open}
+            onVeilClick={() => setOpen(false)}
+            overlay={
+              mode === 'palette' ? (
+                <CommandPalette
+                  open={open}
+                  onClose={() => setOpen(false)}
+                  actions={[
+                    { id: 'a1', label: 'Action 1', onSelect: () => {} },
+                    { id: 'a2', label: 'Action 2', onSelect: () => {} },
+                  ]}
+                />
+              ) : mode === 'shortcut' ? (
+                <ShortcutSheet
+                  open={open}
+                  onClose={() => setOpen(false)}
+                  items={[{ label: 'Find in thread', keys: ['Ctrl', 'F'] }]}
+                />
+              ) : null
+            }
+            sheet={
+              mode === 'sheet' ? (
+                <FloatingContextSheet
+                  open={open}
+                  title="Local context"
+                  onClose={() => setOpen(false)}
+                  footer={
+                    <button type="button" data-testid="sheet-apply">
+                      Apply
+                    </button>
+                  }
+                >
+                  <button type="button" data-testid="sheet-first">
+                    Inspect
+                  </button>
+                </FloatingContextSheet>
+              ) : null
+            }
+          />
+        </div>
+      );
+    }
+
+    for (const mode of ['palette', 'shortcut', 'sheet'] as const) {
+      const el = renderNode(<OverlayHarness mode={mode} />);
+      const trigger = el.querySelector('[data-testid="trigger-btn"]') as HTMLButtonElement;
+
+      act(() => {
+        trigger.focus();
+      });
+      expect(document.activeElement).toBe(trigger);
+
+      act(() => {
+        trigger.click();
+      });
+
+      const dialog = el.querySelector('[role="dialog"]') as HTMLElement;
+      expect(dialog).not.toBeNull();
+      expect(dialog.contains(document.activeElement)).toBe(true);
+
+      const focusables = Array.from(
+        dialog.querySelectorAll<HTMLElement>(
+          'button:not([disabled]), input:not([disabled]), [tabindex]:not([tabindex="-1"])',
+        ),
+      );
+      expect(focusables.length).toBeGreaterThanOrEqual(1);
+
+      const first = focusables[0];
+      const last = focusables[focusables.length - 1];
+
+      // Tab from last wraps to first
+      act(() => {
+        last.focus();
+      });
+      act(() => {
+        document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Tab', bubbles: true }));
+      });
+      expect(document.activeElement).toBe(first);
+
+      // Shift+Tab from first wraps to last
+      act(() => {
+        document.dispatchEvent(
+          new KeyboardEvent('keydown', { key: 'Tab', shiftKey: true, bubbles: true }),
+        );
+      });
+      expect(document.activeElement).toBe(last);
+
+      // Escape dismisses overlay & restores focus to trigger
+      act(() => {
+        document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
+      });
+      expect(el.querySelector('[role="dialog"]')).toBeNull();
+      expect(document.activeElement).toBe(trigger);
+
+      // Re-open and dismiss via veil click -> restores focus to trigger
+      act(() => {
+        trigger.click();
+      });
+      expect(el.querySelector('[role="dialog"]')).not.toBeNull();
+      act(() => {
+        trigger.blur();
+        (el.querySelector('.yui-veil.is-open') as HTMLElement).click();
+      });
+      expect(el.querySelector('[role="dialog"]')).toBeNull();
+      expect(document.activeElement).toBe(trigger);
+
+      // Unmount previous harness cleanly before next mode iteration
+      act(() => {
+        mounted?.root.unmount();
+      });
+      mounted?.container.remove();
+      mounted = null;
+    }
   });
 });

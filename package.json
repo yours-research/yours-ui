@@ -56,6 +56,7 @@
     "prepare": "npm run build",
     "generate:icons": "node scripts/generate-icons.mjs",
     "typecheck": "tsc --noEmit",
+    "prebuild": "node -e \"import('node:fs').then(f=>f.rmSync('dist',{recursive:true,force:true}))\"",
     "build": "node scripts/generate-icons.mjs && tsc -p tsconfig.build.json && node scripts/copy-assets.mjs",
     "check:size": "node scripts/check-size.mjs",
     "test": "vitest run",

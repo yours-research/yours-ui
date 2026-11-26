@@ -1,7 +1,7 @@
 import { useEffect, useId, useMemo, useRef, useState } from 'react';
 import { ApertureIcon, SearchIcon, XIcon } from '../icons/ApertureIcon.js';
 import type { ApertureIconName } from '../icons/iconData.js';
-import { useFocusTrap } from '../utils/focusTrap.js';
+import { useFocusTrap } from '../utils/focus.js';
 import { KbdHint } from './KbdHint.js';
 
 export interface CommandPaletteAction {

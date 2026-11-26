@@ -1,4 +1,6 @@
+import { useEffect, useRef } from 'react';
 import { UndoIcon, XIcon } from '../icons/ApertureIcon.js';
+import { useFocusTrap } from '../utils/focus.js';
 import { KbdHint } from './KbdHint.js';
 import { StatusBadge, type StatusBadgeTone } from './StatusBadge.js';
 
@@ -16,6 +18,10 @@ export interface ShortcutGroup {
 }
 
 export interface ShortcutSheetProps {
+  open?: boolean;
+  onClose?: () => void;
+  closeLabel?: string;
+  trapFocus?: boolean;
   title?: string;
   subtitle?: string;
   badge?: string;
@@ -27,8 +33,14 @@ export interface ShortcutSheetProps {
 /**
  * Compact Paper Page 9 keyboard shortcut reference sheet with hairline rows
  * and monochrome `KbdHint` keycaps sized cleanly for `340px`–`400px` side panels.
+ * Supports optional modal overlay mode (`open` + `onClose`) with focus trapping
+ * and focus restoration.
  */
 export function ShortcutSheet({
+  open,
+  onClose,
+  closeLabel = 'Close keyboard shortcuts',
+  trapFocus,
   title = 'Keyboard shortcuts',
   subtitle,
   badge,
@@ -36,6 +48,27 @@ export function ShortcutSheet({
   items,
   className,
 }: ShortcutSheetProps) {
+  const sheetRef = useRef<HTMLElement | null>(null);
+  const isModal = open !== undefined;
+  const isVisible = open ?? true;
+  const trapActive = isVisible && (trapFocus ?? isModal);
+
+  useFocusTrap(sheetRef, trapActive);
+
+  useEffect(() => {
+    if (!isVisible || !onClose) return;
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        event.preventDefault();
+        onClose();
+      }
+    };
+    document.addEventListener('keydown', onKeyDown);
+    return () => document.removeEventListener('keydown', onKeyDown);
+  }, [isVisible, onClose]);
+
+  if (!isVisible) return null;
+
   const resolvedGroups: readonly ShortcutGroup[] =
     groups && groups.length > 0
       ? groups
@@ -46,8 +79,15 @@ export function ShortcutSheet({
   const cardClass = ['yui-shortcut-sheet', className].filter(Boolean).join(' ');
 
   return (
-    <section data-slot="shortcut-sheet" className={cardClass} aria-label={title}>
-      {title || subtitle || badge ? (
+    <section
+      ref={sheetRef}
+      data-slot="shortcut-sheet"
+      role={isModal ? 'dialog' : undefined}
+      aria-modal={isModal ? 'true' : undefined}
+      className={cardClass}
+      aria-label={title}
+    >
+      {title || subtitle || badge || onClose ? (
         <header className="yui-shortcut-head">
           <div className="yui-col-min">
             <div className="yui-setting-title-row">
@@ -56,6 +96,16 @@ export function ShortcutSheet({
             </div>
             {subtitle ? <p className="yui-genui-muted">{subtitle}</p> : null}
           </div>
+          {onClose ? (
+            <button
+              type="button"
+              className="yui-icon-btn"
+              aria-label={closeLabel}
+              onClick={onClose}
+            >
+              <XIcon size={12.5} />
+            </button>
+          ) : null}
         </header>
       ) : null}
 

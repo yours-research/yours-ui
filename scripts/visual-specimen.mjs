@@ -56,6 +56,7 @@ import {
   EntitySummaryCard,
   ErrorRecoveryCard,
   ExportSessionCard,
+  FindInThreadBar,
   FloatingComposer,
   FloatingContextSheet,
   FollowUpSuggestions,
@@ -93,6 +94,7 @@ import {
   SourcesDrawer,
   StatusBadge,
   StatusToast,
+  StorageQuotaCard,
   StreamingResponse,
   TabContextList,
   ThreadHistoryList,
@@ -1562,6 +1564,114 @@ function ShortcutAndToastPanel({ theme }: { theme: 'light' | 'dark' }) {
   );
 }
 
+function StorageAndFindPanel({ theme }: { theme: 'light' | 'dark' }) {
+  const [query, setQuery] = useState('local');
+  const [matchIdx, setMatchIdx] = useState(2);
+  const [matchCase, setMatchCase] = useState(false);
+  const [vaultVerified, setVaultVerified] = useState(false);
+  const [statusMsg, setStatusMsg] = useState('Local OPFS active · 2.6 GB / 12.0 GB');
+  const [entries, setEntries] = useState([
+    {
+      id: 'weights',
+      label: 'Cached WGSL weights',
+      detail: 'Qwen3.5-4B · INT4 OPFS',
+      sizeLabel: '2.4 GB',
+      percent: 20,
+      tone: 'weights' as const,
+      verified: true,
+    },
+    {
+      id: 'vault',
+      label: 'Encrypted memory vault',
+      detail: 'IndexedDB AES-GCM',
+      sizeLabel: '160 MB',
+      percent: 4,
+      tone: 'vault' as const,
+      verified: false,
+    },
+    {
+      id: 'history',
+      label: 'Thread history',
+      detail: '14 encrypted sessions',
+      sizeLabel: '40 MB',
+      percent: 2,
+      tone: 'history' as const,
+      verified: false,
+    },
+  ]);
+
+  const totalMatches = query.trim().length > 0 ? 7 : 0;
+
+  return (
+    <SidePanelShell
+      theme={theme}
+      notch={<TopNotch items={NOTCH_ITEMS} expandedId={null} />}
+      footer={
+        <FloatingComposer
+          value=""
+          onChange={() => {}}
+          onSubmit={() => {}}
+          leftSlot={<StatusBadge tone="local" dot>{statusMsg}</StatusBadge>}
+        />
+      }
+    >
+      <FindInThreadBar
+        query={query}
+        onQueryChange={(next) => {
+          setQuery(next);
+          setMatchIdx(1);
+        }}
+        totalMatches={totalMatches}
+        currentMatch={matchIdx}
+        onPrev={() => setMatchIdx((prev) => (prev <= 1 ? totalMatches : prev - 1))}
+        onNext={() => setMatchIdx((prev) => (prev >= totalMatches ? 1 : prev + 1))}
+        caseSensitive={matchCase}
+        onToggleCaseSensitive={() => setMatchCase((prev) => !prev)}
+        onClose={() => setStatusMsg('Find bar closed via Esc')}
+      />
+      <FindInThreadBar
+        query="CSP bypass"
+        totalMatches={0}
+        onPrev={() => {}}
+        onNext={() => {}}
+        onClose={() => {}}
+      />
+      <StorageQuotaCard
+        usedLabel="2.6 GB"
+        quotaLabel="12.0 GB"
+        entries={entries.map((entry) => ({
+          ...entry,
+          status:
+            entry.id === 'vault'
+              ? vaultVerified
+                ? 'verified'
+                : 'idle'
+              : entry.verified
+                ? 'verified'
+                : 'idle',
+          onVerify:
+            entry.id === 'vault'
+              ? () => {
+                  setVaultVerified(true);
+                  setStatusMsg('Vault SHA-256 verified');
+                }
+              : entry.id === 'weights'
+                ? () => setStatusMsg('OPFS weights SHA-256 verified')
+                : undefined,
+          onClear:
+            entry.id === 'history'
+              ? () => {
+                  setEntries((prev) => prev.filter((item) => item.id !== 'history'));
+                  setStatusMsg('Cleared thread history cache');
+                }
+              : undefined,
+        }))}
+        onClearAll={() => setStatusMsg('Cleared temporary local cache')}
+      />
+    </SidePanelShell>
+  );
+}
+
 function SpecimenApp() {
   const params = new URLSearchParams(window.location.search);
   const mode = params.get('mode') || 'gallery';
@@ -1598,6 +1708,7 @@ function SpecimenApp() {
         {panel === 'voice' ? <VoiceAndComposerPanel theme={theme} /> : null}
         {panel === 'templates' ? <TemplatesAndExportPanel theme={theme} /> : null}
         {panel === 'genui' ? <GenUiShowcasePanel theme={theme} /> : null}
+        {panel === 'storage' ? <StorageAndFindPanel theme={theme} /> : null}
       </div>
     );
   }
@@ -1623,6 +1734,7 @@ function SpecimenApp() {
       <div className="yui-spec-frame"><RecoveryAndNoticePanel theme={theme} /></div>
       <div className="yui-spec-frame"><VoiceAndComposerPanel theme={theme} /></div>
       <div className="yui-spec-frame"><TemplatesAndExportPanel theme={theme} /></div>
+      <div className="yui-spec-frame"><StorageAndFindPanel theme={theme} /></div>
       <div className="yui-spec-frame-auto"><GenUiShowcasePanel theme={theme} /></div>
     </div>
   );
@@ -1798,6 +1910,7 @@ async function main() {
 
   const errors = [];
   const cspViolations = [];
+  const contrastReport = [];
   const outputs = [];
   let hoverGeometry = null;
 
@@ -1849,7 +1962,92 @@ async function main() {
       'voice',
       'templates',
       'genui',
+      'storage',
     ];
+    const auditPanelContrast = async (activeTheme, panelName) => {
+      const failures = await page.evaluate((t) => {
+        const parseRgba = (str) => {
+          const m = str.match(/rgba?\(([^)]+)\)/);
+          if (!m) return null;
+          const parts = m[1].split(',').map((x) => parseFloat(x.trim()));
+          return [parts[0], parts[1], parts[2], parts[3] ?? 1];
+        };
+        const relLum = ([r, g, b]) => {
+          const f = (c) => {
+            const s = c / 255;
+            return s <= 0.03928 ? s / 12.92 : Math.pow((s + 0.055) / 1.055, 2.4);
+          };
+          return 0.2126 * f(r) + 0.7152 * f(g) + 0.0722 * f(b);
+        };
+        const compositeOver = (fg, bg) => {
+          const a = fg[3] ?? 1;
+          return [
+            fg[0] * a + bg[0] * (1 - a),
+            fg[1] * a + bg[1] * (1 - a),
+            fg[2] * a + bg[2] * (1 - a),
+            1,
+          ];
+        };
+        const effectiveBg = (el) => {
+          const stack = [];
+          let cur = el;
+          while (cur && cur !== document.documentElement) {
+            const bg = parseRgba(getComputedStyle(cur).backgroundColor);
+            if (bg && bg[3] > 0) stack.unshift(bg);
+            cur = cur.parentElement;
+          }
+          const rootBg = t === 'dark' ? [18, 18, 21, 1] : [250, 248, 245, 1];
+          return stack.reduce((acc, layer) => compositeOver(layer, acc), rootBg);
+        };
+        const root = document.getElementById('specimen-root');
+        if (!root) return [{ selector: '#specimen-root', reason: 'missing' }];
+        const isMutedEl = (el) => {
+          const matched = el.closest(
+            '[class*="muted"],[class*="-meta"],[class*="-sub"],[class*="-time"],[class*="-col-head"],[class*="-kv-key"],[class*="-group-title"],[class*="-pct"],[class*="-sep"],[class*="-kbd"],.yui-data-th,.yui-diff-ln',
+          );
+          return Boolean(matched);
+        };
+        const bad = [];
+        const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
+        let textNode;
+        while ((textNode = walker.nextNode())) {
+          if (!textNode.textContent || !textNode.textContent.trim()) continue;
+          const el = textNode.parentElement;
+          if (!el) continue;
+          if (
+            el.closest('[hidden], [aria-hidden="true"], [inert], .yui-disclosure:not(.is-open), svg')
+          ) {
+            continue;
+          }
+          if (el.closest(':disabled, [aria-disabled="true"]')) continue;
+          const rect = el.getBoundingClientRect();
+          if (rect.width < 1 || rect.height < 1) continue;
+          const cs = getComputedStyle(el);
+          if (cs.visibility === 'hidden' || parseFloat(cs.opacity) < 0.05) continue;
+          const rawFg = parseRgba(cs.color);
+          if (!rawFg) continue;
+          const bg = effectiveBg(el);
+          const fg = rawFg[3] < 1 ? compositeOver(rawFg, bg) : rawFg;
+          const l1 = Math.max(relLum(fg), relLum(bg));
+          const l2 = Math.min(relLum(fg), relLum(bg));
+          const ratio = (l1 + 0.05) / (l2 + 0.05);
+          const fontSize = parseFloat(cs.fontSize);
+          const minRatio = fontSize >= 18 || isMutedEl(el) ? 3.0 : 4.5;
+          if (ratio < minRatio) {
+            bad.push({
+              className: typeof el.className === 'string' ? el.className : el.tagName.toLowerCase(),
+              ratio: Number(ratio.toFixed(2)),
+              minRatio,
+              text: textNode.textContent.trim().slice(0, 40),
+            });
+          }
+        }
+        return bad;
+      }, activeTheme);
+      if (failures.length > 0) {
+        contrastReport.push({ panel: `${activeTheme}/${panelName}`, failures });
+      }
+    };
     const blurActive = () =>
       page.evaluate(() => {
         const ae = document.activeElement;
@@ -1865,6 +2063,61 @@ async function main() {
 
         if (panel === 'live' || panel === 'sheet' || panel === 'palette' || panel === 'drawers' || panel === 'budget') {
           await page.waitForTimeout(300);
+        }
+
+        if (
+          [
+            'voice',
+            'templates',
+            'recovery',
+            'onboarding',
+            'budget',
+            'drawers',
+            'trace',
+            'diff',
+            'palette',
+            'data',
+            'shortcuts',
+            'welcome',
+            'storage',
+          ].includes(panel)
+        ) {
+          await auditPanelContrast(theme, panel);
+        }
+
+        if (panel === 'storage') {
+          await page.locator('[data-slot="find-in-thread-bar"] .yui-find-case-btn').first().click();
+          if (
+            (await page
+              .locator('[data-slot="find-in-thread-bar"] .yui-find-case-btn')
+              .first()
+              .getAttribute('aria-pressed')) !== 'true'
+          ) {
+            throw new Error(`FindInThreadBar case toggle failed (${theme})`);
+          }
+          await page.locator('[data-slot="find-in-thread-bar"] [aria-label="Next match"]').first().click();
+          const countAfter = await page
+            .locator('[data-slot="find-in-thread-bar"] .yui-find-count')
+            .first()
+            .textContent();
+          if (countAfter !== '3 / 7') {
+            throw new Error(`FindInThreadBar Next match failed (${theme}): ${countAfter}`);
+          }
+          await page
+            .locator('[data-storage-id="vault"] .yui-storage-action-btn')
+            .click();
+          const vaultStatus = await page
+            .locator('[data-storage-id="vault"]')
+            .getAttribute('data-status');
+          if (vaultStatus !== 'verified') {
+            throw new Error(`StorageQuotaCard Verify SHA-256 failed (${theme}): ${vaultStatus}`);
+          }
+          await page
+            .locator('[data-storage-id="history"] .yui-storage-clear-btn')
+            .click();
+          if ((await page.locator('[data-storage-id="history"]').count()) !== 0) {
+            throw new Error(`StorageQuotaCard Clear row failed (${theme})`);
+          }
         }
 
         if (panel === 'chat') {
@@ -2841,7 +3094,7 @@ async function main() {
       // 400px width verification across key panels + reduced-motion audit
       await page.setViewportSize({ width: 400, height: 828 });
       await page.emulateMedia({ reducedMotion: 'reduce' });
-      for (const widePanel of ['chat', 'data', 'shortcuts', 'welcome', 'palette', 'diff', 'trace', 'drawers', 'budget', 'onboarding', 'recovery', 'voice', 'templates', 'genui']) {
+      for (const widePanel of ['chat', 'data', 'shortcuts', 'welcome', 'palette', 'diff', 'trace', 'drawers', 'budget', 'onboarding', 'recovery', 'voice', 'templates', 'genui', 'storage']) {
         await page.goto(`${baseUrl}/?mode=single&theme=${theme}&panel=${widePanel}&width=400`, {
           waitUntil: 'networkidle',
         });
@@ -2884,6 +3137,7 @@ async function main() {
         'voice',
         'templates',
         'genui',
+        'storage',
       ]) {
         await page.goto(`${baseUrl}/?mode=single&theme=${theme}&panel=${narrowPanel}&narrow=1`, {
           waitUntil: 'networkidle',
@@ -3129,12 +3383,17 @@ async function main() {
           await page.screenshot({ path: genuiNarrowPath, fullPage: true });
           outputs.push(genuiNarrowPath);
         }
+        if (narrowPanel === 'storage') {
+          const storageNarrowPath = path.join(OUT_DIR, `specimen-${theme}-storage-340.png`);
+          await page.screenshot({ path: storageNarrowPath });
+          outputs.push(storageNarrowPath);
+        }
       }
 
-      // Forced-colors audit at 380px across settings, recovery, voice, templates & genui
+      // Forced-colors audit at 380px across settings, recovery, voice, templates, genui & storage
       await page.setViewportSize({ width: 380, height: 828 });
       await page.emulateMedia({ forcedColors: 'active' });
-      for (const fcPanel of ['settings', 'recovery', 'voice', 'templates', 'genui']) {
+      for (const fcPanel of ['settings', 'recovery', 'voice', 'templates', 'genui', 'storage']) {
         await page.goto(`${baseUrl}/?mode=single&theme=${theme}&panel=${fcPanel}`, {
           waitUntil: 'networkidle',
         });
@@ -3162,9 +3421,9 @@ async function main() {
     server.close();
   }
 
-  if (errors.length > 0 || cspViolations.length > 0) {
+  if (errors.length > 0 || cspViolations.length > 0 || contrastReport.length > 0) {
     throw new Error(
-      `Browser verification failed:\nerrors=${JSON.stringify(errors)}\ncsp=${JSON.stringify(cspViolations)}`,
+      `Browser verification failed:\nerrors=${JSON.stringify(errors)}\ncsp=${JSON.stringify(cspViolations)}\nwcag=${JSON.stringify(contrastReport, null, 2)}`,
     );
   }
 
