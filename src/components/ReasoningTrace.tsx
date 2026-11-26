@@ -57,10 +57,18 @@ export function ReasoningTrace({
         )}
         {expanded ? <ChevronUpIcon size={12} /> : <ChevronDownIcon size={12} />}
       </button>
-      {expanded && hasContent ? (
-        <div className="yui-reasoning-body">
-          <div className="yui-reasoning-rail" aria-hidden="true" />
-          <div className="yui-reasoning-text">{content}</div>
+      {hasContent ? (
+        <div
+          className={expanded ? 'yui-disclosure is-open' : 'yui-disclosure'}
+          aria-hidden={!expanded}
+          inert={!expanded ? true : undefined}
+        >
+          <div className="yui-disclosure-inner">
+            <div className="yui-reasoning-body">
+              <div className="yui-reasoning-rail" aria-hidden="true" />
+              <div className="yui-reasoning-text">{content}</div>
+            </div>
+          </div>
         </div>
       ) : null}
     </div>

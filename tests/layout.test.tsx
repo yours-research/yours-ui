@@ -4,6 +4,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import {
   HookSidebarList,
   NotchDrawerSearch,
+  NotchOptionRow,
   NotchStatusPill,
   SidePanelShell,
   TopNotch,
@@ -669,5 +670,44 @@ describe('@yours/ui layout & TopNotch primitives', () => {
     });
     expect(onSelect).toHaveBeenCalledTimes(1);
     expect(onSelect).toHaveBeenCalledWith('threads');
+  });
+
+  it('renders NotchOptionRow with LED dot, selection checkmark, metadata, and disabled state', () => {
+    const onSelectTab = vi.fn();
+    const el = renderNode(
+      <div>
+        <NotchOptionRow
+          title="Qwen3.5-4B · WGSL"
+          subtitle="Q4F16 · OPFS cached"
+          meta="2.6 GB"
+          icon="local-device"
+          dotTone="green"
+          dotPulse
+          selected
+          onClick={() => onSelectTab('qwen')}
+        />
+        <NotchOptionRow
+          title="Disabled Model"
+          dotTone="amber"
+          disabled
+          onClick={() => onSelectTab('disabled')}
+        />
+      </div>,
+    );
+
+    const rows = el.querySelectorAll('[data-slot="notch-option-row"]') as NodeListOf<HTMLButtonElement>;
+    expect(rows.length).toBe(2);
+    expect(rows[0].getAttribute('data-selected')).toBe('true');
+    expect(rows[0].getAttribute('aria-pressed')).toBe('true');
+    expect(rows[0].querySelector('.yui-status-dot--pulse')).toBeTruthy();
+    expect(rows[0].querySelector('.yui-notch-opt-check')).toBeTruthy();
+    expect(rows[1].disabled).toBe(true);
+
+    act(() => {
+      rows[0].click();
+      rows[1].click();
+    });
+    expect(onSelectTab).toHaveBeenCalledTimes(1);
+    expect(onSelectTab).toHaveBeenCalledWith('qwen');
   });
 });

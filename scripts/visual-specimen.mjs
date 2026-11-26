@@ -42,16 +42,20 @@ import {
   ChecklistCard,
   ChoicePromptCard,
   CompareTable,
+  ContextCommandPopover,
   DraftCard,
   EmptyState,
   EntitySummaryCard,
   FloatingComposer,
   FollowUpSuggestions,
   HookSidebarList,
+  InlineCitationPill,
+  MatrixOrb,
   MetricStripCard,
   MicIcon,
   ModelDownloadGate,
   NotchDrawerSearch,
+  NotchOptionRow,
   PageActionCard,
   PageBriefCard,
   PageIcon,
@@ -59,6 +63,7 @@ import {
   PromptCapsuleStack,
   QuotedContextBanner,
   ReasoningTrace,
+  SegmentedControl,
   SidePanelShell,
   SourcesDrawer,
   StatusBadge,
@@ -133,6 +138,8 @@ function RestingPanel({ theme }: { theme: 'light' | 'dark' }) {
 function NotchExpandedPanel({ theme }: { theme: 'light' | 'dark' }) {
   const [query, setQuery] = useState('');
   const [activeId, setActiveId] = useState('t1');
+  const [perfMode, setPerfMode] = useState<'max' | 'balanced' | 'smooth'>('balanced');
+  const [modelId, setModelId] = useState('qwen35');
 
   const threads = [
     { id: 't1', title: 'Pro vs. Team pricing audit', meta: 'Now', hasLiveDot: true },
@@ -159,6 +166,26 @@ function NotchExpandedPanel({ theme }: { theme: 'light' | 'dark' }) {
                 activeId={activeId}
                 onSelect={setActiveId}
               />
+              <div className="yui-drawer-hairline" />
+              <SegmentedControl
+                fullWidth
+                value={perfMode}
+                onChange={setPerfMode}
+                ariaLabel="Inference pacing mode"
+                options={[
+                  { value: 'max', label: 'Max' },
+                  { value: 'balanced', label: 'Balanced' },
+                  { value: 'smooth', label: 'Smooth' },
+                ]}
+              />
+              <NotchOptionRow
+                title="Qwen3.5-4B · WGSL"
+                subtitle="OPFS · Int8 KV cache"
+                meta="2.6 GB"
+                dotTone="green"
+                selected={modelId === 'qwen35'}
+                onClick={() => setModelId('qwen35')}
+              />
             </>
           }
         />
@@ -172,7 +199,7 @@ function NotchExpandedPanel({ theme }: { theme: 'light' | 'dark' }) {
         />
       }
     >
-      <EmptyState title="Select a thread above." orbState="idle" orbSize={26} />
+      <EmptyState title="Select a thread or runtime above." orbState="idle" orbSize={26} />
     </SidePanelShell>
   );
 }
@@ -220,6 +247,8 @@ function ActiveChatPanel({ theme }: { theme: 'light' | 'dark' }) {
               onRegenerate={() => {}}
               onThumbUp={() => {}}
               onThumbDown={() => {}}
+              onSave={() => {}}
+              onSpeak={() => {}}
               speedMetrics={{ tokensPerSec: 86.4, ttftMs: 74, outputTokens: 142 }}
             />
           </div>
@@ -246,6 +275,10 @@ function ActiveChatPanel({ theme }: { theme: 'light' | 'dark' }) {
             '\`\`\`ts\\nconst savings = 1 - 200 / 250; // 0.20\\n\`\`\`'
           }
         />
+        <div className="yui-action-group">
+          <InlineCitationPill index={1} label="pricing.yours.sh" active onClick={() => {}} />
+          <InlineCitationPill index={2} label="yours.sh/faq" href="https://yours.sh" />
+        </div>
         <SourcesDrawer
           sources={[
             { id: 'src1', title: 'Enterprise & Team Plan FAQ (yours.sh)', subtitle: 'Section 2 · Billing' },
@@ -253,6 +286,78 @@ function ActiveChatPanel({ theme }: { theme: 'light' | 'dark' }) {
           ]}
         />
         <FollowUpSuggestions suggestions={['Draft an approval email to finance']} onSelect={() => {}} />
+      </AssistantMessage>
+    </SidePanelShell>
+  );
+}
+
+function LiveStreamPopoverPanel({ theme }: { theme: 'light' | 'dark' }) {
+  const [draft, setDraft] = useState('@');
+
+  return (
+    <SidePanelShell
+      theme={theme}
+      notch={<TopNotch items={NOTCH_ITEMS} expandedId={null} />}
+      footer={
+        <FloatingComposer
+          value={draft}
+          onChange={setDraft}
+          onSubmit={() => {}}
+          isGenerating
+          onStop={() => {}}
+          popoverSlot={
+            <ContextCommandPopover
+              open
+              floating
+              trigger="@"
+              title="Attach context"
+              items={[
+                {
+                  id: 'active-tab',
+                  label: 'Active browser tab',
+                  description: 'pricing.yours.sh — 4 plan tiers',
+                  icon: 'page',
+                  hasLiveDot: true,
+                  shortcut: 'Tab',
+                },
+                {
+                  id: 'summarize',
+                  label: 'Summarize selection',
+                  description: 'Local page brief card',
+                  icon: 'page-scan',
+                  badge: 'Local',
+                  shortcut: ['⌘', 'S'],
+                },
+                {
+                  id: 'memory',
+                  label: 'Search @yours/memory',
+                  description: 'Pinned specs & notes',
+                  icon: 'search',
+                  shortcut: 'M',
+                },
+              ]}
+              onSelect={() => {}}
+              onClose={() => {}}
+            />
+          }
+          leftSlot={<StatusBadge tone="accent" dot pulse>Streaming · 89.2 tok/s</StatusBadge>}
+        />
+      }
+    >
+      <UserMessageBubble content="Compare the active tab options for me." />
+      <AssistantMessage>
+        <div className="yui-action-group">
+          <MatrixOrb state="thinking" size={16} />
+          <MatrixOrb state="streaming" size={16} />
+          <span className="yui-speed-readout">Synthesizing grounded comparison…</span>
+        </div>
+        <StreamingResponse
+          status="streaming"
+          ink="accent"
+          speed={18}
+          actions={false}
+          text="Comparing Team pricing across **10 seats** — verifying annual discount "
+        />
       </AssistantMessage>
     </SidePanelShell>
   );
@@ -366,16 +471,19 @@ function GenUiShowcasePanel({ theme }: { theme: 'light' | 'dark' }) {
 }
 
 function SpecimenApp() {
-  const mode = new URLSearchParams(window.location.search).get('mode') || 'gallery';
-  const theme = (new URLSearchParams(window.location.search).get('theme') || 'light') as 'light' | 'dark';
-  const panel = new URLSearchParams(window.location.search).get('panel') || 'resting';
+  const params = new URLSearchParams(window.location.search);
+  const mode = params.get('mode') || 'gallery';
+  const theme = (params.get('theme') || 'light') as 'light' | 'dark';
+  const panel = params.get('panel') || 'resting';
+  const narrow = params.get('narrow') === '1';
 
   if (mode === 'single') {
     return (
-      <div className="yui-spec-single" data-theme={theme}>
+      <div className={narrow ? 'yui-spec-single yui-spec-single--narrow' : 'yui-spec-single'} data-theme={theme}>
         {panel === 'resting' ? <RestingPanel theme={theme} /> : null}
         {panel === 'notch' ? <NotchExpandedPanel theme={theme} /> : null}
         {panel === 'chat' ? <ActiveChatPanel theme={theme} /> : null}
+        {panel === 'live' ? <LiveStreamPopoverPanel theme={theme} /> : null}
         {panel === 'genui' ? <GenUiShowcasePanel theme={theme} /> : null}
       </div>
     );
@@ -385,6 +493,7 @@ function SpecimenApp() {
     <div className="yui-spec-grid" data-theme={theme}>
       <div className="yui-spec-frame"><RestingPanel theme={theme} /></div>
       <div className="yui-spec-frame"><NotchExpandedPanel theme={theme} /></div>
+      <div className="yui-spec-frame"><LiveStreamPopoverPanel theme={theme} /></div>
       <div className="yui-spec-frame"><ActiveChatPanel theme={theme} /></div>
       <div className="yui-spec-frame-auto"><GenUiShowcasePanel theme={theme} /></div>
     </div>
@@ -409,6 +518,10 @@ html, body {
   min-height: 828px;
   box-sizing: border-box;
   background: var(--bg-canvas);
+}
+
+.yui-spec-single--narrow {
+  width: 340px;
 }
 
 .yui-spec-single > .yui-shell {
@@ -445,13 +558,12 @@ html, body {
   flex-direction: column;
   gap: 14px;
   padding: 12px 16px 18px 16px;
-  width: 380px;
+  width: 100%;
   box-sizing: border-box;
   background: var(--yui-stage-bg);
 }
 
 .yui-spec-frame-auto .yui-spec-scroll-col {
-  width: 100%;
   padding: 0;
 }
 
@@ -555,6 +667,7 @@ async function main() {
   const errors = [];
   const cspViolations = [];
   const outputs = [];
+  let hoverGeometry = null;
 
   try {
     const page = await browser.newPage({
@@ -572,13 +685,18 @@ async function main() {
       });
     });
 
-    const singlePanels = ['resting', 'notch', 'chat', 'genui'];
+    const singlePanels = ['resting', 'notch', 'live', 'chat', 'genui'];
     for (const theme of ['light', 'dark']) {
+      await page.setViewportSize({ width: 380, height: 828 });
       for (const panel of singlePanels) {
         await page.goto(`${baseUrl}/?mode=single&theme=${theme}&panel=${panel}`, {
           waitUntil: 'networkidle',
         });
         await page.waitForSelector('#specimen-root > div');
+
+        if (panel === 'live') {
+          await page.waitForTimeout(300);
+        }
 
         const audit = await page.evaluate(() => {
           const root = document.getElementById('specimen-root');
@@ -589,7 +707,7 @@ async function main() {
 
         if (audit.inlineStyleCount !== 0) {
           throw new Error(
-            `CSP violation check failed (${theme}/${panel}): found ${audit.inlineStyleCount} [style] elements`,
+            `CSP check failed (${theme}/${panel}): found ${audit.inlineStyleCount} [style] nodes`,
           );
         }
         if (audit.docOverflow) {
@@ -599,15 +717,58 @@ async function main() {
         const outPath = path.join(OUT_DIR, `specimen-${theme}-${panel}.png`);
         await page.screenshot({ path: outPath, fullPage: panel === 'genui' });
         outputs.push(outPath);
+
+        // Capture TopNotch intermediate hover-grow (272px x 52px) state directly over resting
+        if (panel === 'resting') {
+          await page.hover('.yui-notch-assembly');
+          await page.waitForTimeout(400);
+          const notchRect = await page.evaluate(() => {
+            const box = document.querySelector('.yui-notch-housing')?.getBoundingClientRect();
+            return box ? { width: Math.round(box.width), height: Math.round(box.height) } : null;
+          });
+          hoverGeometry = notchRect;
+          if (!notchRect || notchRect.width < 260 || notchRect.height < 48) {
+            throw new Error(
+              `TopNotch hover-grow did not reach 272x52 geometry (${JSON.stringify(notchRect)})`,
+            );
+          }
+          const hoverPath = path.join(OUT_DIR, `specimen-${theme}-notch-hover.png`);
+          await page.screenshot({ path: hoverPath });
+          outputs.push(hoverPath);
+        }
       }
 
-      // Overview 4-up comparison sheet
-      await page.setViewportSize({ width: 1640, height: 900 });
+      // Narrow 340px stress pass across interactive & dense panels
+      await page.setViewportSize({ width: 340, height: 828 });
+      for (const narrowPanel of ['resting', 'live', 'chat', 'genui']) {
+        await page.goto(`${baseUrl}/?mode=single&theme=${theme}&panel=${narrowPanel}&narrow=1`, {
+          waitUntil: 'networkidle',
+        });
+        await page.waitForSelector('#specimen-root > div');
+        const narrowAudit = await page.evaluate(() => {
+          const root = document.getElementById('specimen-root');
+          const inlineStyleCount = root ? root.querySelectorAll('[style]').length : -1;
+          const docOverflow = document.documentElement.scrollWidth > 340;
+          return { inlineStyleCount, docOverflow };
+        });
+        if (narrowAudit.inlineStyleCount !== 0 || narrowAudit.docOverflow) {
+          throw new Error(
+            `340px narrow check failed (${theme}/${narrowPanel}): ${JSON.stringify(narrowAudit)}`,
+          );
+        }
+        if (narrowPanel === 'chat') {
+          const narrowPath = path.join(OUT_DIR, `specimen-${theme}-narrow340.png`);
+          await page.screenshot({ path: narrowPath });
+          outputs.push(narrowPath);
+        }
+      }
+
+      // Overview 5-up comparison sheet
+      await page.setViewportSize({ width: 2040, height: 900 });
       await page.goto(`${baseUrl}/?mode=gallery&theme=${theme}`, { waitUntil: 'networkidle' });
       const overviewPath = path.join(OUT_DIR, `specimen-${theme}-overview.png`);
       await page.screenshot({ path: overviewPath, fullPage: true });
       outputs.push(overviewPath);
-      await page.setViewportSize({ width: 380, height: 828 });
     }
   } finally {
     await browser.close();
@@ -626,7 +787,8 @@ async function main() {
       {
         status: 'ok',
         cspStyleSrcSelf: 'verified-zero-inline-styles',
-        viewportWidth: 380,
+        viewportsVerified: [380, 340],
+        hoverNotchGeometry: hoverGeometry,
         outputs,
       },
       null,

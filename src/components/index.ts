@@ -81,3 +81,18 @@ export {
   type StatusBadgeProps,
   type StatusBadgeTone,
 } from './StatusBadge.js';
+export { KbdHint, type KbdHintProps } from './KbdHint.js';
+export {
+  ContextCommandPopover,
+  type ContextCommandItem,
+  type ContextCommandPopoverProps,
+} from './ContextCommandPopover.js';
+export {
+  SegmentedControl,
+  type SegmentedControlProps,
+  type SegmentedOption,
+} from './SegmentedControl.js';
+export {
+  InlineCitationPill,
+  type InlineCitationPillProps,
+} from './InlineCitationPill.js';
