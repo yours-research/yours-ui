@@ -9,6 +9,7 @@ import {
   BranchPicker,
   CitationFootnoteList,
   CodeBlock,
+  CodeBlockCard,
   CommandPalette,
   ContextBudgetMeter,
   ContextCommandPopover,
@@ -31,6 +32,7 @@ import {
   ModelDownloadGate,
   ModelDownloadProgressBar,
   ModelRosterList,
+  OnboardingCard,
   PermissionApprovalCard,
   PermissionCard,
   PromptCapsuleStack,
@@ -2116,5 +2118,66 @@ describe('@yours/ui chat & runtime primitives', () => {
     expect(cssSource).toContain('z-index: 45');
     expect(cssSource).toContain('.yui-sr-table');
     expect(cssSource).toContain('@media (max-width: 360px)');
+  });
+
+  it('renders CodeBlockCard with language badge, line numbers & copy feedback, and OnboardingCard setup CTA', async () => {
+    const writeText = vi.fn().mockResolvedValue(undefined);
+    Object.defineProperty(navigator, 'clipboard', {
+      configurable: true,
+      value: { writeText },
+    });
+
+    const onCopyCode = vi.fn();
+    const onInitialize = vi.fn();
+    const onSecondaryAction = vi.fn();
+
+    const el = renderNode(
+      <div>
+        <CodeBlockCard
+          title="shader.wgsl"
+          language="wgsl"
+          showLineNumbers
+          onCopy={onCopyCode}
+          code={'@compute @workgroup_size(256)\nfn main() {\n  workgroupBarrier();\n}'}
+        />
+        <OnboardingCard
+          checkpointLabel="Qwen3.5-4B · Q4F16"
+          cacheSizeLabel="2.6 GB"
+          adapterLabel="WebGPU ready"
+          secondaryLabel="Choose another checkpoint"
+          onInitialize={onInitialize}
+          onSecondaryAction={onSecondaryAction}
+        />
+      </div>,
+    );
+
+    const codeCard = el.querySelector('[data-slot="code-block-card"]') as HTMLElement;
+    expect(codeCard.querySelector('.yui-codecard-lang')?.textContent).toBe('wgsl');
+    expect(codeCard.querySelectorAll('.yui-codecard-ln').length).toBe(4);
+
+    act(() => {
+      (codeCard.querySelector('.yui-sr-code-copy') as HTMLButtonElement).click();
+    });
+    expect(onCopyCode).toHaveBeenCalledTimes(1);
+    expect(writeText).toHaveBeenCalledWith(
+      '@compute @workgroup_size(256)\nfn main() {\n  workgroupBarrier();\n}',
+    );
+    expect(codeCard.querySelector('.yui-sr-code-copy')?.textContent).toContain('Copied');
+
+    const onb = el.querySelector('[data-slot="onboarding-card"]') as HTMLElement;
+    expect(onb.textContent).toContain('Qwen3.5-4B · Q4F16');
+    expect(onb.textContent).toContain('2.6 GB');
+    expect(onb.textContent).toContain('Zero cloud API keys');
+    act(() => {
+      (onb.querySelector('.yui-onb-cta') as HTMLButtonElement).click();
+      (onb.querySelector('.yui-onb-secondary') as HTMLButtonElement).click();
+    });
+    expect(onInitialize).toHaveBeenCalledTimes(1);
+    expect(onSecondaryAction).toHaveBeenCalledTimes(1);
+
+    const cssSource = await readSourceFile('../src/styles/components.css');
+    expect(cssSource).toContain('height: 54px;');
+    expect(cssSource).toContain('.yui-codecard');
+    expect(cssSource).toContain('.yui-onb-card');
   });
 });

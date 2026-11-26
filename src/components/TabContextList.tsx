@@ -59,9 +59,8 @@ export function TabContextList({
             <span className="yui-col-min">
               <span className="yui-tabctx-domain-row">
                 <span className="yui-tabctx-domain">{item.domain}</span>
-                <span className="yui-tabctx-sep" aria-hidden="true">·</span>
-                <span className="yui-tabctx-tok">{item.tokenLabel}</span>
                 {isSnippet ? <span className="yui-tabctx-kind">Snippet</span> : null}
+                <span className="yui-tabctx-tok">{item.tokenLabel}</span>
               </span>
               <span className="yui-tabctx-title">{item.title}</span>
             </span>

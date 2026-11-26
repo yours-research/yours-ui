@@ -207,3 +207,11 @@ export {
   type CitationFootnoteItem,
   type CitationFootnoteListProps,
 } from './CitationFootnoteList.js';
+export {
+  CodeBlockCard,
+  type CodeBlockCardProps,
+} from './CodeBlockCard.js';
+export {
+  OnboardingCard,
+  type OnboardingCardProps,
+} from './OnboardingCard.js';
