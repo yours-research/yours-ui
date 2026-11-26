@@ -255,4 +255,60 @@ describe('@yours/ui built ESM & CSS exports smoke test', () => {
       fs.rmSync(tmpRoot, { recursive: true, force: true });
     }
   });
+
+  it('isolates subpath entrypoints and supports esbuild tree-shaking without cross-subpath leaks', async () => {
+    const fs = await nodeMod<FsLike>('node:fs');
+    const os = await nodeMod<OsLike>('node:os');
+    const path = await nodeMod<PathLike>('node:path');
+    const cp = await nodeMod<ChildProcessLike>('node:child_process');
+    const proc = await nodeMod<ProcessLike>('node:process');
+
+    const root = path.resolve(
+      path.dirname(new URL(import.meta.url).pathname.replace(/^\/([A-Za-z]:)/, '$1')),
+      '..',
+    );
+    const pkg = JSON.parse(fs.readFileSync(path.join(root, 'package.json'), 'utf8')) as {
+      sideEffects?: string[];
+    };
+    expect(pkg.sideEffects).toEqual(['**/*.css']);
+
+    const linkType = proc.platform === 'win32' ? 'junction' : 'dir';
+    const tmpRoot = path.join(os.tmpdir(), `yours-ui-treeshake-${Date.now()}-${Math.random().toString(16).slice(2)}`);
+    const nmScope = path.join(tmpRoot, 'node_modules', '@yours');
+    fs.mkdirSync(nmScope, { recursive: true });
+    fs.symlinkSync(root, path.join(nmScope, 'ui'), linkType);
+
+    const scriptPath = path.join(tmpRoot, 'check-treeshake.mjs');
+    const esbuildEntry = path.join(root, 'node_modules', 'esbuild', 'lib', 'main.js');
+    fs.writeFileSync(
+      scriptPath,
+      [
+        `import { pathToFileURL } from 'node:url';`,
+        `import assert from 'node:assert/strict';`,
+        `const { build } = await import(pathToFileURL(${JSON.stringify(esbuildEntry)}).href);`,
+        `const bundle = async (contents) => {`,
+        `  const r = await build({`,
+        `    stdin: { contents, resolveDir: ${JSON.stringify(tmpRoot)}, loader: 'js' },`,
+        `    bundle: true, write: false, format: 'esm', treeShaking: true,`,
+        `    external: ['react', 'react-dom', 'react/jsx-runtime'],`,
+        `  });`,
+        `  return r.outputFiles[0].text;`,
+        `};`,
+        `const icons = await bundle("import { YoursMark } from '@yours/ui/icons'; console.log(YoursMark);");`,
+        `assert(!icons.includes('yui-shell') && !icons.includes('yui-cmd-panel') && !icons.includes('yui-genui-card'));`,
+        `const layout = await bundle("import { SidePanelShell } from '@yours/ui/layout'; console.log(SidePanelShell);");`,
+        `assert(layout.includes('yui-shell') && !layout.includes('yui-cmd-panel') && !layout.includes('yui-genui-card'));`,
+        `const genui = await bundle("import { QuoteExcerptCard } from '@yours/ui/genui'; console.log(QuoteExcerptCard);");`,
+        `assert(genui.includes('yui-qec-quote') && !genui.includes('yui-shell') && !genui.includes('yui-cmd-panel'));`,
+        `const comp = await bundle("import { FindInThreadBar } from '@yours/ui/components'; console.log(FindInThreadBar);");`,
+        `assert(comp.includes('yui-find-bar') && !comp.includes('yui-shell') && !comp.includes('yui-qec-quote'));`,
+      ].join('\n'),
+    );
+
+    try {
+      cp.execFileSync(proc.execPath, [scriptPath], { cwd: tmpRoot, stdio: 'pipe' });
+    } finally {
+      fs.rmSync(tmpRoot, { recursive: true, force: true });
+    }
+  });
 });
