@@ -48,6 +48,7 @@
     "node": ">=20.0.0"
   },
   "scripts": {
+    "prepare": "npm run build",
     "generate:icons": "node scripts/generate-icons.mjs",
     "typecheck": "tsc --noEmit",
     "build": "node scripts/generate-icons.mjs && tsc -p tsconfig.build.json && node scripts/copy-assets.mjs",
