@@ -160,6 +160,15 @@ describe('@yours/ui built ESM & CSS exports smoke test', () => {
     expect(typeof rootMod.DeviceCapabilityCard).toBe('function');
     expect(typeof rootMod.OfflineStatusBanner).toBe('function');
     expect(typeof rootMod.SessionCheckpointCard).toBe('function');
+    expect(typeof rootMod.ToolStatusIcon).toBe('function');
+    expect(typeof iconsMod.ToolStatusIcon).toBe('function');
+    expect(typeof rootMod.ShimmerText).toBe('function');
+    expect(typeof componentsMod.ShimmerText).toBe('function');
+    expect(typeof rootMod.InlineToolStatus).toBe('function');
+    expect(typeof componentsMod.InlineToolStatus).toBe('function');
+    expect(typeof rootMod.ToolChain).toBe('function');
+    expect(typeof componentsMod.ToolChain).toBe('function');
+    expect(componentsMod.ToolChain).toBe(componentsMod.ToolTraceList);
     expect(typeof genuiMod.CompareTable).toBe('function');
     expect(typeof genuiMod.MetricStripCard).toBe('function');
     expect(typeof genuiMod.TimelineCard).toBe('function');
@@ -217,9 +226,9 @@ describe('@yours/ui built ESM & CSS exports smoke test', () => {
       [
         "import '@yours/ui/styles';",
         "import { AudioLevelMeter, VoiceSessionCard, type FloatingComposerProps } from '@yours/ui';",
-        "import { MicIcon, YoursMark } from '@yours/ui/icons';",
+        "import { MicIcon, ToolStatusIcon, YoursMark } from '@yours/ui/icons';",
         "import { SidePanelShell, TopNotch } from '@yours/ui/layout';",
-        "import { ErrorRecoveryCard, FloatingComposer, InlineNotice } from '@yours/ui/components';",
+        "import { ErrorRecoveryCard, FloatingComposer, InlineNotice, InlineToolStatus, ShimmerText, ToolChain } from '@yours/ui/components';",
         "import { PromptTemplateList, ExportSessionCard, FindInThreadBar, StorageQuotaCard, ModelParametersCard, NetworkAuditCard, SitePermissionsList, AgentHandoffCard, ConfirmActionCard, PageSelectionCard, DeviceCapabilityCard, OfflineStatusBanner, SessionCheckpointCard } from '@yours/ui/components';",
         "import { CompareTable, MetricStripCard, QuoteExcerptCard, TimelineCard } from '@yours/ui/genui';",
         '',
@@ -232,6 +241,10 @@ describe('@yours/ui built ESM & CSS exports smoke test', () => {
         '    >',
         '      <YoursMark size={20} />',
         '      <MicIcon size={14} />',
+        '      <ToolStatusIcon kind="researching" active />',
+        '      <ShimmerText>Scanning workspace</ShimmerText>',
+        '      <InlineToolStatus state="searching" detail="yours.sh" timer />',
+        '      <ToolChain steps={[{ id: "s1", tool: "search", state: "searching", actionLabel: "Searching docs", status: "running" }]} />',
         '      <AudioLevelMeter level={0.6} tone="active" />',
         '      <VoiceSessionCard state="listening" transcript="Testing" />',
         '      <InlineNotice tone="info" message="Compacted" />',
@@ -323,6 +336,9 @@ describe('@yours/ui built ESM & CSS exports smoke test', () => {
         `assert(genui.includes('yui-qec-quote') && !genui.includes('yui-shell') && !genui.includes('yui-cmd-panel'));`,
         `const comp = await bundle("import { FindInThreadBar } from '@yours/ui/components'; console.log(FindInThreadBar);");`,
         `assert(comp.includes('yui-find-bar') && !comp.includes('yui-shell') && !comp.includes('yui-qec-quote') && !comp.includes('yui-handoff-card') && !comp.includes('yui-confirm-card') && !comp.includes('yui-sel-card') && !comp.includes('yui-devcap-card') && !comp.includes('yui-offline-banner') && !comp.includes('yui-ckpt-card'));`,
+        `assert(!comp.includes('yui-its') && !comp.includes('yui-trace-rail-list') && !comp.includes('yui-shimmer-text'));`,
+        `const shimmerChain = await bundle("import { ShimmerText, InlineToolStatus, ToolChain } from '@yours/ui/components'; console.log(ShimmerText, InlineToolStatus, ToolChain);");`,
+        `assert(shimmerChain.includes('yui-shimmer-text') && shimmerChain.includes('yui-its') && shimmerChain.includes('yui-trace-rail-list') && !shimmerChain.includes('yui-shell') && !shimmerChain.includes('yui-qec-quote') && !shimmerChain.includes('yui-ckpt-card'));`,
         `const handoff = await bundle("import { AgentHandoffCard, SitePermissionsList, ConfirmActionCard, PageSelectionCard, DeviceCapabilityCard, OfflineStatusBanner, SessionCheckpointCard } from '@yours/ui/components'; console.log(AgentHandoffCard, SitePermissionsList, ConfirmActionCard, PageSelectionCard, DeviceCapabilityCard, OfflineStatusBanner, SessionCheckpointCard);");`,
         `assert(handoff.includes('yui-handoff-card') && handoff.includes('yui-sperm-card') && handoff.includes('yui-confirm-card') && handoff.includes('yui-sel-card') && handoff.includes('yui-devcap-card') && handoff.includes('yui-offline-banner') && handoff.includes('yui-ckpt-card') && !handoff.includes('yui-shell') && !handoff.includes('yui-qec-quote'));`,
       ].join('\n'),

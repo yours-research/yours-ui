@@ -12,6 +12,8 @@ import {
   SendIcon,
   ShieldIcon,
   TabStackIcon,
+  ToolStatusIcon,
+  type ToolStatusKind,
   YoursMark,
 } from '../src/icons/index.js';
 
@@ -81,5 +83,47 @@ describe('@yours/ui Aperture icons & brand SVGs', () => {
     expect(el.querySelectorAll('.yui-matrix-orb--idle circle').length).toBe(21);
     expect(el.querySelectorAll('.yui-notch-ear').length).toBe(2);
     expect(el.querySelectorAll('.yui-brand-mark path').length).toBe(2);
+  });
+
+  it('renders all 12 ToolStatusIcon states cleanly in active and static modes with zero inline styles', () => {
+    const kinds: ToolStatusKind[] = [
+      'thinking',
+      'reading',
+      'searching',
+      'researching',
+      'tabs',
+      'analyzing',
+      'calculating',
+      'writing',
+      'memory',
+      'done',
+      'blocked',
+      'error',
+    ];
+    const el = renderNode(
+      <div>
+        <div data-batch="active">
+          {kinds.map((k) => (
+            <ToolStatusIcon key={k} kind={k} active data-kind={k} />
+          ))}
+        </div>
+        <div data-batch="static">
+          {kinds.map((k) => (
+            <ToolStatusIcon key={k} kind={k} active={false} data-kind={k} />
+          ))}
+        </div>
+      </div>,
+    );
+
+    const activeSvgs = el.querySelectorAll('[data-batch="active"] svg.yui-tsi');
+    const staticSvgs = el.querySelectorAll('[data-batch="static"] svg.yui-tsi');
+    expect(activeSvgs.length).toBe(12);
+    expect(staticSvgs.length).toBe(12);
+    expect(el.querySelectorAll('[data-batch="active"] .yui-tsi.is-active').length).toBe(12);
+    expect(el.querySelectorAll('[data-batch="static"] .yui-tsi.is-active').length).toBe(0);
+    expect(el.querySelectorAll('.yui-tsi--done').length).toBe(2);
+    expect(el.querySelectorAll('.yui-tsi--blocked').length).toBe(2);
+    expect(el.querySelectorAll('.yui-tsi--error').length).toBe(2);
+    expect(el.querySelectorAll('[style]').length).toBe(0);
   });
 });

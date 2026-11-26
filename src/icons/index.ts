@@ -60,4 +60,9 @@ export {
 } from './ApertureIcon.js';
 export { MatrixOrb, type MatrixOrbProps, type MatrixOrbState } from './MatrixOrb.js';
 export { NotchEar, type NotchEarProps } from './NotchEar.js';
+export {
+  ToolStatusIcon,
+  type ToolStatusIconProps,
+  type ToolStatusKind,
+} from './ToolStatusIcons.js';
 export { YoursMark, type YoursMarkProps } from './YoursMark.js';

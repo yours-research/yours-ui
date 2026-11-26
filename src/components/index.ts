@@ -38,7 +38,10 @@ export {
 } from './ActionBar.js';
 export { BranchPicker, type BranchPickerProps } from './BranchPicker.js';
 export { ReasoningTrace, type ReasoningTraceProps } from './ReasoningTrace.js';
-export { ToolStepCard, type ToolStepCardProps } from './ToolStepCard.js';
+export {
+  ToolStepCard,
+  type ToolStepCardProps,
+} from './ToolStepCard.js';
 export {
   PermissionApprovalCard,
   PermissionCard,
@@ -46,10 +49,15 @@ export {
   type PermissionCardProps,
 } from './PermissionPrompts.js';
 export {
+  InlineCitationPill,
+  InlineCitationPopover,
   SourcesDrawer,
+  type InlineCitationPillProps,
+  type InlineCitationPopoverProps,
+  type InlineCitationSource,
   type SourceCitation,
   type SourcesDrawerProps,
-} from './SourcesDrawer.js';
+} from './InlineCitationPopover.js';
 export {
   ThreadHistoryDrawer,
   type ThreadDrawerItem,
@@ -97,15 +105,7 @@ export {
   type SegmentedControlProps,
   type SegmentedOption,
 } from './SegmentedControl.js';
-export {
-  InlineCitationPill,
-  type InlineCitationPillProps,
-} from './InlineCitationPill.js';
-export {
-  InlineCitationPopover,
-  type InlineCitationPopoverProps,
-  type InlineCitationSource,
-} from './InlineCitationPopover.js';
+
 export {
   FloatingContextSheet,
   type FloatingContextSheetProps,
@@ -188,10 +188,19 @@ export {
 } from './DiffCard.js';
 export {
   ToolTraceList,
+  ToolChain,
+  type ToolChainProps,
   type ToolTraceListProps,
   type ToolTraceStatus,
   type ToolTraceStep,
 } from './ToolTraceList.js';
+export {
+  InlineToolStatus,
+  ShimmerText,
+  type InlineToolStateMeta,
+  type InlineToolStatusProps,
+  type ShimmerTextProps,
+} from './InlineToolStatus.js';
 export {
   ThreadHistoryList,
   type ThreadHistoryItem,

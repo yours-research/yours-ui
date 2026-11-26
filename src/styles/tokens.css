@@ -59,6 +59,8 @@
   --yui-secondary: #5C5B57;
   --yui-hover-ink: #3A3936;
   --yui-muted: #6F6D68;
+  --yui-shimmer-ink: #5C5B57;
+  --yui-shimmer-shine: #141413;
   --yui-hairline: rgba(20, 20, 19, 0.08);
   --yui-strong: rgba(20, 20, 19, 0.16);
   --yui-cobalt: #1D4ED8;
@@ -188,6 +190,8 @@
     --yui-secondary: #A1A09A;
     --yui-hover-ink: #D4D3CE;
     --yui-muted: #8C8A84;
+    --yui-shimmer-ink: #A1A09A;
+    --yui-shimmer-shine: #F4F3EF;
     --yui-hairline: rgba(255, 255, 255, 0.08);
     --yui-strong: rgba(255, 255, 255, 0.15);
     --yui-cobalt: #60A5FA;
@@ -267,6 +271,8 @@
   --yui-secondary: #5C5B57;
   --yui-hover-ink: #3A3936;
   --yui-muted: #6F6D68;
+  --yui-shimmer-ink: #5C5B57;
+  --yui-shimmer-shine: #141413;
   --yui-hairline: rgba(20, 20, 19, 0.08);
   --yui-strong: rgba(20, 20, 19, 0.16);
   --yui-cobalt: #1D4ED8;
@@ -345,6 +351,8 @@
   --yui-secondary: #A1A09A;
   --yui-hover-ink: #D4D3CE;
   --yui-muted: #8C8A84;
+  --yui-shimmer-ink: #A1A09A;
+  --yui-shimmer-shine: #F4F3EF;
   --yui-hairline: rgba(255, 255, 255, 0.08);
   --yui-strong: rgba(255, 255, 255, 0.15);
   --yui-cobalt: #60A5FA;

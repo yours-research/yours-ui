@@ -1,13 +1,9 @@
-import { useId, useState } from 'react';
-import {
-  AlertIcon,
-  ApertureIcon,
-  CheckIcon,
-  ChevronDownIcon,
-  ShieldIcon,
-} from '../icons/ApertureIcon.js';
+import { useEffect, useId, useRef, useState, type ReactNode } from 'react';
+import { ChevronDownIcon } from '../icons/ApertureIcon.js';
 import type { ApertureIconName } from '../icons/iconData.js';
-import { MatrixOrb } from '../icons/MatrixOrb.js';
+import { ToolStatusIcon, type ToolStatusKind } from '../icons/ToolStatusIcons.js';
+import { cn } from '../utils/clipboard.js';
+import { InlineToolStatus } from './InlineToolStatus.js';
 
 export type ToolTraceStatus = 'running' | 'done' | 'blocked' | 'error';
 
@@ -21,6 +17,11 @@ export interface ToolTraceStep {
   input?: string;
   output?: string;
   defaultExpanded?: boolean;
+  state?: ToolStatusKind;
+  actionLabel?: string;
+  detail?: string;
+  favicon?: string | ReactNode;
+  durationMs?: number;
 }
 
 export interface ToolTraceListProps {
@@ -30,63 +31,104 @@ export interface ToolTraceListProps {
   defaultCollapsed?: boolean;
   expandedStepId?: string | null;
   onToggleStep?: (stepId: string) => void;
+  variant?: 'inline' | 'card';
+  timer?: boolean;
   className?: string;
 }
 
-function resolveToolIcon(tool: string): ApertureIconName {
-  const normalized = tool.toLowerCase();
-  if (normalized.includes('read') || normalized.includes('page')) return 'page';
-  if (normalized.includes('search')) return 'search';
-  if (normalized.includes('memory')) return 'history';
-  if (normalized.includes('sandbox') || normalized.includes('run')) return 'sliders';
-  return 'spark-trend';
+export type ToolChainProps = ToolTraceListProps;
+
+function inferToolKind(step: ToolTraceStep): ToolStatusKind {
+  if (step.state) return step.state;
+  const t = step.tool.toLowerCase();
+  if (t.includes('read') || t.includes('page') || t.includes('fetch')) return 'reading';
+  if (t.includes('search')) return 'searching';
+  if (t.includes('tab')) return 'tabs';
+  if (t.includes('calc') || t.includes('sandbox') || t.includes('analy') || t.includes('run')) {
+    return 'analyzing';
+  }
+  if (t.includes('memory') || t.includes('vault')) return 'memory';
+  if (t.includes('writ') || t.includes('draft')) return 'writing';
+  return 'thinking';
 }
 
-function StatusGlyph({ status }: { status: ToolTraceStatus }) {
-  if (status === 'running') {
-    return (
-      <span className="yui-trace-status is-running" aria-label="Running">
-        <MatrixOrb state="streaming" size={12} />
-      </span>
-    );
+const VERBS: Record<ToolStatusKind, readonly [string, string]> = {
+  thinking: ['Thinking', 'Thought'],
+  reading: ['Reading active page', 'Read active page'],
+  searching: ['Searching the web', 'Searched the web'],
+  researching: ['Researching', 'Researched'],
+  tabs: ['Checking open tabs', 'Checked open tabs'],
+  analyzing: ['Calculating', 'Calculated'],
+  calculating: ['Calculating', 'Calculated'],
+  writing: ['Writing response', 'Wrote response'],
+  memory: ['Recalling memory', 'Recalled memory'],
+  done: ['Completed', 'Completed'],
+  blocked: ['Blocked by guard', 'Blocked by guard'],
+  error: ['Step failed', 'Step failed'],
+};
+
+function formatDurationMs(ms: number): string {
+  const safe = Math.max(0, ms);
+  return safe < 1000 ? `${Math.round(safe)}ms` : `${(safe / 1000).toFixed(1)}s`;
+}
+
+function parseStepMs(step: ToolTraceStep): number {
+  if (typeof step.durationMs === 'number' && Number.isFinite(step.durationMs)) {
+    return step.durationMs;
   }
-  if (status === 'blocked') {
-    return (
-      <span className="yui-trace-status is-blocked" aria-label="Blocked">
-        <ShieldIcon size={12} />
-      </span>
-    );
-  }
-  if (status === 'error') {
-    return (
-      <span className="yui-trace-status is-error" aria-label="Error">
-        <AlertIcon size={12} />
-      </span>
-    );
-  }
+  if (!step.latencyLabel) return 0;
+  const m = step.latencyLabel.match(/([\d.]+)\s*(ms|s)\b/i);
+  if (!m) return 0;
+  const val = parseFloat(m[1]);
+  return m[2].toLowerCase() === 's' ? val * 1000 : val;
+}
+
+function StepGlyph({ step, kind }: { step: ToolTraceStep; kind: ToolStatusKind }) {
+  const glyphKind: ToolStatusKind =
+    step.status === 'blocked'
+      ? 'blocked'
+      : step.status === 'error'
+        ? 'error'
+        : step.status === 'running'
+          ? kind
+          : 'done';
+
   return (
-    <span className="yui-trace-status is-done" aria-label="Done">
-      <CheckIcon size={12} />
+    <span className={cn('yui-trace-status', `is-${step.status}`)} aria-hidden="true">
+      <ToolStatusIcon kind={glyphKind} size={13.5} active={step.status === 'running'} />
     </span>
   );
 }
 
 /**
- * Ultra-quiet Paper Page 9 collapsible step ledger for local tool invocations
- * (`read_tab`, `search_web_tab`, `run_sandbox`, `memory_query`), displaying Aperture icons,
- * calm status indicators, right-aligned `tabular-nums` latency, and expandable I/O drawers.
+ * Quiet borderless rotating shimmer tool chain (`variant="inline"`, default)
+ * or bordered card ledger (`variant="card"`), tracking active step verbs,
+ * subtle favicons/details, continuous timer, and an expandable 1px hairline
+ * timeline rail with inspectable I/O payloads.
  */
 export function ToolTraceList({
   steps,
   title = 'Tool trace',
   summary,
-  defaultCollapsed = false,
+  defaultCollapsed,
   expandedStepId,
   onToggleStep,
+  variant = 'inline',
+  timer = false,
   className,
 }: ToolTraceListProps) {
   const baseId = useId();
-  const [ledgerCollapsed, setLedgerCollapsed] = useState(defaultCollapsed);
+
+  let activeIndex = -1;
+  steps.forEach((s, idx) => {
+    if (s.status === 'running') activeIndex = idx;
+  });
+  const isRunning = activeIndex !== -1;
+
+  const manualRef = useRef(false);
+  const [ledgerCollapsed, setLedgerCollapsed] = useState<boolean>(() =>
+    defaultCollapsed !== undefined ? defaultCollapsed : !isRunning,
+  );
   const [uncontrolledExpanded, setUncontrolledExpanded] = useState<Record<string, boolean>>(() => {
     const initial: Record<string, boolean> = {};
     for (const step of steps) {
@@ -95,14 +137,37 @@ export function ToolTraceList({
     return initial;
   });
 
-  const runningCount = steps.filter((step) => step.status === 'running').length;
-  const resolvedSummary =
-    summary ??
-    (runningCount > 0
-      ? `${runningCount} running · ${steps.length} total`
-      : `${steps.length} ${steps.length === 1 ? 'step' : 'steps'}`);
+  useEffect(() => {
+    if (defaultCollapsed === undefined && !manualRef.current) {
+      setLedgerCollapsed(!isRunning);
+    }
+  }, [isRunning, defaultCollapsed]);
 
-  const cardClass = ['yui-card-shell', 'yui-trace-card', className].filter(Boolean).join(' ');
+  const activeStep = isRunning ? steps[activeIndex] : undefined;
+  const hasError = steps.some((s) => s.status === 'error');
+  const hasBlocked = steps.some((s) => s.status === 'blocked');
+  const totalMs = steps.reduce((acc, s) => acc + parseStepMs(s), 0);
+  const totalElapsed = totalMs > 0 ? formatDurationMs(totalMs) : undefined;
+
+  const singleSettled = steps.length === 1 ? steps[0] : undefined;
+  const singleKind = singleSettled ? inferToolKind(singleSettled) : 'done';
+  const settledSummary =
+    summary ??
+    (singleSettled
+      ? singleSettled.actionLabel ?? VERBS[singleKind][1]
+      : `Used ${steps.length} ${steps.length === 1 ? 'tool' : 'tools'}`);
+  const settledDetail = singleSettled ? (singleSettled.detail ?? singleSettled.label) : undefined;
+  const settledState: ToolStatusKind = hasError ? 'error' : hasBlocked ? 'blocked' : 'done';
+
+  const activeKind = activeStep ? inferToolKind(activeStep) : settledState;
+  const headerLabel = activeStep
+    ? (activeStep.actionLabel ?? VERBS[activeKind][0])
+    : settledSummary;
+  const headerDetail = activeStep ? (activeStep.detail ?? activeStep.label) : settledDetail;
+  const headerElapsed = activeStep
+    ? (activeStep.latencyLabel ??
+      (activeStep.durationMs !== undefined ? formatDurationMs(activeStep.durationMs) : undefined))
+    : totalElapsed;
 
   const isStepOpen = (stepId: string) =>
     expandedStepId !== undefined ? expandedStepId === stepId : Boolean(uncontrolledExpanded[stepId]);
@@ -117,48 +182,109 @@ export function ToolTraceList({
   return (
     <section
       data-slot="tool-trace-list"
-      className={cardClass}
+      data-variant={variant}
+      data-running={isRunning ? 'true' : 'false'}
+      className={cn(
+        variant === 'card' ? 'yui-card-shell yui-trace-card' : 'yui-trace-inline',
+        className,
+      )}
       aria-label={title}
     >
       <button
         type="button"
-        className="yui-trace-head"
+        className={cn('yui-trace-head', variant === 'inline' && 'yui-trace-head--inline')}
         aria-expanded={!ledgerCollapsed}
         aria-controls={`${baseId}-ledger`}
-        onClick={() => setLedgerCollapsed((prev) => !prev)}
+        onClick={() => {
+          manualRef.current = true;
+          setLedgerCollapsed((prev) => !prev);
+        }}
       >
-        <span className="yui-trace-head-left">
-          <ApertureIcon name="sliders" size={12.5} className="yui-privacy-icon" />
-          <span className="yui-trace-head-title">{title}</span>
-        </span>
-        <span className="yui-trace-head-right">
-          <span className="yui-audit-time">{resolvedSummary}</span>
-          <ChevronDownIcon
-            size={12}
-            className={ledgerCollapsed ? 'yui-trace-chevron' : 'yui-trace-chevron is-open'}
-          />
-        </span>
+        <InlineToolStatus
+          state={activeStep ? activeKind : settledState}
+          label={headerLabel}
+          detail={headerDetail}
+          favicon={activeStep?.favicon}
+          shimmer={isRunning}
+          timer={timer}
+          elapsed={headerElapsed}
+          className="yui-trace-its"
+          rightSlot={
+            <span className="yui-trace-head-right">
+              {isRunning && steps.length > 1 ? (
+                <span className="yui-trace-step-badge">{`${activeIndex + 1}/${steps.length}`}</span>
+              ) : null}
+              <ChevronDownIcon
+                size={12}
+                className={cn('yui-trace-chevron', !ledgerCollapsed && 'is-open')}
+              />
+            </span>
+          }
+        />
       </button>
 
       <div
         id={`${baseId}-ledger`}
-        className={ledgerCollapsed ? 'yui-disclosure' : 'yui-disclosure is-open'}
+        className={cn('yui-disclosure', !ledgerCollapsed && 'is-open')}
         aria-hidden={ledgerCollapsed}
         inert={ledgerCollapsed ? true : undefined}
       >
         <div className="yui-disclosure-inner">
-          <ul className="yui-list-plain yui-div-list">
+          <ul
+            className={cn(
+              'yui-list-plain',
+              variant === 'inline' ? 'yui-trace-rail-list' : 'yui-div-list',
+            )}
+          >
             {steps.map((step) => {
+              const stepKind = inferToolKind(step);
               const hasDetail = Boolean(step.input || step.output);
               const stepOpen = hasDetail && isStepOpen(step.id);
               const detailId = `${baseId}-step-${step.id}`;
-              const iconName = step.icon ?? resolveToolIcon(step.tool);
+              const displayTitle =
+                step.actionLabel ??
+                (variant === 'inline' ? VERBS[stepKind][step.status === 'running' ? 0 : 1] : step.tool);
+              const displaySub = step.detail ?? step.label;
+              const latencyText =
+                step.latencyLabel ??
+                (step.durationMs !== undefined ? formatDurationMs(step.durationMs) : undefined);
+
+              const rowHead = (
+                <>
+                  <span className="yui-row yui-flex-1">
+                    <StepGlyph step={step} kind={stepKind} />
+                    <span className="yui-col-min">
+                      <span
+                        className={cn(
+                          'yui-ellipsis',
+                          variant === 'inline' ? 'yui-trace-action' : 'yui-trace-tool',
+                        )}
+                      >
+                        {displayTitle}
+                      </span>
+                      {displaySub ? (
+                        <span className="yui-ellipsis yui-trace-label">{displaySub}</span>
+                      ) : null}
+                    </span>
+                  </span>
+                  <span className="yui-trace-right">
+                    {latencyText ? <span className="yui-trace-latency">{latencyText}</span> : null}
+                    {hasDetail ? (
+                      <ChevronDownIcon
+                        size={12}
+                        className={cn('yui-trace-chevron', stepOpen && 'is-open')}
+                      />
+                    ) : null}
+                  </span>
+                </>
+              );
 
               return (
                 <li
                   key={step.id}
                   className="yui-trace-row"
                   data-step-id={step.id}
+                  data-tool={step.tool}
                   data-status={step.status}
                 >
                   {hasDetail ? (
@@ -169,46 +295,16 @@ export function ToolTraceList({
                       aria-controls={detailId}
                       onClick={() => toggleStep(step.id)}
                     >
-                      <span className="yui-row yui-flex-1">
-                        <StatusGlyph status={step.status} />
-                        <ApertureIcon name={iconName} size={13} className="yui-trace-tool-icon" />
-                        <span className="yui-col-min">
-                          <span className="yui-ellipsis yui-trace-tool">{step.tool}</span>
-                          {step.label ? <span className="yui-ellipsis yui-trace-label">{step.label}</span> : null}
-                        </span>
-                      </span>
-                      <span className="yui-trace-right">
-                        {step.latencyLabel ? (
-                          <span className="yui-trace-latency">{step.latencyLabel}</span>
-                        ) : null}
-                        <ChevronDownIcon
-                          size={12}
-                          className={stepOpen ? 'yui-trace-chevron is-open' : 'yui-trace-chevron'}
-                        />
-                      </span>
+                      {rowHead}
                     </button>
                   ) : (
-                    <div className="yui-trace-static">
-                      <span className="yui-row yui-flex-1">
-                        <StatusGlyph status={step.status} />
-                        <ApertureIcon name={iconName} size={13} className="yui-trace-tool-icon" />
-                        <span className="yui-col-min">
-                          <span className="yui-ellipsis yui-trace-tool">{step.tool}</span>
-                          {step.label ? <span className="yui-ellipsis yui-trace-label">{step.label}</span> : null}
-                        </span>
-                      </span>
-                      <span className="yui-trace-right">
-                        {step.latencyLabel ? (
-                          <span className="yui-trace-latency">{step.latencyLabel}</span>
-                        ) : null}
-                      </span>
-                    </div>
+                    <div className="yui-trace-static">{rowHead}</div>
                   )}
 
                   {hasDetail ? (
                     <div
                       id={detailId}
-                      className={stepOpen ? 'yui-disclosure is-open' : 'yui-disclosure'}
+                      className={cn('yui-disclosure', stepOpen && 'is-open')}
                       aria-hidden={!stepOpen}
                       inert={!stepOpen ? true : undefined}
                     >
@@ -243,3 +339,5 @@ export function ToolTraceList({
     </section>
   );
 }
+
+export const ToolChain = ToolTraceList;

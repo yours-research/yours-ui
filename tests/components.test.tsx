@@ -32,6 +32,7 @@ import {
   InlineCitationPill,
   InlineCitationPopover,
   InlineNotice,
+  InlineToolStatus,
   KbdHint,
   LocalVaultExportCard,
   MemoryInspectorList,
@@ -56,6 +57,7 @@ import {
   SessionCheckpointCard,
   SettingsSection,
   SettingsToggleRow,
+  ShimmerText,
   ShortcutSheet,
   SitePermissionsList,
   SourcesDrawer,
@@ -69,6 +71,7 @@ import {
   ThreadHistoryDrawer,
   ThreadHistoryList,
   ToastPill,
+  ToolChain,
   ToolStepCard,
   ToolTraceList,
   UserMessageBubble,
@@ -3407,5 +3410,171 @@ describe('@yours/ui chat & runtime primitives', () => {
     const forced = cssSource.slice(cssSource.indexOf('@media (forced-colors: active)'));
     expect(forced).toContain('.yui-offline-banner');
     expect(forced).toContain('.yui-ckpt-card');
+  });
+
+  it('renders ShimmerText, InlineToolStatus overrides, CSS-only broken favicon hiding, and continuous timer transitions', () => {
+    const shimmerEl = renderNode(
+      <div>
+        <ShimmerText active>Reading active tab</ShimmerText>
+        <ShimmerText active={false}>Completed step</ShimmerText>
+      </div>,
+    );
+    const shimmers = shimmerEl.querySelectorAll('[data-slot="shimmer-text"]');
+    expect(shimmers.length).toBe(2);
+    expect(shimmers[0]?.classList.contains('is-active')).toBe(true);
+    expect(shimmers[1]?.classList.contains('is-active')).toBe(false);
+    expect(shimmerEl.querySelectorAll('[style]').length).toBe(0);
+
+    vi.useFakeTimers();
+    try {
+      const container = document.createElement('div');
+      document.body.appendChild(container);
+      const root = createRoot(container);
+      mounted = { container, root };
+
+      act(() => {
+        root.render(
+          <InlineToolStatus
+            state="searching"
+            detail="docs.yours.sh"
+            favicon="https://invalid.local/favicon.png"
+            states={{
+              searching: { label: 'Querying index', detail: 'yours.sh/docs' },
+            }}
+            timer
+          />,
+        );
+      });
+
+      const status = container.querySelector('[data-slot="inline-tool-status"]') as HTMLElement;
+      expect(status.getAttribute('role')).toBe('status');
+      expect(status.textContent).toContain('Querying index');
+      expect(status.textContent).toContain('docs.yours.sh');
+      expect(container.querySelectorAll('[style]').length).toBe(0);
+
+      // Broken favicon hides cleanly via CSS class instead of inline style
+      const img = container.querySelector('img.yui-its-favicon') as HTMLImageElement;
+      expect(img.classList.contains('is-hidden')).toBe(false);
+      act(() => {
+        img.dispatchEvent(new Event('error'));
+      });
+      expect(img.classList.contains('is-hidden')).toBe(true);
+      expect(img.getAttribute('style')).toBeNull();
+
+      // Timer increments during active run and formats Worked for / Failed after on settle
+      act(() => {
+        vi.advanceTimersByTime(3100);
+      });
+      expect(status.textContent).toContain('3s');
+
+      act(() => {
+        root.render(<InlineToolStatus state="done" timer />);
+      });
+      expect(status.textContent).toContain('Worked for 3s');
+
+      act(() => {
+        root.render(<InlineToolStatus state="error" timer />);
+      });
+      expect(status.textContent).toContain('Failed after 3s');
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it('renders ToolChain / ToolTraceList inline borderless hairline rail, auto-collapse, rotating steps, and upgraded ToolStepCard + CSS', async () => {
+    expect(ToolChain).toBe(ToolTraceList);
+
+    // Settled chain auto-collapses to summary unless defaultCollapsed={false}
+    const settledSteps = [
+      {
+        id: 't1',
+        tool: 'tabs.read',
+        state: 'reading' as const,
+        actionLabel: 'Reading active tab',
+        detail: 'yours.sh/spec',
+        status: 'done' as const,
+        latencyLabel: '42 ms',
+        input: '{"tabId":1}',
+        output: '{"ok":true}',
+      },
+      {
+        id: 't2',
+        tool: 'web.search',
+        state: 'searching' as const,
+        actionLabel: 'Searching references',
+        detail: 'clean-room svg',
+        status: 'done' as const,
+        latencyLabel: '88 ms',
+      },
+    ];
+
+    const collapsedEl = renderNode(<ToolChain steps={settledSteps} />);
+    const section = collapsedEl.querySelector('[data-slot="tool-trace-list"]') as HTMLElement;
+    expect(section.classList.contains('yui-trace-inline')).toBe(true);
+    expect(section.textContent).toContain('Used 2 tools');
+    const headBtn = section.querySelector('.yui-trace-head') as HTMLButtonElement;
+    expect(headBtn.getAttribute('aria-expanded')).toBe('false');
+    expect(section.querySelectorAll('.yui-trace-row').length).toBe(2);
+
+    // Expanding shows borderless hairline rail & inspectable I/O drawers
+    act(() => {
+      headBtn.click();
+    });
+    expect(headBtn.getAttribute('aria-expanded')).toBe('true');
+    expect(section.querySelector('.yui-trace-rail-list')).not.toBeNull();
+    const firstTrigger = section.querySelector('.yui-trace-trigger') as HTMLButtonElement;
+    expect(firstTrigger.getAttribute('aria-expanded')).toBe('false');
+    act(() => {
+      firstTrigger.click();
+    });
+    expect(firstTrigger.getAttribute('aria-expanded')).toBe('true');
+    expect(section.textContent).toContain('{"tabId":1}');
+
+    // Running mid-chain shows active rotating step & step counter badge
+    const runningEl = renderNode(
+      <ToolTraceList
+        steps={[
+          ...settledSteps,
+          {
+            id: 't3',
+            tool: 'synth.write',
+            state: 'writing',
+            actionLabel: 'Drafting response',
+            detail: 'Streaming 340 tok',
+            status: 'running',
+          },
+        ]}
+      />,
+    );
+    expect(runningEl.textContent).toContain('Drafting response');
+    expect(runningEl.textContent).toContain('3/3');
+    expect(runningEl.querySelector('.yui-shimmer-text.is-active')).not.toBeNull();
+
+    // Card mode & upgraded ToolStepCard variants remain supported
+    const cardEl = renderNode(
+      <div>
+        <ToolTraceList variant="card" steps={settledSteps} defaultCollapsed={false} />
+        <ToolStepCard status="running" state="analyzing" title="Analyzing DOM" detail="142 nodes" />
+        <ToolStepCard variant="card" status="done" title="Verified hash" summary="SHA-256 matched" />
+      </div>,
+    );
+    expect(cardEl.querySelector('.yui-trace-card')).not.toBeNull();
+    expect(cardEl.querySelector('.yui-tool-card--inline')).not.toBeNull();
+    expect(cardEl.querySelectorAll('[style]').length).toBe(0);
+
+    const [tokensCss, compCss] = await Promise.all([
+      readSourceFile('../src/styles/tokens.css'),
+      readSourceFile('../src/styles/components.css'),
+    ]);
+    expect(tokensCss).toContain('--yui-shimmer-ink');
+    expect(tokensCss).toContain('--yui-shimmer-shine');
+    expect(compCss).toContain('@keyframes yuiShimmer');
+    expect(compCss).toContain('.yui-trace-rail-list');
+    const reduced = compCss.slice(compCss.indexOf('@media (prefers-reduced-motion: reduce)'));
+    expect(reduced).toContain('.yui-shimmer-text.is-active');
+    expect(reduced).toContain('.yui-tsi-check');
+    const forcedCss = compCss.slice(compCss.indexOf('@media (forced-colors: active)'));
+    expect(forcedCss).toContain('.yui-shimmer-text.is-active');
+    expect(forcedCss).toContain('.yui-trace-rail-list::before');
   });
 });

@@ -3,7 +3,15 @@
 All notable milestones for **`@yours/ui`** are documented here.
 The library targets Chrome MV3 side panels (`340px–440px`), maintains zero runtime dependencies, zero JSX inline `style` attributes, and zero `dangerouslySetInnerHTML`.
 
-## Unreleased / Milestone 26 (PR #29)
+## Unreleased / Milestone 27 (PR #30)
+
+- Added clean-room animated SVG tool status icons (`ToolStatusIcon`, `ToolStatusKind` across 12 states: `thinking`, `reading`, `searching`, `researching`, `tabs`, `analyzing`, `calculating`, `writing`, `memory`, `done`, `blocked`, `error`) in `src/icons/ToolStatusIcons.tsx` with pure monochrome `currentColor`, semantic `done`/`blocked`/`error` draw-in/shake micro-motion, zero inline `style=` attributes, and static `prefers-reduced-motion: reduce` fallbacks.
+- Added `ShimmerText` and `InlineToolStatus` (`src/components/InlineToolStatus.tsx`) plus theme-scoped `--yui-shimmer-ink` / `--yui-shimmer-shine` tokens (`src/styles/tokens.css`), featuring pure-CSS `background-clip: text` glare sweeps, rotating icon entrance, vertical blur-crossfade labels/details, `states` map overrides, CSS-only broken-favicon hiding (`.is-hidden`), continuous `1s` -> `Worked for Xs` / `Failed after Xs` timers, and `forced-colors` / `reduced-motion` static ink fallbacks.
+- Upgraded `ToolTraceList` (also exported as `ToolChain` alias in `src/components/ToolTraceList.tsx`) and `ToolStepCard` (`src/components/ToolStepCard.tsx`) to default `variant="inline"` borderless rotating shimmer headers with a `1px` vertical hairline timeline rail (`.yui-trace-rail-list`), auto-collapsing on settled steps unless `defaultCollapsed={false}` while preserving `data-slot="tool-trace-list"`, `.yui-trace-row`, and `variant="card"` compatibility.
+- Consolidated `InlineCitationPill` and `SourcesDrawer` into `src/components/InlineCitationPopover.tsx` and grouped shared CSS rules in `src/styles/components.css` to keep MV3 dist bundles cleanly inside budgets (`196.57 KB` raw / `79.59 KB` gzip JS across `81` ESM modules; `120.16 KB` raw / `19.00 KB` gzip CSS).
+- Added unit/consumer/tree-shaking tests across `tests/icons.test.tsx`, `tests/components.test.tsx`, and `tests/exports.test.ts` (`65/65` passing) plus Light & Dark Playwright audits (`npm run verify:visual` passing with zero inline styles, WCAG AA contrast, keyboard `Enter`/`Space`, `320px`/`340px` container reflow, `dir="rtl"`, `forced-colors`, and `reducedMotion`).
+
+## Milestone 26 (PR #29)
 
 - Upgraded side-panel narrow reflow in `src/styles/components.css` from viewport `@media` breakpoints to CSS container queries (`@container (max-width: 340px)`, `@container (max-width: 380px)`, `@container (max-width: 420px)`) scoped to `.yui-shell` / `.yui-surface` (`container-type: inline-size`), plus container-relative citation popover bounds (`100cqi`), verified across `320px` and `360px` containers on a `1280px` viewport (Light, Dark, RTL, `forced-colors`, `prefers-reduced-motion`).
 - Added `OfflineStatusBanner` (`src/components/OfflineStatusBanner.tsx`) — monochrome/amber connectivity status strip (`online` | `offline-ready` | `offline-degraded` | `sync-paused`) with `role="status"` / `aria-live="polite"`, `100%` local WebGPU active guarantees, and `Local-only` / `Retry` buttons.

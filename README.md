@@ -165,8 +165,8 @@ All public subpaths (`@yours/ui`, `@yours/ui/icons`, `@yours/ui/layout`, `@yours
 
 | Entrypoint | Raw | Gzip | Budget Guard |
 | :--- | :---: | :---: | :---: |
-| Total `dist/` JS (`81` ESM modules) | `190.17 KB` | `76.93 KB` | `<= 80.00 KB` |
-| `@yours/ui/styles` (`tokens.css` + `components.css` + `index.css`) | `117.52 KB` | `18.14 KB` | `<= 19.00 KB` |
+| Total `dist/` JS (`81` ESM modules) | `196.57 KB` | `79.59 KB` | `<= 80.00 KB` |
+| `@yours/ui/styles` (`tokens.css` + `components.css` + `index.css`) | `120.16 KB` | `19.00 KB` | `<= 19.00 KB` |
 
 Run `npm run build && npm run check:size` to inspect live raw and gzipped sizes per entrypoint.
 
@@ -177,7 +177,7 @@ Run `npm run build && npm run check:size` to inspect live raw and gzipped sizes 
 | Subpath | Contents |
 | :--- | :--- |
 | `@yours/ui` | Complete root barrel re-exporting `@yours/ui/icons`, `@yours/ui/layout`, `@yours/ui/components`, and `@yours/ui/genui`. |
-| `@yours/ui/icons` | `ApertureIcon`, `APERTURE_ICON_NAMES`, 48 named `*Icon` SVG components, `MatrixOrb`, `NotchEar`, `YoursMark`. |
+| `@yours/ui/icons` | `ApertureIcon`, `APERTURE_ICON_NAMES`, 48 named `*Icon` SVG components, `ToolStatusIcon` (12 animated tool/AI states), `MatrixOrb`, `NotchEar`, `YoursMark`. |
 | `@yours/ui/layout` | `SidePanelShell` (`overlay`, `sheet` & `toast` z-45 slots + `ResizeObserver` scroll-edge fades), `TopNotch` (`144x36` -> `272x52` hover-grow & drawer), `HookSidebarList`, `NotchDrawerSearch`, `NotchOptionRow`, `NotchStatusPill`, `GreenLed`. |
 | `@yours/ui/components` | Grouped below across shell/command, conversation, tools/guard, runtime/models, and data/settings. |
 | `@yours/ui/genui` | `CompareTable`, `ChecklistCard`, `PageBriefCard`, `DraftCard`, `EntitySummaryCard`, `ChoicePromptCard`, `MetricStripCard`, `PageActionCard`, `TimelineCard`, `QuoteExcerptCard`. |
@@ -187,7 +187,7 @@ Run `npm run build && npm run check:size` to inspect live raw and gzipped sizes 
 
 - **Shell, Overlay & Navigation:** `CommandPalette`, `ContextCommandPopover`, `FindInThreadBar`, `FloatingComposer`, `FloatingContextSheet`, `EmptyPanelState`, `EmptyState`, `KbdHint`, `OfflineStatusBanner`, `OnboardingCard`, `PromptCapsuleStack`, `PromptTemplateList`, `QuotedContextBanner`, `ScrollToBottomButton`, `SegmentedControl`, `ShortcutSheet`, `StatusBadge`, `StatusToast`, `SuggestionChipRow`, `ThreadHistoryDrawer`, `ThreadHistoryList`, `ToastPill`.
 - **Conversation, Citations & Diffs:** `ActionBar`, `AssistantMessage`, `AttachmentDropzone`, `AttachmentStrip`, `AudioLevelMeter`, `BranchPicker`, `CitationFootnoteList`, `CodeBlock`, `CodeBlockCard`, `DiffCard`, `FollowUpSuggestions`, `InlineCitationPill`, `InlineCitationPopover`, `InlineNotice`, `MessageSkeleton`, `SessionCheckpointCard`, `SourcesDrawer`, `StreamingResponse`, `UserMessageBubble`, `VoiceDictationPill`, `VoiceSessionBar`, `VoiceSessionCard`.
-- **Reasoning, Tools, Context & Guard:** `AgentHandoffCard`, `ConfirmActionCard`, `ContextBudgetMeter`, `PageSelectionCard`, `PermissionApprovalCard`, `PermissionCard`, `ReasoningTrace`, `SitePermissionsList`, `TabContextList`, `ToolStepCard`, `ToolTraceList`.
+- **Reasoning, Tools, Context & Guard:** `AgentHandoffCard`, `ConfirmActionCard`, `ContextBudgetMeter`, `InlineToolStatus`, `PageSelectionCard`, `PermissionApprovalCard`, `PermissionCard`, `ReasoningTrace`, `ShimmerText`, `SitePermissionsList`, `TabContextList`, `ToolChain`, `ToolStepCard`, `ToolTraceList`.
 - **Local Runtime, Models, Memory, Data & Settings:** `ArtifactPreviewCard`, `DataTableCard`, `DeviceCapabilityCard`, `ErrorRecoveryBanner`, `ErrorRecoveryCard`, `ExportSessionCard`, `HardwareStatusStrip`, `LocalVaultExportCard`, `MemoryInspectorList`, `MemoryRecordCard`, `ModelDownloadGate`, `ModelDownloadProgressBar`, `ModelParametersCard`, `ModelRosterList`, `NetworkAuditCard`, `SettingsSection`, `SettingsToggleRow`, `StorageQuotaCard`.
 
 ---
