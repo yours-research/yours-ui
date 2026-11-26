@@ -111,6 +111,13 @@
   font-family: var(--font-sans);
 }
 
+.yui-shell--bleed {
+  border-radius: 0;
+  border: none;
+  box-shadow: none;
+  padding: 8px;
+}
+
 .yui-stage {
   position: relative;
   flex: 1;
@@ -213,6 +220,16 @@
   width: 272px;
   border-radius: 0 0 22px 22px;
   box-shadow: var(--yui-notch-shadow);
+}
+
+.yui-notch-housing--wide {
+  width: 176px;
+}
+
+.yui-notch-assembly:hover .yui-notch-housing--wide,
+.yui-notch-housing--wide:focus-within,
+.yui-notch-housing--wide.is-expanded {
+  width: 304px;
 }
 
 .yui-notch-bar {
@@ -632,6 +649,16 @@
   padding: 0;
   justify-content: center;
   color: var(--yui-secondary);
+}
+
+.yui-chip-btn.is-active {
+  background-color: var(--yui-cobalt-soft);
+  color: var(--yui-cobalt);
+}
+
+.yui-chip-btn.is-recording {
+  background-color: var(--yui-danger-soft);
+  color: var(--yui-danger);
 }
 
 .yui-send-btn {

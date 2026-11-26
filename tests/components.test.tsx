@@ -200,4 +200,66 @@ describe('@yours/ui chat & runtime primitives', () => {
     expect(onDeny).toHaveBeenCalledTimes(1);
     expect(onDownload).toHaveBeenCalledTimes(1);
   });
+
+  it('toggles live ReasoningTrace body while thinking when content is non-empty', () => {
+    const el = renderNode(
+      <div>
+        <div data-case="empty">
+          <ReasoningTrace status="thinking" durationLabel="1s" />
+        </div>
+        <div data-case="blank">
+          <ReasoningTrace status="thinking" content="" />
+        </div>
+        <div data-case="live">
+          <ReasoningTrace
+            status="thinking"
+            durationLabel="2s"
+            content="Step 1"
+            defaultExpanded={false}
+          />
+        </div>
+        <div data-case="default-open">
+          <ReasoningTrace
+            status="thinking"
+            content="Step 1"
+            defaultExpanded
+          />
+        </div>
+      </div>,
+    );
+
+    const emptyWrap = el.querySelector('[data-case="empty"]')!;
+    expect(emptyWrap.querySelector('button.yui-reasoning-trigger')).toBeNull();
+    expect(emptyWrap.querySelector('.yui-reasoning-trigger')?.textContent).toContain('Thinking');
+    expect(emptyWrap.querySelector('.yui-reasoning-body')).toBeNull();
+
+    const blankWrap = el.querySelector('[data-case="blank"]')!;
+    expect(blankWrap.querySelector('button.yui-reasoning-trigger')).toBeNull();
+    expect(blankWrap.querySelector('.yui-reasoning-body')).toBeNull();
+
+    const liveWrap = el.querySelector('[data-case="live"]')!;
+    const trigger = liveWrap.querySelector('button.yui-reasoning-trigger') as HTMLButtonElement;
+    expect(trigger).toBeTruthy();
+    expect(trigger.getAttribute('aria-expanded')).toBe('false');
+    expect(trigger.textContent).toContain('Thinking');
+    expect(trigger.textContent).toContain('2s');
+    expect(liveWrap.querySelector('.yui-reasoning-body')).toBeNull();
+
+    act(() => {
+      trigger.click();
+    });
+    expect(trigger.getAttribute('aria-expanded')).toBe('true');
+    expect(liveWrap.querySelector('.yui-reasoning-body')).toBeTruthy();
+    expect(liveWrap.querySelector('.yui-reasoning-text')?.textContent).toBe('Step 1');
+
+    act(() => {
+      trigger.click();
+    });
+    expect(trigger.getAttribute('aria-expanded')).toBe('false');
+    expect(liveWrap.querySelector('.yui-reasoning-body')).toBeNull();
+
+    const defaultOpenWrap = el.querySelector('[data-case="default-open"]')!;
+    expect(defaultOpenWrap.querySelector('button.yui-reasoning-trigger')?.getAttribute('aria-expanded')).toBe('true');
+    expect(defaultOpenWrap.querySelector('.yui-reasoning-text')?.textContent).toBe('Step 1');
+  });
 });
