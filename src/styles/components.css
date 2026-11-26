@@ -193,9 +193,17 @@
   padding: 52px 14px 20px 14px;
   display: flex;
   flex-direction: column;
-  gap: 14px;
   scrollbar-width: thin;
   scrollbar-color: var(--yui-strong) transparent;
+}
+
+.yui-scroll-content {
+  flex: 1 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  min-width: 0;
+  width: 100%;
 }
 
 .yui-scroll-stage::-webkit-scrollbar,
@@ -3596,7 +3604,7 @@ span.yui-citation-pill {
   display: inline-flex;
   align-items: center;
   flex-wrap: wrap;
-  gap: 8px;
+  gap: 5px;
   font-family: var(--font-mono);
   font-size: 10.5px;
   line-height: 14px;
@@ -3971,13 +3979,74 @@ span.yui-citation-pill {
 }
 
 .yui-vault-feedback {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
   font-size: 11px;
   line-height: 15px;
   color: var(--yui-green);
 }
 
+[data-theme="dark"] .yui-vault-feedback {
+  color: #7cc99a;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) .yui-vault-feedback {
+    color: #7cc99a;
+  }
+}
+
 .yui-vault-feedback--error {
   color: var(--yui-danger);
+}
+
+[data-theme="dark"] .yui-vault-feedback--error {
+  color: var(--yui-danger);
+}
+
+.yui-vault-drop {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 8px 10px;
+  border-radius: 10px;
+  border: 1px dashed var(--yui-strong);
+  background-color: var(--yui-stage-bg);
+  color: var(--yui-secondary);
+  font-size: 11px;
+  line-height: 14px;
+  cursor: pointer;
+  transition: border-color 140ms ease, background-color 140ms ease, color 140ms ease;
+}
+
+.yui-vault-drop:hover,
+.yui-vault-drop.is-dragging {
+  border-color: var(--yui-cobalt);
+  background-color: var(--yui-cobalt-soft);
+  color: var(--yui-ink);
+}
+
+.yui-vault-drop:focus-within {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: 2px;
+}
+
+.yui-vault-drop-label {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.yui-vault-file-input {
+  position: absolute;
+  inset: 0;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+  pointer-events: none;
 }
 
 .yui-vault-actions {
@@ -3987,12 +4056,30 @@ span.yui-citation-pill {
   gap: 8px;
 }
 
+.yui-vault-actions--dual {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.yui-vault-actions--dual .yui-pill-btn {
+  justify-content: center;
+}
+
 .yui-vault-danger-zone {
-  padding-top: 8px;
+  padding-top: 9px;
+  margin-top: 2px;
   border-top: 1px solid var(--yui-hairline);
   display: flex;
   align-items: center;
-  justify-content: flex-start;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.yui-vault-danger-hint {
+  font-size: 10.5px;
+  line-height: 14px;
+  color: var(--yui-muted);
 }
 
 .yui-vault-confirm-row {
@@ -4022,6 +4109,162 @@ span.yui-citation-pill {
   background-color: var(--yui-danger-soft);
 }
 
+.yui-dl-telemetry-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.yui-dl-sep {
+  color: var(--yui-muted);
+  opacity: 0.7;
+}
+
+/* ==========================================================================
+ * DataTableCard & ArtifactPreviewCard (Page 9 Data & Artifact Primitives)
+ * ========================================================================== */
+.yui-data-card,
+.yui-artifact-card {
+  width: 100%;
+  box-sizing: border-box;
+  flex-shrink: 0;
+  background-color: var(--yui-capsule-bg);
+  border: 1px solid var(--yui-capsule-border);
+  border-radius: 14px;
+  box-shadow: var(--yui-capsule-shadow);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.yui-data-scroll-wrap {
+  position: relative;
+  min-width: 0;
+}
+
+.yui-data-scroll-wrap::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  width: 24px;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 150ms ease;
+  background: linear-gradient(to left, var(--yui-capsule-bg) 18%, transparent 100%);
+}
+
+.yui-data-scroll-wrap.is-scrollable-right::after {
+  opacity: 1;
+}
+
+.yui-data-scroll {
+  overflow-x: auto;
+  scrollbar-width: thin;
+  scrollbar-color: var(--yui-strong) transparent;
+}
+
+.yui-data-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 11.5px;
+  line-height: 15px;
+}
+
+.yui-data-th {
+  position: sticky;
+  top: 0;
+  background-color: var(--yui-stage-bg);
+  color: var(--yui-muted);
+  font-family: var(--font-mono);
+  font-size: 10px;
+  line-height: 13px;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  text-align: left;
+  padding: 7px 12px;
+  border-bottom: 1px solid var(--yui-hairline);
+  white-space: nowrap;
+}
+
+.yui-data-td {
+  padding: 8px 12px;
+  color: var(--yui-ink);
+  border-bottom: 1px solid var(--yui-hairline);
+  white-space: nowrap;
+}
+
+.yui-data-tr:last-child .yui-data-td {
+  border-bottom: none;
+}
+
+.yui-data-th.is-right,
+.yui-data-td.is-right {
+  text-align: right;
+}
+
+.yui-data-td.is-numeric {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+}
+
+.yui-artifact-type {
+  font-family: var(--font-mono);
+  font-size: 9.5px;
+  line-height: 13px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--yui-secondary);
+  background-color: var(--yui-chip-bg);
+  border: 1px solid var(--yui-hairline);
+  border-radius: 5px;
+  padding: 1px 5px;
+}
+
+.yui-artifact-meta {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  line-height: 14px;
+  color: var(--yui-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.yui-artifact-chevron {
+  transition: transform 160ms var(--yui-spring);
+}
+
+.yui-artifact-chevron.is-open {
+  transform: rotate(180deg);
+}
+
+.yui-artifact-pre {
+  margin: 0;
+  padding: 9px 13px;
+  background-color: var(--yui-well-bg);
+  border-top: 1px solid var(--yui-hairline);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  line-height: 1.5;
+  color: var(--yui-ink);
+  overflow-x: auto;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.yui-icon-btn:focus-visible,
+.yui-pill-btn:focus-visible,
+.yui-seg-btn:focus-visible,
+.yui-notch-btn:focus-visible,
+.yui-micro-pill:focus-visible,
+.yui-citation-pill:focus-visible,
+.yui-notch-opt-row:focus-visible {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: 2px;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .yui-hook-rail-layer,
   .yui-hook-row,
@@ -4042,6 +4285,10 @@ span.yui-citation-pill {
   .yui-scroll-wrap--fade::after,
   .yui-switch,
   .yui-switch-thumb,
+  .yui-vault-drop,
+  .yui-vault-input,
+  .yui-data-scroll-wrap::after,
+  .yui-artifact-chevron,
   .yui-cmd-popover,
   .yui-cmd-item,
   .yui-seg-btn,
