@@ -159,16 +159,23 @@ export function SidePanelApp() {
 
 ---
 
-## Subpath Exports & Inventory
+## Subpath Exports & Complete Component Inventory
 
 | Subpath | Contents |
 | :--- | :--- |
-| `@yours/ui` | Complete root barrel exporting icons, layout, chat components, and GenUI primitives. |
-| `@yours/ui/icons` | `ApertureIcon`, 48 named `*Icon` components, `APERTURE_ICON_NAMES`, `MatrixOrb`, `NotchEar`, `YoursMark`. |
-| `@yours/ui/layout` | `SidePanelShell` (with `sheet` tray slot & inner-content `ResizeObserver` gated scroll fades), `TopNotch` (144x36 -> 272x52 hover-grow & focus-trapped drawer), `HookSidebarList`, `NotchDrawerSearch`, `NotchOptionRow`, `NotchStatusPill`, `GreenLed`. |
-| `@yours/ui/components` | `FloatingComposer`, `FloatingContextSheet`, `CommandPalette`, `ContextCommandPopover`, `KbdHint`, `ShortcutSheet`, `StatusToast`, `SegmentedControl`, `QuotedContextBanner`, `VoiceDictationPill`, `VoiceSessionBar`, `AttachmentStrip`, `AttachmentDropzone`, `EmptyState`, `EmptyPanelState`, `StatusBadge`, `PromptCapsuleStack`, `SuggestionChipRow`, `ScrollToBottomButton`, `UserMessageBubble`, `AssistantMessage`, `StreamingResponse`, `CodeBlock`, `ActionBar`, `BranchPicker`, `FollowUpSuggestions`, `ReasoningTrace`, `ToolStepCard`, `ToolTraceList`, `PermissionApprovalCard`, `PermissionCard`, `SourcesDrawer`, `InlineCitationPill`, `InlineCitationPopover`, `MemoryRecordCard`, `MemoryInspectorList`, `HardwareStatusStrip`, `ModelDownloadProgressBar`, `ModelRosterList`, `SettingsSection`, `SettingsToggleRow`, `LocalVaultExportCard`, `DataTableCard`, `ArtifactPreviewCard`, `DiffCard`, `ThreadHistoryDrawer`, `ThreadHistoryList`, `TabContextList`, `ErrorRecoveryBanner`, `MessageSkeleton`, `ToastPill`, `ModelDownloadGate`. |
+| `@yours/ui` | Complete root barrel re-exporting `@yours/ui/icons`, `@yours/ui/layout`, `@yours/ui/components`, and `@yours/ui/genui`. |
+| `@yours/ui/icons` | `ApertureIcon`, `APERTURE_ICON_NAMES`, 48 named `*Icon` SVG components, `MatrixOrb`, `NotchEar`, `YoursMark`. |
+| `@yours/ui/layout` | `SidePanelShell` (`overlay` & `sheet` slots + `ResizeObserver` scroll-edge fades), `TopNotch` (`144x36` -> `272x52` hover-grow & drawer), `HookSidebarList`, `NotchDrawerSearch`, `NotchOptionRow`, `NotchStatusPill`, `GreenLed`. |
+| `@yours/ui/components` | Grouped below across shell/command, conversation, tools/guard, runtime/models, and data/settings. |
 | `@yours/ui/genui` | `CompareTable`, `ChecklistCard`, `PageBriefCard`, `DraftCard`, `EntitySummaryCard`, `ChoicePromptCard`, `MetricStripCard`, `PageActionCard`. |
-| `@yours/ui/styles` | Full Cotton Paper + Anodized Obsidian CSS variables (`tokens.css`) and scoped `.yui-*` classes (`components.css`). |
+| `@yours/ui/styles` | Cotton Paper & Anodized Obsidian CSS variables (`tokens.css`) and scoped `.yui-*` rules (`components.css`). |
+
+### `@yours/ui/components` Inventory
+
+- **Shell, Overlay & Navigation:** `CommandPalette`, `ContextCommandPopover`, `FloatingComposer`, `FloatingContextSheet`, `EmptyPanelState`, `EmptyState`, `KbdHint`, `PromptCapsuleStack`, `QuotedContextBanner`, `ScrollToBottomButton`, `SegmentedControl`, `ShortcutSheet`, `StatusBadge`, `StatusToast`, `SuggestionChipRow`, `ThreadHistoryDrawer`, `ThreadHistoryList`, `ToastPill`.
+- **Conversation, Citations & Diffs:** `ActionBar`, `AssistantMessage`, `AttachmentDropzone`, `AttachmentStrip`, `BranchPicker`, `CitationFootnoteList`, `CodeBlock`, `DiffCard`, `FollowUpSuggestions`, `InlineCitationPill`, `InlineCitationPopover`, `MessageSkeleton`, `SourcesDrawer`, `StreamingResponse`, `UserMessageBubble`, `VoiceDictationPill`, `VoiceSessionBar`.
+- **Reasoning, Tools, Context & Guard:** `ContextBudgetMeter`, `PermissionApprovalCard`, `PermissionCard`, `ReasoningTrace`, `TabContextList`, `ToolStepCard`, `ToolTraceList`.
+- **Local Runtime, Models, Memory, Data & Settings:** `ArtifactPreviewCard`, `DataTableCard`, `ErrorRecoveryBanner`, `HardwareStatusStrip`, `LocalVaultExportCard`, `MemoryInspectorList`, `MemoryRecordCard`, `ModelDownloadGate`, `ModelDownloadProgressBar`, `ModelRosterList`, `SettingsSection`, `SettingsToggleRow`.
 
 ---
 

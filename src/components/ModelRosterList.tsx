@@ -155,7 +155,18 @@ export function ModelRosterList({
                     <span className="yui-model-name">{item.name}</span>
                     {item.quantLabel ? <span className="yui-model-quant">{item.quantLabel}</span> : null}
                   </span>
-                  <span className="yui-model-specs">{specs.join(' · ')}</span>
+                  <span className="yui-model-specs">
+                    {specs.map((spec, specIdx) => (
+                      <span key={spec} className="yui-model-spec-token">
+                        {specIdx > 0 ? (
+                          <span className="yui-model-spec-sep" aria-hidden="true">
+                            ·
+                          </span>
+                        ) : null}
+                        <span className="yui-model-spec-val">{spec}</span>
+                      </span>
+                    ))}
+                  </span>
                 </span>
               </span>
             </button>

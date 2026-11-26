@@ -42,8 +42,10 @@ import {
   BranchPicker,
   ChecklistCard,
   ChoicePromptCard,
+  CitationFootnoteList,
   CommandPalette,
   CompareTable,
+  ContextBudgetMeter,
   ContextCommandPopover,
   DataTableCard,
   DiffCard,
@@ -1138,6 +1140,69 @@ function DrawerAndContextPanel({ theme }: { theme: 'light' | 'dark' }) {
   );
 }
 
+function BudgetAndCitationPanel({ theme }: { theme: 'light' | 'dark' }) {
+  const [activeCite, setActiveCite] = useState<number | string>(1);
+
+  return (
+    <SidePanelShell
+      theme={theme}
+      notch={<TopNotch items={NOTCH_ITEMS} expandedId={null} />}
+      footer={
+        <FloatingComposer
+          value=""
+          onChange={() => {}}
+          onSubmit={() => {}}
+          leftSlot={<StatusBadge tone="local" dot>3.2k / 8k ctx</StatusBadge>}
+        />
+      }
+    >
+      <ContextBudgetMeter
+        usedTokens={3200}
+        maxTokens={8000}
+        defaultExpanded
+        segments={[
+          { id: 'sys', label: 'System prompt', tokensLabel: '640 tok', percent: 8 },
+          { id: 'tab', label: 'Active tab (docs.rs)', tokensLabel: '1.4k tok', percent: 18 },
+          { id: 'hist', label: 'Conversation history', tokensLabel: '840 tok', percent: 10 },
+          { id: 'mem', label: 'Local FTS5 memory', tokensLabel: '320 tok', percent: 4 },
+        ]}
+      />
+      <ContextBudgetMeter
+        usedTokens={6880}
+        maxTokens={8000}
+        title="Compaction threshold"
+      />
+      <CitationFootnoteList
+        activeIndex={activeCite}
+        onShowOnPage={(cite) => setActiveCite(cite.index)}
+        onCopyQuote={() => {}}
+        citations={[
+          {
+            id: 'fn-1',
+            index: 1,
+            title: 'WebGPU Subgroup Operations',
+            domain: 'gpuweb.github.io',
+            locator: 'Section 3.2 · Para 4',
+            excerpt:
+              'Subgroup barriers synchronize invocations cleanly inside a compute workgroup without global memory fences.',
+            highlight: 'warm',
+          },
+          {
+            id: 'fn-2',
+            index: 2,
+            title: 'MV3 Extension Security Model',
+            domain: 'developer.chrome.com',
+            locator: 'CSP v3 · Note 2',
+            excerpt:
+              'Extension side-panel documents block inline style attributes under default style-src self policies.',
+            highlight: 'mono',
+          },
+        ]}
+      />
+    </SidePanelShell>
+  );
+}
+
 function ShortcutAndToastPanel({ theme }: { theme: 'light' | 'dark' }) {
   const [toastOpen, setToastOpen] = useState(true);
 
@@ -1221,6 +1286,7 @@ function SpecimenApp() {
         {panel === 'diff' ? <DiffShowcasePanel theme={theme} /> : null}
         {panel === 'trace' ? <TraceAndPermissionPanel theme={theme} /> : null}
         {panel === 'drawers' ? <DrawerAndContextPanel theme={theme} /> : null}
+        {panel === 'budget' ? <BudgetAndCitationPanel theme={theme} /> : null}
         {panel === 'genui' ? <GenUiShowcasePanel theme={theme} /> : null}
       </div>
     );
@@ -1242,6 +1308,7 @@ function SpecimenApp() {
       <div className="yui-spec-frame"><DiffShowcasePanel theme={theme} /></div>
       <div className="yui-spec-frame"><TraceAndPermissionPanel theme={theme} /></div>
       <div className="yui-spec-frame"><DrawerAndContextPanel theme={theme} /></div>
+      <div className="yui-spec-frame"><BudgetAndCitationPanel theme={theme} /></div>
       <div className="yui-spec-frame-auto"><GenUiShowcasePanel theme={theme} /></div>
     </div>
   );
@@ -1462,8 +1529,14 @@ async function main() {
       'diff',
       'trace',
       'drawers',
+      'budget',
       'genui',
     ];
+    const blurActive = () =>
+      page.evaluate(() => {
+        const ae = document.activeElement;
+        if (ae && typeof ae.blur === 'function') ae.blur();
+      });
     for (const theme of ['light', 'dark']) {
       await page.setViewportSize({ width: 380, height: 828 });
       for (const panel of singlePanels) {
@@ -1472,7 +1545,7 @@ async function main() {
         });
         await waitForSpecimen(`${theme}/${panel}`);
 
-        if (panel === 'live' || panel === 'sheet' || panel === 'palette' || panel === 'drawers') {
+        if (panel === 'live' || panel === 'sheet' || panel === 'palette' || panel === 'drawers' || panel === 'budget') {
           await page.waitForTimeout(300);
         }
 
@@ -1544,6 +1617,7 @@ async function main() {
           throw new Error(`Horizontal overflow detected at 380px width on ${theme}/${panel}`);
         }
 
+        await blurActive();
         const outPath = path.join(OUT_DIR, `specimen-${theme}-${panel}.png`);
         await page.screenshot({ path: outPath, fullPage: panel === 'genui' });
         outputs.push(outPath);
@@ -1730,6 +1804,7 @@ async function main() {
           }
 
           const paletteInput = page.locator('[data-slot="command-palette"] [role="combobox"]');
+          await paletteInput.focus();
           const activeBefore = await paletteInput.getAttribute('aria-activedescendant');
           await page.keyboard.press('ArrowDown');
           const activeAfter = await paletteInput.getAttribute('aria-activedescendant');
@@ -1930,6 +2005,67 @@ async function main() {
           }
         }
 
+        if (panel === 'budget') {
+          const budgetContrast = await page.evaluate(() => {
+            const parseRgba = (str) => {
+              const m = str.match(/rgba?\(([^)]+)\)/);
+              if (!m) return null;
+              const parts = m[1].split(',').map((x) => parseFloat(x.trim()));
+              return [parts[0], parts[1], parts[2], parts[3] ?? 1];
+            };
+            const relLum = ([r, g, b]) => {
+              const f = (c) => {
+                const s = c / 255;
+                return s <= 0.03928 ? s / 12.92 : Math.pow((s + 0.055) / 1.055, 2.4);
+              };
+              return 0.2126 * f(r) + 0.7152 * f(g) + 0.0722 * f(b);
+            };
+            const effectiveBg = (el) => {
+              let cur = el;
+              while (cur && cur !== document.documentElement) {
+                const bg = parseRgba(getComputedStyle(cur).backgroundColor);
+                if (bg && bg[3] >= 0.95) return bg;
+                cur = cur.parentElement;
+              }
+              return [255, 255, 255, 1];
+            };
+            const selectors = [
+              '[data-slot="context-budget-meter"] .yui-budget-title',
+              '[data-slot="context-budget-meter"] .yui-budget-summary',
+              '[data-slot="context-budget-meter"] .yui-budget-seg-label',
+              '[data-slot="context-budget-meter"] .yui-budget-seg-tok',
+              '[data-slot="citation-footnote-list"] .yui-fn-title',
+              '[data-slot="citation-footnote-list"] .yui-fn-meta',
+              '[data-slot="citation-footnote-list"] .yui-fn-quote',
+              '[data-slot="citation-footnote-list"] .yui-fn-btn',
+            ];
+            const bad = [];
+            for (const sel of selectors) {
+              for (const node of document.querySelectorAll(sel)) {
+                const fg = parseRgba(getComputedStyle(node).color);
+                const bg = effectiveBg(node);
+                if (!fg) continue;
+                const l1 = Math.max(relLum(fg), relLum(bg));
+                const l2 = Math.min(relLum(fg), relLum(bg));
+                const ratio = (l1 + 0.05) / (l2 + 0.05);
+                if (ratio < 4.5) {
+                  bad.push({ sel, ratio: Number(ratio.toFixed(2)), text: node.textContent });
+                }
+              }
+            }
+            return bad;
+          });
+          if (budgetContrast.length > 0) {
+            throw new Error(`WCAG AA contrast audit failed (${theme}/budget): ${JSON.stringify(budgetContrast)}`);
+          }
+          const toggle = page.locator('[data-slot="context-budget-meter"] .yui-budget-toggle').first();
+          await toggle.click();
+          if ((await toggle.getAttribute('aria-expanded')) !== 'false') {
+            throw new Error(`Expected ContextBudgetMeter breakdown to collapse on toggle (${theme})`);
+          }
+          await page.locator('[data-slot="citation-footnote-list"] [aria-label="Copy quote 1"]').click();
+        }
+
         if (panel === 'diff') {
           const capFade = await page
             .locator('[data-slot="artifact-preview-card"] .yui-artifact-scroll-wrap')
@@ -1959,10 +2095,10 @@ async function main() {
         }
       }
 
-      // 400px width verification on Data, Shortcuts, Welcome, Palette, Diff, Trace & Drawers panels + reduced-motion audit
+      // 400px width verification on Data, Shortcuts, Welcome, Palette, Diff, Trace, Drawers & Budget panels + reduced-motion audit
       await page.setViewportSize({ width: 400, height: 828 });
       await page.emulateMedia({ reducedMotion: 'reduce' });
-      for (const widePanel of ['data', 'shortcuts', 'welcome', 'palette', 'diff', 'trace', 'drawers']) {
+      for (const widePanel of ['data', 'shortcuts', 'welcome', 'palette', 'diff', 'trace', 'drawers', 'budget']) {
         await page.goto(`${baseUrl}/?mode=single&theme=${theme}&panel=${widePanel}&width=400`, {
           waitUntil: 'networkidle',
         });
@@ -1976,6 +2112,7 @@ async function main() {
         if (wideAudit.inlineStyleCount !== 0 || wideAudit.docOverflow) {
           throw new Error(`400px ${widePanel} check failed (${theme}): ${JSON.stringify(wideAudit)}`);
         }
+        await blurActive();
         const widePath = path.join(OUT_DIR, `specimen-${theme}-${widePanel}-400.png`);
         await page.screenshot({ path: widePath });
         outputs.push(widePath);
@@ -1998,6 +2135,7 @@ async function main() {
         'diff',
         'trace',
         'drawers',
+        'budget',
         'genui',
       ]) {
         await page.goto(`${baseUrl}/?mode=single&theme=${theme}&panel=${narrowPanel}&narrow=1`, {
@@ -2069,6 +2207,7 @@ async function main() {
             `340px narrow check failed (${theme}/${narrowPanel}): ${JSON.stringify(narrowAudit)}`,
           );
         }
+        await blurActive();
         if (narrowPanel === 'chat') {
           const narrowPath = path.join(OUT_DIR, `specimen-${theme}-narrow340.png`);
           await page.screenshot({ path: narrowPath });
@@ -2134,14 +2273,36 @@ async function main() {
           outputs.push(traceNarrowPath);
         }
         if (narrowPanel === 'drawers') {
+          const drawer340Audit = await page.evaluate(() => {
+            const specVals = Array.from(document.querySelectorAll('[data-slot="model-roster-list"] .yui-model-spec-val'));
+            const clippedSpec = specVals.find((el) => el.scrollWidth > el.clientWidth + 1);
+            const tabTokInDomain = document.querySelectorAll(
+              '[data-slot="tab-context-list"] .yui-tabctx-domain-row .yui-tabctx-tok',
+            ).length;
+            const firstTitle = document.querySelector('[data-slot="tab-context-list"] .yui-tabctx-title');
+            const titleWidth = firstTitle ? Math.round(firstTitle.getBoundingClientRect().width) : 0;
+            return {
+              clippedText: clippedSpec ? clippedSpec.textContent : null,
+              tabTokInDomain,
+              titleWidth,
+            };
+          });
+          if (drawer340Audit.clippedText || drawer340Audit.tabTokInDomain < 3 || drawer340Audit.titleWidth < 130) {
+            throw new Error(`340px drawers legibility audit failed (${theme}): ${JSON.stringify(drawer340Audit)}`);
+          }
           const drawersNarrowPath = path.join(OUT_DIR, `specimen-${theme}-drawers-340.png`);
           await page.screenshot({ path: drawersNarrowPath });
           outputs.push(drawersNarrowPath);
         }
+        if (narrowPanel === 'budget') {
+          const budgetNarrowPath = path.join(OUT_DIR, `specimen-${theme}-budget-340.png`);
+          await page.screenshot({ path: budgetNarrowPath });
+          outputs.push(budgetNarrowPath);
+        }
       }
 
-      // Overview 15-up comparison sheet
-      await page.setViewportSize({ width: 6084, height: 900 });
+      // Overview 16-up comparison sheet
+      await page.setViewportSize({ width: 6488, height: 900 });
       await page.goto(`${baseUrl}/?mode=gallery&theme=${theme}`, { waitUntil: 'networkidle' });
       const overviewPath = path.join(OUT_DIR, `specimen-${theme}-overview.png`);
       await page.screenshot({ path: overviewPath, fullPage: true });
