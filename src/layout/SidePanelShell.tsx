@@ -8,6 +8,7 @@ export interface SidePanelShellProps {
   onVeilClick?: () => void;
   overlay?: ReactNode;
   sheet?: ReactNode;
+  toast?: ReactNode;
   footer?: ReactNode;
   scrollEdgeFade?: boolean;
   children?: ReactNode;
@@ -18,7 +19,7 @@ export interface SidePanelShellProps {
  * Cotton Paper / Anodized Obsidian side-panel bezel wrapping a recessed stage,
  * sculpted top-center notch slot, optional focus veil, stage overlay slot,
  * scrollable stream with overflow-gated edge fades, floating context sheet slot,
- * and composer slot.
+ * elevated toast overlay slot, and composer slot.
  */
 export function SidePanelShell({
   theme = 'system',
@@ -28,6 +29,7 @@ export function SidePanelShell({
   onVeilClick,
   overlay,
   sheet,
+  toast,
   footer,
   scrollEdgeFade = true,
   children,
@@ -124,7 +126,15 @@ export function SidePanelShell({
           </div>
         </div>
         {sheet ? <div className="yui-sheet-region">{sheet}</div> : null}
-        {footer ? <div className="yui-composer-region">{footer}</div> : null}
+        {toast && !footer ? (
+          <div className="yui-toast-overlay yui-toast-overlay--standalone">{toast}</div>
+        ) : null}
+        {footer || toast ? (
+          <div className="yui-composer-region">
+            {toast && footer ? <div className="yui-toast-overlay">{toast}</div> : null}
+            {footer}
+          </div>
+        ) : null}
       </div>
     </div>
   );

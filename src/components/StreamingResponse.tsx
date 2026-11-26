@@ -1,5 +1,6 @@
 import {
   Fragment,
+  useCallback,
   useEffect,
   useLayoutEffect,
   useMemo,
@@ -67,7 +68,7 @@ function getPrefersReducedMotion(): boolean {
   if (typeof window === 'undefined' || typeof window.matchMedia !== 'function') {
     return false;
   }
-  return window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  return Boolean(window.matchMedia('(prefers-reduced-motion: reduce)')?.matches);
 }
 
 /** Tracks `prefers-reduced-motion: reduce` safely across SSR and jsdom. */
@@ -79,7 +80,8 @@ function useReducedMotion(): boolean {
       return;
     }
     const mq = window.matchMedia('(prefers-reduced-motion: reduce)');
-    setReduced(mq.matches);
+    if (!mq) return;
+    setReduced(Boolean(mq.matches));
     const onChange = (event: MediaQueryListEvent) => {
       setReduced(event.matches);
     };
@@ -139,13 +141,16 @@ function punctuationPause(slice: string): number {
   return 0;
 }
 
+type TableAlign = 'left' | 'center' | 'right';
+
 type Block =
   | { type: 'p'; text: string }
   | { type: 'quote'; text: string }
   | { type: 'h'; level: 1 | 2 | 3; text: string }
   | { type: 'ul'; items: string[] }
   | { type: 'ol'; start: number; items: string[] }
-  | { type: 'code'; lang: string; code: string; closed: boolean };
+  | { type: 'code'; lang: string; code: string; closed: boolean }
+  | { type: 'table'; headers: string[]; aligns: TableAlign[]; rows: string[][] };
 
 type Inline =
   | { type: 'text'; text: string }
@@ -359,6 +364,66 @@ const HEADING_RE = /^\s*(#{1,6})\s+(.*)$/;
 const QUOTE_RE = /^\s*>\s?(.*)$/;
 const UL_RE = /^\s*[-*+]\s+(.*)$/;
 const OL_RE = /^\s*(\d+)\.\s+(.*)$/;
+const TABLE_DELIM_CELL_RE = /^:?-{1,}:?$/;
+
+function splitPipeRow(rawLine: string): string[] | null {
+  const trimmed = rawLine.trim();
+  if (!trimmed || !trimmed.includes('|')) return null;
+
+  const hasOuterEdgePipe = trimmed.startsWith('|') || trimmed.endsWith('|');
+  const cells: string[] = [];
+  let cur = '';
+  for (let idx = 0; idx < trimmed.length; idx++) {
+    const ch = trimmed[idx];
+    if (ch === '\\' && trimmed[idx + 1] === '|') {
+      cur += '|';
+      idx += 1;
+      continue;
+    }
+    if (ch === '|') {
+      cells.push(cur.trim());
+      cur = '';
+      continue;
+    }
+    cur += ch;
+  }
+  cells.push(cur.trim());
+
+  if (trimmed.startsWith('|') && cells[0] === '') {
+    cells.shift();
+  }
+  if (trimmed.endsWith('|') && cells.length > 0 && cells[cells.length - 1] === '') {
+    cells.pop();
+  }
+
+  if (cells.length === 0) return null;
+  if (!hasOuterEdgePipe && cells.length < 2) return null;
+  return cells;
+}
+
+function tryParseTableStart(
+  lines: readonly string[],
+  startIndex: number,
+): { headers: string[]; aligns: TableAlign[] } | null {
+  if (startIndex + 1 >= lines.length) return null;
+  const headers = splitPipeRow(lines[startIndex]);
+  if (!headers) return null;
+  const delimCells = splitPipeRow(lines[startIndex + 1]);
+  if (!delimCells || delimCells.length !== headers.length) return null;
+
+  const aligns: TableAlign[] = [];
+  for (const cell of delimCells) {
+    if (!TABLE_DELIM_CELL_RE.test(cell)) return null;
+    if (cell.startsWith(':') && cell.endsWith(':')) {
+      aligns.push('center');
+    } else if (cell.endsWith(':')) {
+      aligns.push('right');
+    } else {
+      aligns.push('left');
+    }
+  }
+  return { headers, aligns };
+}
 
 function collectListItems(
   lines: readonly string[],
@@ -462,6 +527,35 @@ function parseBlocks(source: string): Block[] {
       continue;
     }
 
+    const tableStart = tryParseTableStart(lines, i);
+    if (tableStart) {
+      const { headers, aligns } = tableStart;
+      const rows: string[][] = [];
+      let j = i + 2;
+      while (j < lines.length) {
+        const cur = lines[j];
+        if (
+          cur.trim() === '' ||
+          FENCE_OPEN_RE.test(cur) ||
+          HEADING_RE.test(cur) ||
+          QUOTE_RE.test(cur) ||
+          UL_RE.test(cur) ||
+          OL_RE.test(cur) ||
+          !cur.includes('|')
+        ) {
+          break;
+        }
+        const parsedRow = splitPipeRow(cur);
+        if (!parsedRow) break;
+        const normalized = Array.from({ length: headers.length }, (_, colIdx) => parsedRow[colIdx] ?? '');
+        rows.push(normalized);
+        j++;
+      }
+      blocks.push({ type: 'table', headers, aligns, rows });
+      i = j;
+      continue;
+    }
+
     const pLines: string[] = [];
     while (i < lines.length) {
       const cur = lines[i];
@@ -471,7 +565,8 @@ function parseBlocks(source: string): Block[] {
         HEADING_RE.test(cur) ||
         QUOTE_RE.test(cur) ||
         UL_RE.test(cur) ||
-        OL_RE.test(cur)
+        OL_RE.test(cur) ||
+        tryParseTableStart(lines, i) !== null
       ) {
         break;
       }
@@ -698,6 +793,118 @@ function StreamingCodeBlock({ lang, code, animate, caret }: StreamingCodeBlockPr
           {caret}
         </code>
       </pre>
+    </div>
+  );
+}
+
+interface StreamingTableProps {
+  headers: readonly string[];
+  aligns: readonly TableAlign[];
+  rows: readonly (readonly string[])[];
+  keyPrefix: string;
+  final: boolean;
+  wordCtx: WordRenderCtx;
+  caret?: ReactNode;
+}
+
+/**
+ * Paper Page 9 hairline GFM Markdown pipe-table with column alignments,
+ * `tabular-nums`, inline formatting inside cells, and dynamic horizontal scroll fade.
+ */
+function StreamingTable({
+  headers,
+  aligns,
+  rows,
+  keyPrefix,
+  final,
+  wordCtx,
+  caret,
+}: StreamingTableProps) {
+  const scrollRef = useRef<HTMLDivElement | null>(null);
+  const [canScrollRight, setCanScrollRight] = useState(false);
+
+  const syncFade = useCallback(() => {
+    const el = scrollRef.current;
+    if (!el) return;
+    const next = el.scrollWidth - el.clientWidth - el.scrollLeft > 2;
+    setCanScrollRight((prev) => (prev === next ? prev : next));
+  }, []);
+
+  useEffect(() => {
+    syncFade();
+    const el = scrollRef.current;
+    if (!el) return;
+
+    const onScroll = () => syncFade();
+    el.addEventListener('scroll', onScroll, { passive: true });
+
+    let ro: ResizeObserver | undefined;
+    if (typeof ResizeObserver !== 'undefined') {
+      ro = new ResizeObserver(() => syncFade());
+      ro.observe(el);
+    }
+
+    if (typeof window !== 'undefined') {
+      window.addEventListener('resize', onScroll, { passive: true });
+    }
+
+    return () => {
+      el.removeEventListener('scroll', onScroll);
+      ro?.disconnect();
+      if (typeof window !== 'undefined') {
+        window.removeEventListener('resize', onScroll);
+      }
+    };
+  }, [syncFade, headers, rows]);
+
+  return (
+    <div className="yui-sr-table-card" data-slot="streaming-response-table">
+      <div
+        className={cx('yui-data-scroll-wrap', canScrollRight && 'has-right-fade')}
+        data-scrollable-right={canScrollRight ? 'true' : 'false'}
+      >
+        <div ref={scrollRef} className="yui-sr-table-scroll">
+          <table className="yui-sr-table">
+            <thead>
+              <tr>
+                {headers.map((header, colIdx) => {
+                  const align = aligns[colIdx] ?? 'left';
+                  const isTail = rows.length === 0 && colIdx === headers.length - 1;
+                  return (
+                    <th key={`${keyPrefix}-h${colIdx}`} className={cx('yui-sr-th', `is-${align}`)}>
+                      {renderInline(parseInline(header, final), `${keyPrefix}-h${colIdx}`, wordCtx)}
+                      {isTail ? caret : null}
+                    </th>
+                  );
+                })}
+              </tr>
+            </thead>
+            {rows.length > 0 ? (
+              <tbody>
+                {rows.map((row, rowIdx) => (
+                  <tr key={`${keyPrefix}-r${rowIdx}`} className="yui-sr-tr">
+                    {headers.map((_, colIdx) => {
+                      const align = aligns[colIdx] ?? 'left';
+                      const cell = row[colIdx] ?? '';
+                      const isTail =
+                        rowIdx === rows.length - 1 && colIdx === headers.length - 1;
+                      return (
+                        <td
+                          key={`${keyPrefix}-r${rowIdx}-c${colIdx}`}
+                          className={cx('yui-sr-td', `is-${align}`)}
+                        >
+                          {cell ? renderInline(parseInline(cell, final), `${keyPrefix}-r${rowIdx}-c${colIdx}`, wordCtx) : null}
+                          {isTail ? caret : null}
+                        </td>
+                      );
+                    })}
+                  </tr>
+                ))}
+              </tbody>
+            ) : null}
+          </table>
+        </div>
+      </div>
     </div>
   );
 }
@@ -1073,6 +1280,19 @@ export function StreamingResponse({
                     lang={block.lang}
                     code={block.code}
                     animate={animateWords}
+                    caret={tailCaret}
+                  />
+                );
+              case 'table':
+                return (
+                  <StreamingTable
+                    key={key}
+                    headers={block.headers}
+                    aligns={block.aligns}
+                    rows={block.rows}
+                    keyPrefix={key}
+                    final={final}
+                    wordCtx={wordCtx}
                     caret={tailCaret}
                   />
                 );

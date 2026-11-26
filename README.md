@@ -165,7 +165,7 @@ export function SidePanelApp() {
 | :--- | :--- |
 | `@yours/ui` | Complete root barrel re-exporting `@yours/ui/icons`, `@yours/ui/layout`, `@yours/ui/components`, and `@yours/ui/genui`. |
 | `@yours/ui/icons` | `ApertureIcon`, `APERTURE_ICON_NAMES`, 48 named `*Icon` SVG components, `MatrixOrb`, `NotchEar`, `YoursMark`. |
-| `@yours/ui/layout` | `SidePanelShell` (`overlay` & `sheet` slots + `ResizeObserver` scroll-edge fades), `TopNotch` (`144x36` -> `272x52` hover-grow & drawer), `HookSidebarList`, `NotchDrawerSearch`, `NotchOptionRow`, `NotchStatusPill`, `GreenLed`. |
+| `@yours/ui/layout` | `SidePanelShell` (`overlay`, `sheet` & `toast` z-45 slots + `ResizeObserver` scroll-edge fades), `TopNotch` (`144x36` -> `272x52` hover-grow & drawer), `HookSidebarList`, `NotchDrawerSearch`, `NotchOptionRow`, `NotchStatusPill`, `GreenLed`. |
 | `@yours/ui/components` | Grouped below across shell/command, conversation, tools/guard, runtime/models, and data/settings. |
 | `@yours/ui/genui` | `CompareTable`, `ChecklistCard`, `PageBriefCard`, `DraftCard`, `EntitySummaryCard`, `ChoicePromptCard`, `MetricStripCard`, `PageActionCard`. |
 | `@yours/ui/styles` | Cotton Paper & Anodized Obsidian CSS variables (`tokens.css`) and scoped `.yui-*` rules (`components.css`). |
