@@ -55,6 +55,7 @@ import {
   EmptyState,
   EntitySummaryCard,
   ErrorRecoveryCard,
+  ExportSessionCard,
   FloatingComposer,
   FloatingContextSheet,
   FollowUpSuggestions,
@@ -80,6 +81,7 @@ import {
   PermissionApprovalCard,
   PermissionCard,
   PromptCapsuleStack,
+  PromptTemplateList,
   QuotedContextBanner,
   ReasoningTrace,
   SegmentedControl,
@@ -1364,7 +1366,76 @@ function VoiceAndComposerPanel({ theme }: { theme: 'light' | 'dark' }) {
         onToggleMute={() => setMuted((prev) => !prev)}
         onEndSession={() => {}}
       />
-      <AudioLevelMeter level={0.68} tone="speaking" bars={12} animated label="Assistant TTS output level" />
+      <div className="yui-alm-strip">
+        <div className="yui-alm-pair">
+          <span className="yui-alm-pair-label">Idle</span>
+          <AudioLevelMeter level={0.14} tone="neutral" bars={7} label="Idle level" />
+        </div>
+        <div className="yui-alm-pair">
+          <span className="yui-alm-pair-label">Speaking</span>
+          <AudioLevelMeter level={0.76} tone="speaking" bars={10} animated label="Speaking level" />
+        </div>
+      </div>
+    </SidePanelShell>
+  );
+}
+
+function TemplatesAndExportPanel({ theme }: { theme: 'light' | 'dark' }) {
+  const [pinnedIds, setPinnedIds] = useState<Record<string, boolean>>({ 'tpl-1': true });
+  const [selectedCmd, setSelectedCmd] = useState<string | null>(null);
+  const [statusNote, setStatusNote] = useState('14 turns · 18.4 KB');
+
+  return (
+    <SidePanelShell
+      theme={theme}
+      notch={<TopNotch items={NOTCH_ITEMS} expandedId={null} />}
+      footer={
+        <FloatingComposer
+          value={selectedCmd ?? ''}
+          onChange={setSelectedCmd}
+          onSubmit={() => {}}
+          onOpenCommands={() => setSelectedCmd('/summarize ')}
+          leftSlot={<StatusBadge tone="local" dot>{selectedCmd ? 'Template loaded' : statusNote}</StatusBadge>}
+        />
+      }
+    >
+      <PromptTemplateList
+        onSelect={(item) => setSelectedCmd(item.command + ' ')}
+        onTogglePin={(id) => setPinnedIds((prev) => ({ ...prev, [id]: !prev[id] }))}
+        items={[
+          {
+            id: 'tpl-1',
+            command: '/summarize',
+            title: 'Summarize active page',
+            description: 'Extract 5 key takeaways from local DOM.',
+            category: 'Page',
+            pinned: Boolean(pinnedIds['tpl-1']),
+            shortcut: '⌘1',
+          },
+          {
+            id: 'tpl-2',
+            command: '/wgsl',
+            title: 'Audit WebGPU kernel',
+            description: 'Inspect subgroup barriers and memory layout.',
+            category: 'Code',
+            pinned: Boolean(pinnedIds['tpl-2']),
+          },
+          {
+            id: 'tpl-3',
+            command: '/redact',
+            title: 'Check PII before export',
+            description: 'Scan quoted snippets locally before saving.',
+            category: 'Local',
+            pinned: Boolean(pinnedIds['tpl-3']),
+          },
+        ]}
+      />
+      <ExportSessionCard
+        metaLabel={statusNote}
+        previewText={'# Local session\\nVerified privately.'}
+        onCopy={() => setStatusNote('Copied to clipboard')}
+        onDownload={(opts) => setStatusNote('Saved .' + opts.format)}
+      />
     </SidePanelShell>
   );
 }
@@ -1486,6 +1557,7 @@ function SpecimenApp() {
         {panel === 'onboarding' ? <OnboardingAndCodePanel theme={theme} /> : null}
         {panel === 'recovery' ? <RecoveryAndNoticePanel theme={theme} /> : null}
         {panel === 'voice' ? <VoiceAndComposerPanel theme={theme} /> : null}
+        {panel === 'templates' ? <TemplatesAndExportPanel theme={theme} /> : null}
         {panel === 'genui' ? <GenUiShowcasePanel theme={theme} /> : null}
       </div>
     );
@@ -1511,6 +1583,7 @@ function SpecimenApp() {
       <div className="yui-spec-frame"><OnboardingAndCodePanel theme={theme} /></div>
       <div className="yui-spec-frame"><RecoveryAndNoticePanel theme={theme} /></div>
       <div className="yui-spec-frame"><VoiceAndComposerPanel theme={theme} /></div>
+      <div className="yui-spec-frame"><TemplatesAndExportPanel theme={theme} /></div>
       <div className="yui-spec-frame-auto"><GenUiShowcasePanel theme={theme} /></div>
     </div>
   );
@@ -1735,6 +1808,7 @@ async function main() {
       'onboarding',
       'recovery',
       'voice',
+      'templates',
       'genui',
     ];
     const blurActive = () =>
@@ -2463,6 +2537,82 @@ async function main() {
           }
         }
 
+        if (panel === 'templates') {
+          const tplContrast = await page.evaluate(() => {
+            const parseRgba = (str) => {
+              const m = str.match(/rgba?\(([^)]+)\)/);
+              if (!m) return null;
+              const parts = m[1].split(',').map((x) => parseFloat(x.trim()));
+              return [parts[0], parts[1], parts[2], parts[3] ?? 1];
+            };
+            const relLum = ([r, g, b]) => {
+              const f = (c) => {
+                const s = c / 255;
+                return s <= 0.03928 ? s / 12.92 : Math.pow((s + 0.055) / 1.055, 2.4);
+              };
+              return 0.2126 * f(r) + 0.7152 * f(g) + 0.0722 * f(b);
+            };
+            const compositeOver = (fg, bg) => {
+              const a = fg[3] ?? 1;
+              return [
+                fg[0] * a + bg[0] * (1 - a),
+                fg[1] * a + bg[1] * (1 - a),
+                fg[2] * a + bg[2] * (1 - a),
+                1,
+              ];
+            };
+            const effectiveBg = (el) => {
+              const stack = [];
+              let cur = el;
+              while (cur && cur !== document.documentElement) {
+                const bg = parseRgba(getComputedStyle(cur).backgroundColor);
+                if (bg && bg[3] > 0) stack.unshift(bg);
+                cur = cur.parentElement;
+              }
+              return stack.reduce((acc, layer) => compositeOver(layer, acc), [255, 255, 255, 1]);
+            };
+            const selectors = [
+              '[data-slot="prompt-template-list"] .yui-ptl-title',
+              '[data-slot="prompt-template-list"] .yui-ptl-cmd',
+              '[data-slot="prompt-template-list"] .yui-ptl-item-title',
+              '[data-slot="prompt-template-list"] .yui-ptl-desc',
+              '[data-slot="export-session-card"] .yui-export-title',
+              '[data-slot="export-session-card"] .yui-export-sub',
+              '[data-slot="export-session-card"] .yui-export-toggle-label',
+              '[data-slot="export-session-card"] .yui-export-privacy',
+            ];
+            const bad = [];
+            for (const sel of selectors) {
+              for (const node of document.querySelectorAll(sel)) {
+                const fg = parseRgba(getComputedStyle(node).color);
+                const bg = effectiveBg(node);
+                if (!fg) continue;
+                const l1 = Math.max(relLum(fg), relLum(bg));
+                const l2 = Math.min(relLum(fg), relLum(bg));
+                const ratio = (l1 + 0.05) / (l2 + 0.05);
+                if (ratio < 4.5) {
+                  bad.push({ sel, ratio: Number(ratio.toFixed(2)), text: node.textContent });
+                }
+              }
+            }
+            return bad;
+          });
+          if (tplContrast.length > 0) {
+            throw new Error(`WCAG AA contrast audit failed (${theme}/templates): ${JSON.stringify(tplContrast)}`);
+          }
+          await page.locator('[data-slot="prompt-template-list"] .yui-ptl-main').first().click();
+          const tplBadge = await page.locator('.yui-composer .yui-status-badge').textContent();
+          if (!tplBadge?.includes('Template loaded')) {
+            throw new Error(`PromptTemplateList click did not update badge (${theme}): ${tplBadge}`);
+          }
+          await page.locator('[data-slot="export-session-card"] [role="switch"]').first().click();
+          await page.locator('[data-slot="export-session-card"] .yui-export-copy-btn').click();
+          const expCopy = await page.locator('[data-slot="export-session-card"] .yui-export-copy-btn').textContent();
+          if (!expCopy?.includes('Copied')) {
+            throw new Error(`ExportSessionCard copy failed (${theme}): ${expCopy}`);
+          }
+        }
+
         if (panel === 'budget') {
           const budgetContrast = await page.evaluate(() => {
             const parseRgba = (str) => {
@@ -2556,7 +2706,7 @@ async function main() {
       // 400px width verification across key panels + reduced-motion audit
       await page.setViewportSize({ width: 400, height: 828 });
       await page.emulateMedia({ reducedMotion: 'reduce' });
-      for (const widePanel of ['chat', 'data', 'shortcuts', 'welcome', 'palette', 'diff', 'trace', 'drawers', 'budget', 'onboarding', 'recovery', 'voice']) {
+      for (const widePanel of ['chat', 'data', 'shortcuts', 'welcome', 'palette', 'diff', 'trace', 'drawers', 'budget', 'onboarding', 'recovery', 'voice', 'templates']) {
         await page.goto(`${baseUrl}/?mode=single&theme=${theme}&panel=${widePanel}&width=400`, {
           waitUntil: 'networkidle',
         });
@@ -2597,6 +2747,7 @@ async function main() {
         'onboarding',
         'recovery',
         'voice',
+        'templates',
         'genui',
       ]) {
         await page.goto(`${baseUrl}/?mode=single&theme=${theme}&panel=${narrowPanel}&narrow=1`, {
@@ -2818,16 +2969,32 @@ async function main() {
           outputs.push(recNarrowPath);
         }
         if (narrowPanel === 'voice') {
+          const voiceControlsCheck = await page.evaluate(() => {
+            const btns = Array.from(
+              document.querySelectorAll('[data-slot="voice-session-card"] .yui-voice-card-btns button'),
+            );
+            const tops = btns.map((b) => Math.round(b.getBoundingClientRect().top));
+            const uniqueRows = new Set(tops).size;
+            return { count: btns.length, uniqueRows };
+          });
+          if (voiceControlsCheck.count !== 3 || voiceControlsCheck.uniqueRows !== 1) {
+            throw new Error(`Expected VoiceSessionCard 3 primary controls on 1 row at 340px (${theme}): ${JSON.stringify(voiceControlsCheck)}`);
+          }
           const voiceNarrowPath = path.join(OUT_DIR, `specimen-${theme}-voice-340.png`);
           await page.screenshot({ path: voiceNarrowPath });
           outputs.push(voiceNarrowPath);
         }
+        if (narrowPanel === 'templates') {
+          const tplNarrowPath = path.join(OUT_DIR, `specimen-${theme}-templates-340.png`);
+          await page.screenshot({ path: tplNarrowPath });
+          outputs.push(tplNarrowPath);
+        }
       }
 
-      // Forced-colors audit at 380px across settings, recovery & voice
+      // Forced-colors audit at 380px across settings, recovery, voice & templates
       await page.setViewportSize({ width: 380, height: 828 });
       await page.emulateMedia({ forcedColors: 'active' });
-      for (const fcPanel of ['settings', 'recovery', 'voice']) {
+      for (const fcPanel of ['settings', 'recovery', 'voice', 'templates']) {
         await page.goto(`${baseUrl}/?mode=single&theme=${theme}&panel=${fcPanel}`, {
           waitUntil: 'networkidle',
         });
@@ -2842,8 +3009,8 @@ async function main() {
       }
       await page.emulateMedia({ forcedColors: 'none' });
 
-      // Overview 19-up comparison sheet
-      await page.setViewportSize({ width: 7700, height: 900 });
+      // Overview 20-up comparison sheet
+      await page.setViewportSize({ width: 8104, height: 900 });
       await page.goto(`${baseUrl}/?mode=gallery&theme=${theme}`, { waitUntil: 'networkidle' });
       const overviewPath = path.join(OUT_DIR, `specimen-${theme}-overview.png`);
       await page.screenshot({ path: overviewPath, fullPage: true });

@@ -109,6 +109,8 @@ describe('@yours/ui built ESM & CSS exports smoke test', () => {
     expect(typeof rootMod.InlineNotice).toBe('function');
     expect(typeof rootMod.AudioLevelMeter).toBe('function');
     expect(typeof rootMod.VoiceSessionCard).toBe('function');
+    expect(typeof rootMod.PromptTemplateList).toBe('function');
+    expect(typeof rootMod.ExportSessionCard).toBe('function');
 
     expect(typeof iconsMod.ApertureIcon).toBe('function');
     expect(typeof iconsMod.MatrixOrb).toBe('function');
@@ -134,6 +136,8 @@ describe('@yours/ui built ESM & CSS exports smoke test', () => {
     expect(typeof componentsMod.InlineNotice).toBe('function');
     expect(typeof componentsMod.AudioLevelMeter).toBe('function');
     expect(typeof componentsMod.VoiceSessionCard).toBe('function');
+    expect(typeof componentsMod.PromptTemplateList).toBe('function');
+    expect(typeof componentsMod.ExportSessionCard).toBe('function');
     expect(typeof genuiMod.CompareTable).toBe('function');
     expect(typeof genuiMod.MetricStripCard).toBe('function');
   });
@@ -190,6 +194,7 @@ describe('@yours/ui built ESM & CSS exports smoke test', () => {
         "import { MicIcon, YoursMark } from '@yours/ui/icons';",
         "import { SidePanelShell, TopNotch } from '@yours/ui/layout';",
         "import { ErrorRecoveryCard, FloatingComposer, InlineNotice } from '@yours/ui/components';",
+        "import { PromptTemplateList, ExportSessionCard } from '@yours/ui/components';",
         "import { CompareTable, MetricStripCard } from '@yours/ui/genui';",
         '',
         'export function ConsumerExample(props: FloatingComposerProps) {',
@@ -205,6 +210,8 @@ describe('@yours/ui built ESM & CSS exports smoke test', () => {
         '      <VoiceSessionCard state="listening" transcript="Testing" />',
         '      <InlineNotice tone="info" message="Compacted" />',
         '      <ErrorRecoveryCard title="Err" diagnosis="Diag" onRetry={() => {}} />',
+        '      <PromptTemplateList items={[{ id: "p1", command: "/sum", title: "Summarize" }]} onSelect={() => {}} />',
+        '      <ExportSessionCard metaLabel="4 turns" onCopy={() => {}} onDownload={() => {}} />',
         '      <MetricStripCard label="VRAM" primaryValue="2.4 GB" values={[2.1, 2.3, 2.4]} />',
         '      <CompareTable title="Bench" leftColumnTitle="A" rightColumnTitle="B" rows={[{ feature: "Speed", leftValue: "44", rightValue: "39" }]} />',
         '    </SidePanelShell>',
