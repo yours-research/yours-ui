@@ -74,14 +74,14 @@ export function ThreadHistoryList({
   return (
     <div data-slot="thread-history-list" className={rootClass}>
       {sections.map((section) => (
-        <div key={section.label || 'default'} className="yui-th-group" data-slot="thread-history-group">
+        <div key={section.label || 'default'} className="yui-col-5 yui-th-group" data-slot="thread-history-group">
           {section.label ? (
             <div className="yui-th-group-head">
               <span className="yui-th-group-title">{section.label}</span>
               <span className="yui-th-group-count">{section.entries.length}</span>
             </div>
           ) : null}
-          <ul className="yui-th-list" role="list">
+          <ul className="yui-list-plain yui-th-list yui-div-list" role="list">
             {section.entries.map((item) => {
               const isActive = item.id === activeId;
               const isConfirming = confirmDeleteId === item.id;
@@ -112,21 +112,21 @@ export function ThreadHistoryList({
                     <span className="yui-th-indicator" aria-hidden="true" />
                     <span className="yui-col-min">
                       <span className="yui-th-title-row">
-                        <span className="yui-th-title">{item.title}</span>
+                        <span className="yui-ellipsis yui-th-title">{item.title}</span>
                         {item.badge ? <span className="yui-th-badge">{item.badge}</span> : null}
                       </span>
-                      {item.preview ? <span className="yui-th-preview">{item.preview}</span> : null}
+                      {item.preview ? <span className="yui-ellipsis yui-th-preview">{item.preview}</span> : null}
                       <span className="yui-th-meta">{metaParts.join(' · ')}</span>
                     </span>
                   </button>
 
                   {(onTogglePin || onDelete) ? (
-                    <div className="yui-th-actions">
+                    <div className="yui-action-group">
                       {isConfirming && onDelete ? (
-                        <div className="yui-th-confirm" role="group" aria-label={`Delete options for ${item.title}`}>
+                        <div className="yui-action-group" role="group" aria-label={`Delete options for ${item.title}`}>
                           <button
                             type="button"
-                            className="yui-th-confirm-btn"
+                            className="yui-micro-pill yui-th-confirm-btn"
                             aria-label={`Confirm delete ${item.title}`}
                             onClick={() => {
                               setConfirmDeleteId(null);

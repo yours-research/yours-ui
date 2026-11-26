@@ -147,12 +147,12 @@ export function ModelRosterList({
                 }
               }}
             >
-              <span className="yui-model-left">
+              <span className="yui-row yui-w-full yui-gap-8">
                 <span className={isSelected ? 'yui-model-dot is-checked' : 'yui-model-dot'} aria-hidden="true" />
-                <LocalDeviceIcon size={13.5} className="yui-model-icon" />
+                <LocalDeviceIcon size={13.5} className="yui-privacy-icon" />
                 <span className="yui-col-min">
-                  <span className="yui-model-name-row">
-                    <span className="yui-model-name">{item.name}</span>
+                  <span className="yui-row yui-gap-5">
+                    <span className="yui-ellipsis yui-model-name">{item.name}</span>
                     {item.quantLabel ? <span className="yui-model-quant">{item.quantLabel}</span> : null}
                   </span>
                   <span className="yui-model-specs">
@@ -171,7 +171,7 @@ export function ModelRosterList({
               </span>
             </button>
 
-            <span className="yui-model-right">
+            <span className="yui-action-group">
               {item.state === 'active' ? (
                 <span className="yui-model-pill is-active">Active</span>
               ) : item.state === 'cached' ? (
@@ -179,7 +179,7 @@ export function ModelRosterList({
               ) : (
                 <button
                   type="button"
-                  className="yui-model-dl-btn"
+                  className="yui-micro-pill yui-model-dl-btn"
                   disabled={item.disabled}
                   aria-label={`Download ${item.name}`}
                   onClick={() => {

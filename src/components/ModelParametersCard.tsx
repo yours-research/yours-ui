@@ -1,5 +1,6 @@
 import { useId, useState } from 'react';
 import { RetryIcon, SlidersIcon } from '../icons/ApertureIcon.js';
+import { CardHeaderChrome } from './CardChrome.js';
 import { SegmentedControl, type SegmentedOption } from './SegmentedControl.js';
 
 export type ThinkingMode = 'auto' | 'fast' | 'deep';
@@ -111,19 +112,15 @@ export function ModelParametersCard({
   return (
     <section
       data-slot="model-parameters-card"
-      className={['yui-params-card', className].filter(Boolean).join(' ')}
+      className={['yui-card-shell', 'yui-params-card', className].filter(Boolean).join(' ')}
       aria-label={title}
     >
-      <header className="yui-params-head">
-        <div className="yui-col-min">
-          <div className="yui-setting-title-row">
-            <SlidersIcon size={13} className="yui-privacy-icon" />
-            <h3 className="yui-genui-title">{title}</h3>
-          </div>
-          {subtitle ? <p className="yui-genui-muted">{subtitle}</p> : null}
-        </div>
-        {modelLabel ? <span className="yui-badge">{modelLabel}</span> : null}
-      </header>
+      <CardHeaderChrome
+        icon={<SlidersIcon size={13} className="yui-privacy-icon" />}
+        title={title}
+        subtitle={subtitle}
+        right={modelLabel ? <span className="yui-badge">{modelLabel}</span> : null}
+      />
 
       <div className="yui-params-groups">
         <div className="yui-params-field">

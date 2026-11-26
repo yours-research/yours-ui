@@ -95,6 +95,7 @@ import {
   SidePanelShell,
   SitePermissionsList,
   AgentHandoffCard,
+  ConfirmActionCard,
   SourcesDrawer,
   StatusBadge,
   StatusToast,
@@ -1804,6 +1805,7 @@ function PermissionsAndHandoffPanel({ theme }: { theme: 'light' | 'dark' }) {
         onCancel={() => setStatusMsg('Automated checkout cancelled')}
       />
       <SitePermissionsList
+        confirmRevokeAll
         items={items}
         onModeChange={(id, nextMode) => {
           setItems((prev) =>
@@ -1819,6 +1821,18 @@ function PermissionsAndHandoffPanel({ theme }: { theme: 'light' | 'dark' }) {
           setItems([]);
           setStatusMsg('All site permissions revoked');
         }}
+      />
+      <ConfirmActionCard
+        title="Purge local OPFS cache"
+        description="Removes indexed weights and session shards stored on this device."
+        rows={[
+          { label: 'Target', value: 'OPFS · Qwen3.5-4B' },
+          { label: 'Reclaim', value: '2.4 GB · 14 shards' },
+        ]}
+        holdDurationMs={450}
+        confirmLabel="Purge cache"
+        onConfirm={() => setStatusMsg('Purged local cache')}
+        onCancel={() => setStatusMsg('Cache purge cancelled')}
       />
     </SidePanelShell>
   );
@@ -1915,6 +1929,7 @@ function RtlShowcasePanel({ theme }: { theme: 'light' | 'dark' }) {
       <SitePermissionsList
         title="أذونات المواقع"
         subtitle="سجل صلاحيات كل نطاق محلياً"
+        confirmRevokeAll
         items={[
           {
             id: 'rtl-sp1',
@@ -1926,6 +1941,21 @@ function RtlShowcasePanel({ theme }: { theme: 'light' | 'dark' }) {
         ]}
         onModeChange={() => {}}
         onRevoke={() => {}}
+      />
+      <ConfirmActionCard
+        title="حذف ذاكرة التخزين المحلية"
+        description="إزالة أوزان النماذج والبيانات المفهرسة من هذا الجهاز فقط."
+        rows={[
+          { label: 'المسار', value: 'OPFS · Qwen3.5-4B' },
+          { label: 'الحجم', value: '2.4 GB' },
+        ]}
+        holdDurationMs={450}
+        confirmLabel="تأكيد الحذف"
+        holdPromptLabel="اضغط مطولاً للحذف"
+        cancelLabel="إلغاء"
+        privacyNote="إجراء محلي · لا يمكن التراجع"
+        onConfirm={() => {}}
+        onCancel={() => {}}
       />
       <PromptTemplateList
         items={[
@@ -2421,6 +2451,15 @@ async function main() {
         }
 
         if (panel === 'permissions') {
+          const rowAlignment = await page.evaluate(() => {
+            const groups = Array.from(
+              document.querySelectorAll('[data-slot="site-permissions-list"] [role="radiogroup"]'),
+            );
+            return groups.map((g) => Math.round(g.getBoundingClientRect().left));
+          });
+          if (rowAlignment.length < 2 || rowAlignment.some((x) => Math.abs(x - rowAlignment[0]) > 1)) {
+            throw new Error(`SitePermissionsList row controls misaligned (${theme}): ${JSON.stringify(rowAlignment)}`);
+          }
           const lockedDisabled = await page
             .locator('[data-permission-id="sp3"] [role="radio"]')
             .nth(2)
@@ -2442,10 +2481,27 @@ async function main() {
           ) {
             throw new Error(`SitePermissionsList mode change failed (${theme})`);
           }
-          await page.locator('[data-slot="site-permissions-list"] footer button').click();
-          if ((await page.locator('[data-slot="site-permissions-list"] .yui-audit-empty').count()) !== 1) {
+          await page.locator('[data-slot="site-permissions-list"] footer button:has-text("Revoke all")').click();
+          if ((await page.locator('[data-slot="site-permissions-list"] [role="group"]').count()) !== 1) {
+            throw new Error(`SitePermissionsList inline confirmRevokeAll did not open (${theme})`);
+          }
+          await page.keyboard.press('Escape');
+          if ((await page.locator('[data-slot="site-permissions-list"] [role="group"]').count()) !== 0) {
+            throw new Error(`SitePermissionsList Escape did not dismiss confirmRevokeAll (${theme})`);
+          }
+          await page.locator('[data-slot="site-permissions-list"] footer button:has-text("Revoke all")').click();
+          await page.locator('[data-slot="site-permissions-list"] [role="group"] button:has-text("Confirm revoke")').click();
+          if ((await page.locator('[data-slot="site-permissions-list"] .yui-empty-box').count()) !== 1) {
             throw new Error(`SitePermissionsList Revoke all empty state failed (${theme})`);
           }
+          await page.locator('[data-slot="confirm-action-card"]').press('Escape');
+          const holdBtn = page.locator('[data-slot="confirm-action-card"] button:has-text("Hold to purge cache")');
+          const box = await holdBtn.boundingBox();
+          if (!box) throw new Error(`Missing ConfirmActionCard hold button (${theme})`);
+          await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
+          await page.mouse.down();
+          await page.waitForTimeout(550);
+          await page.mouse.up();
         }
 
         if (panel === 'chat') {
@@ -3746,6 +3802,7 @@ async function main() {
           outputs.push(controlsNarrowPath);
         }
         if (narrowPanel === 'permissions') {
+          await blurActive();
           const permOverflow = await page.evaluate(() => ({
             overflow: document.documentElement.scrollWidth > 340,
             inlineStyles: document.querySelectorAll('#specimen-root [style]').length,

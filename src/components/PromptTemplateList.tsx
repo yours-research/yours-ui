@@ -126,7 +126,7 @@ export function PromptTemplateList({
     }
   };
 
-  const rootClass = ['yui-ptl-card', className].filter(Boolean).join(' ');
+  const rootClass = ['yui-card-shell', 'yui-ptl-card', className].filter(Boolean).join(' ');
 
   return (
     <section
@@ -141,8 +141,8 @@ export function PromptTemplateList({
       </div>
 
       {searchable ? (
-        <div className="yui-ptl-search-wrap">
-          <SearchIcon size={12.5} className="yui-ptl-search-icon" />
+        <div className="yui-row yui-well yui-ptl-search-wrap">
+          <SearchIcon size={12.5} className="yui-privacy-icon" />
           <input
             type="search"
             className="yui-ptl-search"
@@ -165,7 +165,7 @@ export function PromptTemplateList({
       ) : null}
 
       {categories.length > 0 ? (
-        <div className="yui-ptl-cats" role="tablist" aria-label="Template categories">
+        <div className="yui-row yui-wrap" role="tablist" aria-label="Template categories">
           {categories.map((cat) => {
             const active = cat === activeCategory;
             return (
@@ -185,11 +185,11 @@ export function PromptTemplateList({
       ) : null}
 
       {visibleItems.length === 0 ? (
-        <div className="yui-ptl-empty" role="status">
+        <div className="yui-empty-box yui-ptl-empty" role="status">
           {emptyLabel}
         </div>
       ) : (
-        <ul className="yui-ptl-list" role="listbox" aria-label={title}>
+        <ul className="yui-list-plain yui-well yui-storage-list yui-div-list" role="listbox" aria-label={title}>
           {visibleItems.map((item, idx) => {
             const isSelected = idx === resolvedActiveIndex;
             const rowClass = ['yui-ptl-row', isSelected ? 'is-active' : '']
@@ -217,15 +217,15 @@ export function PromptTemplateList({
                     onSelect(item);
                   }}
                 >
-                  <div className="yui-ptl-main-top">
+                  <div className="yui-row yui-wrap">
                     <span className="yui-ptl-cmd">{item.command}</span>
-                    <span className="yui-ptl-item-title">{item.title}</span>
+                    <span className="yui-ellipsis yui-ptl-item-title">{item.title}</span>
                     {item.shortcut ? (
                       <KbdHint keys={item.shortcut} size="xs" className="yui-ptl-kbd" />
                     ) : null}
                   </div>
                   {item.description ? (
-                    <span className="yui-ptl-desc">{item.description}</span>
+                    <span className="yui-ellipsis yui-ptl-desc">{item.description}</span>
                   ) : null}
                 </button>
 

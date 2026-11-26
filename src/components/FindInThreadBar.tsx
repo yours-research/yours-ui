@@ -74,8 +74,8 @@ export function FindInThreadBar({
       aria-label="Find in thread"
       className={rootClass}
     >
-      <div className="yui-find-input-wrap">
-        <SearchIcon size={12.5} className="yui-find-icon" />
+      <div className="yui-row yui-find-input-wrap">
+        <SearchIcon size={12.5} className="yui-privacy-icon" />
         <input
           ref={inputRef}
           type="search"
@@ -110,7 +110,7 @@ export function FindInThreadBar({
         </span>
       ) : null}
 
-      <div className="yui-find-actions">
+      <div className="yui-action-group">
         {onToggleCaseSensitive ? (
           <button
             type="button"

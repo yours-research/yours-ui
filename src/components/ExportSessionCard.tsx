@@ -108,7 +108,7 @@ export function ExportSessionCard({
     onCopy?.(currentOptions);
   };
 
-  const rootClass = ['yui-export-card', className].filter(Boolean).join(' ');
+  const rootClass = ['yui-card-shell', 'yui-export-card', className].filter(Boolean).join(' ');
 
   return (
     <section
@@ -117,7 +117,7 @@ export function ExportSessionCard({
       className={rootClass}
       aria-label={title}
     >
-      <div className="yui-export-head">
+      <div className="yui-col yui-export-head">
         <div className="yui-export-title-row">
           <h3 className="yui-export-title">{title}</h3>
           {metaLabel ? <span className="yui-export-meta">{metaLabel}</span> : null}
@@ -135,9 +135,9 @@ export function ExportSessionCard({
       />
 
       {showToolTracesToggle || showCitationsToggle ? (
-        <div className="yui-export-toggles">
+        <div className="yui-list-plain yui-well yui-storage-list yui-div-list">
           {showToolTracesToggle ? (
-            <div className="yui-export-toggle-row">
+            <div className="yui-row-between yui-export-toggle-row">
               <span className="yui-export-toggle-label">Include tool traces</span>
               <button
                 type="button"
@@ -153,7 +153,7 @@ export function ExportSessionCard({
             </div>
           ) : null}
           {showCitationsToggle ? (
-            <div className="yui-export-toggle-row">
+            <div className="yui-row-between yui-export-toggle-row">
               <span className="yui-export-toggle-label">Include citations</span>
               <button
                 type="button"
@@ -171,7 +171,7 @@ export function ExportSessionCard({
         </div>
       ) : null}
 
-      <div className="yui-export-actions">
+      <div className="yui-actions-end">
         {onCopy ? (
           <button
             type="button"
@@ -196,7 +196,7 @@ export function ExportSessionCard({
         ) : null}
       </div>
 
-      <div className="yui-export-privacy">
+      <div className="yui-storage-privacy yui-privacy-foot yui-export-privacy">
         <ShieldIcon size={11.5} className="yui-privacy-icon" />
         <span>{privacyNote}</span>
       </div>

@@ -70,7 +70,7 @@ export function MemoryRecordCard({
             <span className="yui-mem-meta">{record.scoreLabel}</span>
           ) : null}
         </div>
-        <div className="yui-mem-meta-row">
+        <div className="yui-row yui-shrink">
           {record.sourceDomain ? (
             <span className="yui-mem-domain">{record.sourceDomain}</span>
           ) : null}
@@ -95,7 +95,7 @@ export function MemoryRecordCard({
       ) : null}
 
       {(isForgotten && onUndo) || (!isForgotten && onForget) ? (
-        <div className="yui-mem-foot">
+        <div className="yui-actions-end yui-pt-2">
           {isForgotten && onUndo ? (
             <>
               <span className="yui-mem-meta">Marked to forget locally</span>
@@ -199,7 +199,7 @@ export function MemoryInspectorList({
     }
   }
 
-  const listClass = ['yui-mem-inspector', className].filter(Boolean).join(' ');
+  const listClass = ['yui-col-10', className].filter(Boolean).join(' ');
 
   return (
     <div data-slot="memory-inspector-list" className={listClass}>
@@ -215,7 +215,7 @@ export function MemoryInspectorList({
       {filtered.length === 0 ? (
         <EmptyState title={emptyTitle} subtitle={emptySubtitle} orbState="idle" orbSize={20} />
       ) : hasGroups ? (
-        <div className="yui-mem-groups">
+        <div className="yui-col-12">
           {grouped.map((group) => (
             <section
               key={group.label}
@@ -227,7 +227,7 @@ export function MemoryInspectorList({
                 <span className="yui-mem-group-title">{group.label}</span>
                 <span className="yui-mem-group-count">{group.items.length}</span>
               </div>
-              <div className="yui-mem-list">
+              <div className="yui-col-8">
                 {group.items.map((record) => (
                   <MemoryRecordCard
                     key={record.id}
@@ -243,7 +243,7 @@ export function MemoryInspectorList({
           ))}
         </div>
       ) : (
-        <div className="yui-mem-list">
+        <div className="yui-col-8">
           {filtered.map((record) => (
             <MemoryRecordCard
               key={record.id}

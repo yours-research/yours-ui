@@ -30,7 +30,7 @@ export function SettingsToggleRow({
   disabled = false,
   className,
 }: SettingsToggleRowProps) {
-  const rowClass = ['yui-setting-row', disabled ? 'is-disabled' : '', className]
+  const rowClass = ['yui-row-between', 'yui-setting-row', disabled ? 'is-disabled' : '', className]
     .filter(Boolean)
     .join(' ');
   const switchClass = ['yui-switch', checked ? 'is-checked' : ''].filter(Boolean).join(' ');
@@ -43,7 +43,7 @@ export function SettingsToggleRow({
           {badge ? <StatusBadge tone={badgeTone}>{badge}</StatusBadge> : null}
           {shortcut ? <KbdHint keys={shortcut} /> : null}
         </div>
-        {description ? <p className="yui-setting-desc">{description}</p> : null}
+        {description ? <p className="yui-muted-note">{description}</p> : null}
       </div>
       <button
         type="button"
@@ -83,11 +83,11 @@ export function SettingsSection({
   footer,
   className,
 }: SettingsSectionProps) {
-  const cardClass = ['yui-settings-card', className].filter(Boolean).join(' ');
+  const cardClass = ['yui-card-shell', 'yui-settings-card', className].filter(Boolean).join(' ');
 
   return (
     <section data-slot="settings-section" className={cardClass} aria-label={title}>
-      <header className="yui-settings-head">
+      <header className="yui-params-head">
         <div className="yui-col-min">
           <div className="yui-setting-title-row">
             <h3 className="yui-genui-title">{title}</h3>
@@ -96,7 +96,7 @@ export function SettingsSection({
           {subtitle ? <p className="yui-genui-muted">{subtitle}</p> : null}
         </div>
       </header>
-      <div className="yui-settings-list">{children}</div>
+      <div className="yui-list-plain yui-div-list">{children}</div>
       {footer ? <footer className="yui-settings-foot">{footer}</footer> : null}
     </section>
   );
@@ -162,7 +162,7 @@ export function LocalVaultExportCard({
   const [isDragging, setIsDragging] = useState(false);
 
   const validPassphrase = passphrase.trim().length >= minPassphraseLength;
-  const cardClass = ['yui-vault-card', className].filter(Boolean).join(' ');
+  const cardClass = ['yui-card-shell', 'yui-vault-card', className].filter(Boolean).join(' ');
   const dropClass = ['yui-vault-drop', isDragging ? 'is-dragging' : '']
     .filter(Boolean)
     .join(' ');
@@ -176,10 +176,10 @@ export function LocalVaultExportCard({
 
   return (
     <section data-slot="local-vault-export-card" className={cardClass} aria-label={title}>
-      <div className="yui-vault-head">
+      <div className="yui-params-head">
         <div className="yui-col-min">
           <div className="yui-setting-title-row">
-            <ShieldIcon size={13} className="yui-hw-icon" />
+            <ShieldIcon size={13} className="yui-privacy-icon" />
             <h3 className="yui-genui-title">{title}</h3>
           </div>
           {subtitle ? <p className="yui-genui-muted">{subtitle}</p> : null}
@@ -190,7 +190,7 @@ export function LocalVaultExportCard({
       </div>
 
       <div className="yui-vault-field">
-        <label htmlFor={inputId} className="yui-vault-label">
+        <label htmlFor={inputId} className="yui-params-label">
           {passphraseLabel}
         </label>
         <input
@@ -307,7 +307,7 @@ export function LocalVaultExportCard({
             </div>
           ) : (
             <>
-              <span className="yui-vault-danger-hint">Irreversible local reset</span>
+              <span className="yui-muted-note">Irreversible local reset</span>
               <button
                 type="button"
                 disabled={busy}

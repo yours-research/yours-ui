@@ -37,7 +37,7 @@ export function PermissionCard({
   disabled = false,
   className,
 }: PermissionCardProps) {
-  const cardClass = ['yui-perm-card', className].filter(Boolean).join(' ');
+  const cardClass = ['yui-card-shell', 'yui-perm-card', className].filter(Boolean).join(' ');
 
   const handleKeyDown = (event: KeyboardEvent<HTMLElement>) => {
     if (disabled) return;
@@ -66,7 +66,7 @@ export function PermissionCard({
           <ShieldIcon size={14} />
         </span>
         <div className="yui-col-min">
-          <div className="yui-perm-title-row">
+          <div className="yui-row yui-wrap">
             <h3 className="yui-perm-title">{title}</h3>
             {ruleLabel ? <span className="yui-perm-rule">{ruleLabel}</span> : null}
           </div>
@@ -78,7 +78,7 @@ export function PermissionCard({
         <div className="yui-perm-meta-row">
           <dt className="yui-perm-meta-label">Domain</dt>
           <dd className="yui-perm-meta-val yui-perm-domain">
-            <GlobeIcon size={11.5} className="yui-perm-domain-icon" />
+            <GlobeIcon size={11.5} className="yui-privacy-icon" />
             <span>{domain}</span>
           </dd>
         </div>
@@ -88,7 +88,7 @@ export function PermissionCard({
         </div>
       </dl>
 
-      <div className="yui-perm-actions">
+      <div className="yui-row-between yui-wrap">
         {onAlwaysSite ? (
           <button
             type="button"
@@ -99,7 +99,7 @@ export function PermissionCard({
             {alwaysSiteLabel}
           </button>
         ) : null}
-        <div className="yui-perm-btn-pair">
+        <div className="yui-action-group">
           <button
             type="button"
             className="yui-pill-btn yui-perm-deny-btn"

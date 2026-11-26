@@ -60,6 +60,7 @@ export function ContextBudgetMeter({
 
   const hasBreakdown = Boolean(segments && segments.length > 0);
   const rootClass = [
+    'yui-card-shell',
     'yui-budget-card',
     level === 'warning' ? 'is-warning' : '',
     level === 'critical' ? 'is-critical' : '',
@@ -85,7 +86,7 @@ export function ContextBudgetMeter({
             onClick={() => setExpanded((prev) => !prev)}
           >
             <span className="yui-budget-title-row">
-              <SlidersIcon size={12.5} className="yui-budget-icon" />
+              <SlidersIcon size={12.5} className="yui-privacy-icon" />
               <span className="yui-budget-title">{title}</span>
             </span>
             <span className="yui-budget-right">
@@ -99,7 +100,7 @@ export function ContextBudgetMeter({
         ) : (
           <div className="yui-budget-static">
             <span className="yui-budget-title-row">
-              <SlidersIcon size={12.5} className="yui-budget-icon" />
+              <SlidersIcon size={12.5} className="yui-privacy-icon" />
               <span className="yui-budget-title">{title}</span>
             </span>
             <span className="yui-budget-summary">{resolvedSummary}</span>
@@ -123,11 +124,11 @@ export function ContextBudgetMeter({
           inert={!expanded ? true : undefined}
         >
           <div className="yui-disclosure-inner">
-            <ul className="yui-budget-breakdown" role="list">
+            <ul className="yui-list-plain yui-budget-breakdown" role="list">
               {segments.map((seg) => (
                 <li key={seg.id} className="yui-budget-seg-row" data-segment-id={seg.id}>
                   <span className="yui-budget-seg-label">{seg.label}</span>
-                  <span className="yui-budget-seg-vals">
+                  <span className="yui-row yui-budget-seg-vals">
                     {seg.percent !== undefined ? (
                       <span className="yui-budget-seg-pct">{seg.percent}%</span>
                     ) : null}

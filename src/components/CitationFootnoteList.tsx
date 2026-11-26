@@ -67,7 +67,7 @@ export function CitationFootnoteList({
     onCopyQuote?.(citation);
   };
 
-  const rootClass = ['yui-fn-card', className].filter(Boolean).join(' ');
+  const rootClass = ['yui-card-shell', 'yui-fn-card', className].filter(Boolean).join(' ');
 
   return (
     <section
@@ -75,12 +75,12 @@ export function CitationFootnoteList({
       className={rootClass}
       aria-label={title}
     >
-      <div className="yui-fn-head">
+      <div className="yui-params-head yui-fn-head">
         <span className="yui-fn-head-title">{title}</span>
-        <span className="yui-fn-head-count">{citations.length}</span>
+        <span className="yui-badge">{citations.length}</span>
       </div>
 
-      <ol className="yui-fn-list">
+      <ol className="yui-list-plain yui-div-list">
         {citations.map((item) => {
           const isActive =
             activeIndex !== undefined && String(activeIndex) === String(item.index);
@@ -96,8 +96,8 @@ export function CitationFootnoteList({
               data-citation-id={item.id}
               data-citation-index={String(item.index)}
             >
-              <div className="yui-fn-row-head">
-                <span className="yui-fn-num">{item.index}</span>
+              <div className="yui-row-start">
+                <span className="yui-sq-22 yui-fn-num">{item.index}</span>
                 <div className="yui-col-min">
                   <div className="yui-fn-title">{item.title}</div>
                   {metaParts.length > 0 ? (
@@ -110,11 +110,11 @@ export function CitationFootnoteList({
                 {item.excerpt}
               </blockquote>
 
-              <div className="yui-fn-actions">
+              <div className="yui-actions-end">
                 {onShowOnPage ? (
                   <button
                     type="button"
-                    className="yui-fn-btn"
+                    className="yui-micro-pill yui-fn-btn"
                     onClick={() => onShowOnPage(item)}
                   >
                     <span>{showOnPageLabel}</span>
@@ -125,7 +125,7 @@ export function CitationFootnoteList({
                     href={item.url}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="yui-fn-btn"
+                    className="yui-micro-pill yui-fn-btn"
                   >
                     <span>{showOnPageLabel}</span>
                     <ExternalLinkIcon size={11} />
@@ -134,7 +134,7 @@ export function CitationFootnoteList({
 
                 <button
                   type="button"
-                  className="yui-fn-btn"
+                  className="yui-micro-pill yui-fn-btn"
                   aria-label={`${copyLabel} ${item.index}`}
                   onClick={() => handleCopy(item)}
                 >

@@ -41,7 +41,7 @@ export function OnboardingCard({
   onSecondaryAction,
   className,
 }: OnboardingCardProps) {
-  const rootClass = ['yui-onb-card', className].filter(Boolean).join(' ');
+  const rootClass = ['yui-card-shell', 'yui-onb-card', className].filter(Boolean).join(' ');
 
   return (
     <section
@@ -49,7 +49,7 @@ export function OnboardingCard({
       className={rootClass}
       aria-label={title}
     >
-      <div className="yui-onb-hero">
+      <div className="yui-row-start yui-onb-hero">
         <div className="yui-onb-mark" aria-hidden="true">
           <YoursMark size={20} />
         </div>
@@ -59,9 +59,9 @@ export function OnboardingCard({
         </div>
       </div>
 
-      <div className="yui-onb-spec">
+      <div className="yui-row-between yui-wrap yui-well yui-onb-spec">
         <div className="yui-onb-ckpt">
-          <LocalDeviceIcon size={13.5} className="yui-onb-device-icon" />
+          <LocalDeviceIcon size={13.5} className="yui-privacy-icon" />
           <span className="yui-onb-ckpt-label">{checkpointLabel}</span>
         </div>
         <div className="yui-onb-chips">
@@ -72,7 +72,7 @@ export function OnboardingCard({
         </div>
       </div>
 
-      <div className="yui-onb-actions">
+      <div className="yui-col yui-onb-actions">
         <button
           type="button"
           className="yui-onb-cta"
@@ -95,8 +95,8 @@ export function OnboardingCard({
         ) : null}
       </div>
 
-      <div className="yui-onb-privacy">
-        <ShieldIcon size={12} className="yui-onb-shield" />
+      <div className="yui-storage-privacy yui-privacy-foot yui-onb-privacy">
+        <ShieldIcon size={12} className="yui-privacy-icon" />
         <span>{privacyNote}</span>
       </div>
     </section>

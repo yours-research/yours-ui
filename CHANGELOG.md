@@ -3,13 +3,15 @@
 All notable milestones for **`@yours/ui`** are documented here.
 The library targets Chrome MV3 side panels (`340px–440px`), maintains zero runtime dependencies, zero JSX inline `style` attributes, and zero `dangerouslySetInnerHTML`.
 
-## Unreleased / Milestone 22 (PR #25)
+## Unreleased / Milestone 23 (PR #26)
 
-- Added `SitePermissionsList` (`src/components/SitePermissionsList.tsx`) — local revocable per-origin permission ledger (`Off` · `Once` · `Site` via `SegmentedControl`, optional `lockedReason` disabling persistent site-wide access on banking/sensitive flows, per-origin `Revoke` / `Revoke all`, and empty state `"No sites approved — all requests ask first"`).
-- Added `AgentHandoffCard` (`src/components/AgentHandoffCard.tsx`) — tactile human-in-the-loop pause & takeover card for login walls, CAPTCHAs, checkout steps, or sensitive forms with amber left accent, active origin, `paused at` step progress, `Take over tab` / `Resume` / `Cancel` controls, and zero inline styles.
-- Reused shared `.yui-storage-list` / `.yui-audit-row` / `.yui-perm-scope` layout styles in `src/styles/components.css` (`@media (forced-colors: active)` and `dir="rtl"` ready) to stay cleanly within the `<= 80.00 KB` JS gzip and `<= 19.00 KB` CSS gzip MV3 budgets, with full jsdom unit tests, `esbuild` tree-shaking checks, and Playwright Light/Dark/RTL/`400px`/`340px` audits.
+- Added `ConfirmActionCard` (`src/components/ConfirmActionCard.tsx`) — high-stakes local confirmation primitive with `danger`/`amber` accent tones, compact key-value summary well (`CardMetaScope`), optional typed phrase confirmation (`confirmPhrase`), pointer & `Space`/`Enter` keyboard hold-to-confirm (`holdDurationMs` with `prefers-reduced-motion` static countdown status fallback), `Esc` dismissal, and default focus on `Cancel`.
+- Polished `SitePermissionsList` (`src/components/SitePermissionsList.tsx`) so per-origin controls stack uniformly below every origin across all `340px–440px` widths (eliminating horizontal zigzagging at `400px`) and added optional inline `Revoke all` confirmation (`confirmRevokeAll`, default `false`) focusing `Cancel` with `Escape` dismissal.
+- Reclaimed Chrome MV3 CSS and JS bundle headroom by consolidating duplicate rules/selectors across `src/styles/components.css`, extracting shared chrome helpers in `src/components/CardChrome.tsx`, and enabling identifier minification in `scripts/copy-assets.mjs` (`115.75 KB` raw / `17.79 KB` gzip CSS, `186.96 KB` raw / `75.35 KB` gzip JS across `87` ESM modules).
 
 ## Milestone History (`v0.1.0`)
+
+- **Milestone 22 (PR #25):** Added `SitePermissionsList` (`src/components/SitePermissionsList.tsx`) — local revocable per-origin permission ledger (`Off` · `Once` · `Site` via `SegmentedControl`, optional `lockedReason` disabling persistent site-wide access on banking/sensitive flows, per-origin `Revoke` / `Revoke all`, and empty state `"No sites approved — all requests ask first"`); and added `AgentHandoffCard` (`src/components/AgentHandoffCard.tsx`) — tactile human-in-the-loop pause & takeover card for login walls, CAPTCHAs, checkout steps, or sensitive forms.
 
 - **Milestone 21 (PR #24):** Reclaimed MV3 bundle size headroom via AST whitespace/syntax JS minification + min-gzip CSS output in `scripts/copy-assets.mjs` and duplicate card/selector consolidation in `src/styles/components.css` — cutting total JS to `76.48 KB` gzip (`<= 80.00 KB` budget) and total CSS to `18.81 KB` gzip (`<= 19.00 KB` budget); upgraded directional styles to CSS logical properties with `dir="rtl"` `340px` Playwright verification, `esbuild` subpath tree-shaking checks, and [`docs/CONSUMERS.md`](docs/CONSUMERS.md).
 
