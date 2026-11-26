@@ -96,6 +96,8 @@ import {
   SitePermissionsList,
   AgentHandoffCard,
   ConfirmActionCard,
+  PageSelectionCard,
+  DeviceCapabilityCard,
   SourcesDrawer,
   StatusBadge,
   StatusToast,
@@ -1838,6 +1840,58 @@ function PermissionsAndHandoffPanel({ theme }: { theme: 'light' | 'dark' }) {
   );
 }
 
+function PreflightAndSelectionPanel({ theme }: { theme: 'light' | 'dark' }) {
+  const [statusMsg, setStatusMsg] = useState('WebGPU adapter probed locally');
+  const [tierId, setTierId] = useState('1.5b');
+  const [expanded, setExpanded] = useState(false);
+
+  return (
+    <SidePanelShell
+      theme={theme}
+      notch={<TopNotch items={NOTCH_ITEMS} expandedId={null} />}
+      footer={
+        <FloatingComposer
+          value=""
+          onChange={() => {}}
+          onSubmit={() => {}}
+          leftSlot={<StatusBadge tone="local" dot>{statusMsg}</StatusBadge>}
+        />
+      }
+    >
+      <DeviceCapabilityCard
+        status="tight"
+        adapterName="Apple M2 Pro (16-core)"
+        vramLabel="16.0 GB unified"
+        ramLabel="16 GB"
+        diskLabel="4.8 GB free"
+        headroom={{ usedGb: 8.6, neededGb: 3.4, freeGb: 7.4, totalGb: 16 }}
+        selectedTierId={tierId}
+        tiers={[
+          { id: '1.5b', label: '1.5B Q4', detail: '1.3 GB', recommended: true },
+          { id: '4b', label: '4B Q4', detail: '3.4 GB' },
+          { id: '9b', label: '9B Q4', detail: '6.2 GB', disabled: true },
+        ]}
+        onSelectTier={(id) => {
+          setTierId(id);
+          setStatusMsg('Selected tier ' + id);
+        }}
+        onRecheck={() => setStatusMsg('Hardware preflight refreshed')}
+      />
+      <PageSelectionCard
+        origin="docs.yours.sh"
+        pageTitle="MV3 Local Inference Spec"
+        locator="§2 · ¶1"
+        tokenEstimate="~48 tok"
+        expanded={expanded}
+        onExpandedChange={(next) => setExpanded(next)}
+        excerpt="Local-first Chrome MV3 assistants keep tab context, embeddings, and quantized weights inside your Origin Private File System without sending DOM fragments to remote servers even during long research sessions."
+        onLocate={() => setStatusMsg('Highlighted selection in tab')}
+        onDismiss={() => setStatusMsg('Removed pinned selection')}
+      />
+    </SidePanelShell>
+  );
+}
+
 function RtlShowcasePanel({ theme }: { theme: 'light' | 'dark' }) {
   return (
     <SidePanelShell
@@ -1983,11 +2037,13 @@ function SpecimenApp() {
   const dir = params.get('dir') === 'rtl' ? 'rtl' : undefined;
   const widthMode = params.get('width') || (params.get('narrow') === '1' ? '340' : '380');
   const singleClass =
-    widthMode === '340'
-      ? 'yui-spec-single yui-spec-single--narrow'
-      : widthMode === '400'
-        ? 'yui-spec-single yui-spec-single--wide'
-        : 'yui-spec-single';
+    widthMode === '320'
+      ? 'yui-spec-single yui-spec-single--compact'
+      : widthMode === '340'
+        ? 'yui-spec-single yui-spec-single--narrow'
+        : widthMode === '400'
+          ? 'yui-spec-single yui-spec-single--wide'
+          : 'yui-spec-single';
 
   if (mode === 'single') {
     return (
@@ -2015,6 +2071,7 @@ function SpecimenApp() {
         {panel === 'storage' ? <StorageAndFindPanel theme={theme} /> : null}
         {panel === 'controls' ? <ControlsAndAuditPanel theme={theme} /> : null}
         {panel === 'permissions' ? <PermissionsAndHandoffPanel theme={theme} /> : null}
+        {panel === 'preflight' ? <PreflightAndSelectionPanel theme={theme} /> : null}
         {panel === 'rtl' ? <RtlShowcasePanel theme={theme} /> : null}
       </div>
     );
@@ -2044,6 +2101,7 @@ function SpecimenApp() {
       <div className="yui-spec-frame"><StorageAndFindPanel theme={theme} /></div>
       <div className="yui-spec-frame"><ControlsAndAuditPanel theme={theme} /></div>
       <div className="yui-spec-frame"><PermissionsAndHandoffPanel theme={theme} /></div>
+      <div className="yui-spec-frame"><PreflightAndSelectionPanel theme={theme} /></div>
       <div className="yui-spec-frame-auto"><GenUiShowcasePanel theme={theme} /></div>
     </div>
   );
@@ -2067,6 +2125,10 @@ html, body {
   min-height: 828px;
   box-sizing: border-box;
   background: var(--bg-canvas);
+}
+
+.yui-spec-single--compact {
+  width: 320px;
 }
 
 .yui-spec-single--narrow {
@@ -2274,6 +2336,7 @@ async function main() {
       'storage',
       'controls',
       'permissions',
+      'preflight',
     ];
     const auditPanelContrast = async (activeTheme, panelName) => {
       const failures = await page.evaluate((t) => {
@@ -2502,6 +2565,22 @@ async function main() {
           await page.mouse.down();
           await page.waitForTimeout(550);
           await page.mouse.up();
+        }
+
+        if (panel === 'preflight') {
+          const tier4b = page.locator('[data-slot="device-capability-card"] button:has-text("4B Q4")');
+          await tier4b.click();
+          if ((await tier4b.getAttribute('aria-pressed')) !== 'true') {
+            throw new Error(`DeviceCapabilityCard tier switch failed (${theme})`);
+          }
+          await page.locator('[data-slot="device-capability-card"] footer button:has-text("Re-check")').click();
+          const toggleSel = page.locator('[data-slot="page-selection-card"] button[aria-expanded]');
+          await toggleSel.click();
+          if ((await toggleSel.getAttribute('aria-expanded')) !== 'true') {
+            throw new Error(`PageSelectionCard Expand toggle failed (${theme})`);
+          }
+          await toggleSel.click();
+          await page.locator('[data-slot="page-selection-card"] button:has-text("Show on page")').click();
         }
 
         if (panel === 'chat') {
@@ -3478,7 +3557,7 @@ async function main() {
       // 400px width verification across key panels + reduced-motion audit
       await page.setViewportSize({ width: 400, height: 828 });
       await page.emulateMedia({ reducedMotion: 'reduce' });
-      for (const widePanel of ['chat', 'data', 'shortcuts', 'welcome', 'palette', 'diff', 'trace', 'drawers', 'budget', 'onboarding', 'recovery', 'voice', 'templates', 'genui', 'storage', 'controls', 'permissions']) {
+      for (const widePanel of ['chat', 'data', 'shortcuts', 'welcome', 'palette', 'diff', 'trace', 'drawers', 'budget', 'onboarding', 'recovery', 'voice', 'templates', 'genui', 'storage', 'controls', 'permissions', 'preflight']) {
         await page.goto(`${baseUrl}/?mode=single&theme=${theme}&panel=${widePanel}&width=400`, {
           waitUntil: 'networkidle',
         });
@@ -3524,6 +3603,7 @@ async function main() {
         'storage',
         'controls',
         'permissions',
+        'preflight',
       ]) {
         await page.goto(`${baseUrl}/?mode=single&theme=${theme}&panel=${narrowPanel}&narrow=1`, {
           waitUntil: 'networkidle',
@@ -3814,6 +3894,35 @@ async function main() {
           await page.screenshot({ path: permNarrowPath });
           outputs.push(permNarrowPath);
         }
+        if (narrowPanel === 'preflight') {
+          await blurActive();
+          const preflightNarrowPath = path.join(OUT_DIR, `specimen-${theme}-preflight-340.png`);
+          await page.screenshot({ path: preflightNarrowPath });
+          outputs.push(preflightNarrowPath);
+        }
+      }
+
+      // 320px compact Chrome side-panel audit (overflow, zero inline styles, WCAG AA contrast)
+      await page.setViewportSize({ width: 320, height: 828 });
+      for (const compactPanel of ['permissions', 'storage', 'controls', 'templates', 'voice', 'preflight']) {
+        await page.goto(`${baseUrl}/?mode=single&theme=${theme}&panel=${compactPanel}&width=320`, {
+          waitUntil: 'networkidle',
+        });
+        await waitForSpecimen(`320/${theme}/${compactPanel}`);
+        await auditPanelContrast(theme, `${compactPanel}-320`);
+        const compactCheck = await page.evaluate(() => ({
+          overflow: document.documentElement.scrollWidth > 320,
+          inlineStyles: document.querySelectorAll('#specimen-root [style]').length,
+        }));
+        if (compactCheck.overflow || compactCheck.inlineStyles !== 0) {
+          throw new Error(`320px compact audit failed (${theme}/${compactPanel}): ${JSON.stringify(compactCheck)}`);
+        }
+        await blurActive();
+        if (compactPanel === 'preflight' || compactPanel === 'permissions') {
+          const compactPath = path.join(OUT_DIR, `specimen-${theme}-${compactPanel}-320.png`);
+          await page.screenshot({ path: compactPath });
+          outputs.push(compactPath);
+        }
       }
 
       // RTL (dir="rtl") narrow 340px layout, seam, WCAG AA, and zero-inline-style audit
@@ -3863,7 +3972,7 @@ async function main() {
       // Forced-colors audit at 380px across settings, recovery, voice, templates, genui, storage & controls
       await page.setViewportSize({ width: 380, height: 828 });
       await page.emulateMedia({ forcedColors: 'active' });
-      for (const fcPanel of ['settings', 'recovery', 'voice', 'templates', 'genui', 'storage', 'controls', 'permissions']) {
+      for (const fcPanel of ['settings', 'recovery', 'voice', 'templates', 'genui', 'storage', 'controls', 'permissions', 'preflight']) {
         await page.goto(`${baseUrl}/?mode=single&theme=${theme}&panel=${fcPanel}`, {
           waitUntil: 'networkidle',
         });

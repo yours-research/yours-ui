@@ -286,3 +286,15 @@ export {
   type ConfirmActionSummaryRow,
   type ConfirmActionTone,
 } from './ConfirmActionCard.js';
+export {
+  PageSelectionCard,
+  type PageSelectionCardProps,
+} from './PageSelectionCard.js';
+export {
+  DeviceCapabilityCard,
+  type DeviceCapabilityCardProps,
+  type DeviceCapabilityHeadroom,
+  type DeviceCapabilityRow,
+  type DeviceCapabilityStatus,
+  type DeviceCapabilityTierOption,
+} from './DeviceCapabilityCard.js';

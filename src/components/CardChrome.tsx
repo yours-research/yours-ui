@@ -1,6 +1,10 @@
 import type { ReactNode } from 'react';
 import { ShieldIcon } from '../icons/ApertureIcon.js';
 
+/** Compact conditional class joiner shared across card primitives. */
+export const cn = (...parts: Array<string | false | null | undefined>) =>
+  parts.filter(Boolean).join(' ');
+
 export interface CardHeaderChromeProps {
   icon?: ReactNode;
   iconClassName?: string;
@@ -25,6 +29,21 @@ export function CardHeaderChrome({ icon, title, subtitle, right }: CardHeaderChr
   );
 }
 
+export interface CardPrivacyNoteProps {
+  privacyNote: string;
+  className?: string;
+}
+
+/** Shared shield icon + monospace privacy caption. */
+export function CardPrivacyNote({ privacyNote, className = 'yui-storage-privacy' }: CardPrivacyNoteProps) {
+  return (
+    <span className={className}>
+      <ShieldIcon size={11} className="yui-privacy-icon" />
+      <span>{privacyNote}</span>
+    </span>
+  );
+}
+
 export interface CardFooterChromeProps {
   privacyNote?: string;
   children?: ReactNode;
@@ -34,14 +53,37 @@ export interface CardFooterChromeProps {
 export function CardFooterChrome({ privacyNote, children }: CardFooterChromeProps) {
   return (
     <footer className="yui-storage-foot">
-      {privacyNote ? (
-        <span className="yui-storage-privacy">
-          <ShieldIcon size={11} className="yui-privacy-icon" />
-          <span>{privacyNote}</span>
-        </span>
-      ) : null}
+      {privacyNote ? <CardPrivacyNote privacyNote={privacyNote} /> : null}
       {children}
     </footer>
+  );
+}
+
+export interface CardBarSegment {
+  id: string;
+  x: number;
+  width: number;
+  className: string;
+}
+
+/** Shared zero-inline-style SVG segmented bar used across storage & GPU headroom meters. */
+export function CardSegmentBar({
+  ariaLabel,
+  segments,
+}: {
+  ariaLabel: string;
+  segments: readonly CardBarSegment[];
+}) {
+  return (
+    <div className="yui-storage-bar" role="img" aria-label={ariaLabel}>
+      <svg className="yui-storage-bar-svg" viewBox="0 0 100 6" preserveAspectRatio="none" aria-hidden="true">
+        {segments.map((seg) =>
+          seg.width > 0 ? (
+            <rect key={seg.id} x={seg.x} y={0} width={seg.width} height={6} className={seg.className} />
+          ) : null,
+        )}
+      </svg>
+    </div>
   );
 }
 

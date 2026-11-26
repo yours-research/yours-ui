@@ -1,4 +1,5 @@
 import { CheckIcon, ShieldIcon, TrashIcon } from '../icons/ApertureIcon.js';
+import { CardFooterChrome, CardHeaderChrome, CardSegmentBar, cn } from './CardChrome.js';
 
 export type StorageEntryTone = 'weights' | 'vault' | 'history' | 'other';
 export type StorageEntryStatus = 'idle' | 'verified' | 'verifying' | 'error';
@@ -60,46 +61,30 @@ export function StorageQuotaCard({
     return segment;
   });
 
-  const rootClass = ['yui-card-shell', 'yui-storage-card', className].filter(Boolean).join(' ');
+  const rootClass = cn('yui-card-shell yui-storage-card', className);
 
   return (
     <section data-slot="storage-quota-card" className={rootClass} aria-label={title}>
-      <header className="yui-params-head">
-        <div className="yui-col-min">
-          <h3 className="yui-genui-title">{title}</h3>
-          {subtitle ? <p className="yui-genui-muted">{subtitle}</p> : null}
-        </div>
-        <span className="yui-storage-quota-readout">
-          <strong className="yui-storage-used">{usedLabel}</strong>
-          <span className="yui-storage-total"> / {quotaLabel}</span>
-        </span>
-      </header>
+      <CardHeaderChrome
+        title={title}
+        subtitle={subtitle}
+        right={
+          <span className="yui-storage-quota-readout">
+            <strong className="yui-storage-used">{usedLabel}</strong>
+            <span className="yui-storage-total"> / {quotaLabel}</span>
+          </span>
+        }
+      />
 
-      <div
-        className="yui-storage-bar"
-        role="img"
-        aria-label={`${title}: ${usedLabel} of ${quotaLabel}`}
-      >
-        <svg
-          className="yui-storage-bar-svg"
-          viewBox="0 0 100 6"
-          preserveAspectRatio="none"
-          aria-hidden="true"
-        >
-          {segments.map((seg) =>
-            seg.width > 0 ? (
-              <rect
-                key={seg.id}
-                x={seg.x}
-                y={0}
-                width={seg.width}
-                height={6}
-                className={`yui-storage-seg yui-storage-seg--${seg.tone}`}
-              />
-            ) : null,
-          )}
-        </svg>
-      </div>
+      <CardSegmentBar
+        ariaLabel={`${title}: ${usedLabel} of ${quotaLabel}`}
+        segments={segments.map((seg) => ({
+          id: seg.id,
+          x: seg.x,
+          width: seg.width,
+          className: `yui-storage-seg yui-storage-seg--${seg.tone}`,
+        }))}
+      />
 
       {entries.length > 0 ? (
         <ul className="yui-list-plain yui-well yui-storage-list yui-div-list" role="list">
@@ -191,18 +176,14 @@ export function StorageQuotaCard({
         </ul>
       ) : null}
 
-      <footer className="yui-storage-foot">
-        <span className="yui-storage-privacy">
-          <ShieldIcon size={11} className="yui-privacy-icon" />
-          <span>{privacyNote}</span>
-        </span>
+      <CardFooterChrome privacyNote={privacyNote}>
         {onClearAll ? (
           <button type="button" className="yui-micro-pill yui-storage-clear-all" onClick={onClearAll}>
             <TrashIcon size={10.5} />
             <span>{clearAllLabel}</span>
           </button>
         ) : null}
-      </footer>
+      </CardFooterChrome>
     </section>
   );
 }

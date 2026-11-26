@@ -1,6 +1,6 @@
 import { useId, useState } from 'react';
 import { RetryIcon, SlidersIcon } from '../icons/ApertureIcon.js';
-import { CardHeaderChrome } from './CardChrome.js';
+import { CardHeaderChrome, cn } from './CardChrome.js';
 import { SegmentedControl, type SegmentedOption } from './SegmentedControl.js';
 
 export type ThinkingMode = 'auto' | 'fast' | 'deep';
@@ -112,7 +112,7 @@ export function ModelParametersCard({
   return (
     <section
       data-slot="model-parameters-card"
-      className={['yui-card-shell', 'yui-params-card', className].filter(Boolean).join(' ')}
+      className={cn('yui-card-shell yui-params-card', className)}
       aria-label={title}
     >
       <CardHeaderChrome

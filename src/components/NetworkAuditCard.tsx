@@ -1,5 +1,5 @@
 import { ArrowDownIcon, ShieldIcon, TrashIcon } from '../icons/ApertureIcon.js';
-import { CardFooterChrome, CardHeaderChrome } from './CardChrome.js';
+import { CardFooterChrome, CardHeaderChrome, cn } from './CardChrome.js';
 import { StatusBadge } from './StatusBadge.js';
 
 export type NetworkAuditDecision = 'blocked' | 'allowed-once' | 'local';
@@ -65,7 +65,7 @@ export function NetworkAuditCard({
   exportJsonLabel = 'Export JSON',
   className,
 }: NetworkAuditCardProps) {
-  const cardClass = ['yui-card-shell', 'yui-audit-card', className].filter(Boolean).join(' ');
+  const cardClass = cn('yui-card-shell yui-audit-card', className);
 
   return (
     <section data-slot="network-audit-card" className={cardClass} aria-label={title}>
