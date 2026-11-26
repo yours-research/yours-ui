@@ -444,6 +444,23 @@
 }
 
 /* HookSidebar List */
+.yui-hook-nav {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
+.yui-hook-label {
+  font-family: var(--font-sans);
+  font-size: 11px;
+  line-height: 15px;
+  font-weight: 500;
+  letter-spacing: 0.01em;
+  color: var(--yui-muted);
+  padding: 0 6px;
+}
+
 .yui-hook-wrap {
   position: relative;
   display: flex;
@@ -451,23 +468,57 @@
   gap: 2px;
 }
 
-.yui-hook-rail {
+.yui-hook-rail-layer {
   position: absolute;
-  left: 4px;
+  left: 5px;
   top: 0;
+  bottom: 0;
+  width: 12px;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 200ms ease-out;
+}
+
+.yui-hook-rail-layer[data-visible="true"] {
+  opacity: 1;
+}
+
+.yui-hook-rail-layer--hover {
+  color: var(--yui-muted);
+}
+
+.yui-hook-rail-layer--active {
+  color: var(--yui-cobalt);
+}
+
+.yui-hook-stem {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 1px;
+  height: 0;
   pointer-events: none;
 }
 
-.yui-hook-svg {
+.yui-hook-stem--dashed {
+  background-image: repeating-linear-gradient(
+    to top,
+    transparent 0 2px,
+    currentColor 2px 4px
+  );
+}
+
+.yui-hook-stem--solid {
+  background-color: currentColor;
+}
+
+.yui-hook-corner {
+  position: absolute;
+  left: 0;
+  top: 0;
   display: block;
-}
-
-.yui-hook-active {
-  stroke: var(--yui-cobalt);
-}
-
-.yui-hook-hover {
-  stroke: var(--yui-muted);
+  overflow: visible;
+  pointer-events: none;
 }
 
 .yui-hook-row {
@@ -484,6 +535,12 @@
   gap: 6px;
   cursor: pointer;
   text-align: left;
+  transition: background-color 140ms ease;
+}
+
+.yui-hook-row:focus-visible {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: -1px;
 }
 
 .yui-hook-row-left {
@@ -502,9 +559,11 @@
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  transition: color 140ms ease;
 }
 
-.yui-hook-row:hover .yui-hook-row-title {
+.yui-hook-row:hover .yui-hook-row-title,
+.yui-hook-row:focus-visible .yui-hook-row-title {
   font-weight: 500;
   color: var(--yui-hover-ink);
 }
@@ -520,6 +579,7 @@
   line-height: 14px;
   color: var(--yui-muted);
   flex-shrink: 0;
+  transition: color 140ms ease;
 }
 
 .yui-hook-row.is-active .yui-hook-row-meta {
@@ -1983,6 +2043,10 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
+  .yui-hook-rail-layer,
+  .yui-hook-row,
+  .yui-hook-row-title,
+  .yui-hook-row-meta,
   .yui-notch-housing,
   .yui-notch-bar,
   .yui-notch-btn,
