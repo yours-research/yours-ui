@@ -248,8 +248,35 @@
 }
 
 .yui-composer-region {
+  position: relative;
   padding: 4px 14px 14px 14px;
   flex-shrink: 0;
+}
+
+.yui-toast-overlay {
+  position: absolute;
+  left: 14px;
+  right: 14px;
+  bottom: calc(100% + 4px);
+  z-index: 45;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  pointer-events: none;
+}
+
+.yui-toast-overlay--standalone {
+  position: relative;
+  left: auto;
+  right: auto;
+  bottom: auto;
+  margin-top: auto;
+  padding: 0 14px 14px 14px;
+  flex-shrink: 0;
+}
+
+.yui-toast-overlay > * {
+  pointer-events: auto;
 }
 
 /* ==========================================================================
@@ -2620,6 +2647,66 @@
 
 .yui-sr-code-line {
   display: inline;
+}
+
+.yui-sr-table-card {
+  width: 100%;
+  box-sizing: border-box;
+  background-color: var(--yui-capsule-bg);
+  border: 1px solid var(--yui-hairline);
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.yui-sr-table-scroll {
+  overflow-x: auto;
+  scrollbar-width: thin;
+  scrollbar-color: var(--yui-strong) transparent;
+}
+
+.yui-sr-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 11.5px;
+  line-height: 16px;
+  font-variant-numeric: tabular-nums;
+}
+
+.yui-sr-th {
+  padding: 7px 10px;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  line-height: 14px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  color: var(--yui-secondary);
+  background-color: var(--yui-well-bg);
+  border-bottom: 1px solid var(--yui-hairline);
+  text-align: left;
+  white-space: nowrap;
+}
+
+.yui-sr-td {
+  padding: 7px 10px;
+  color: var(--yui-ink);
+  border-bottom: 1px solid var(--yui-hairline);
+  vertical-align: top;
+  white-space: nowrap;
+}
+
+.yui-sr-tr:last-child .yui-sr-td {
+  border-bottom: none;
+}
+
+.yui-sr-th.is-center,
+.yui-sr-td.is-center {
+  text-align: center;
+}
+
+.yui-sr-th.is-right,
+.yui-sr-td.is-right {
+  text-align: right;
 }
 
 .yui-sr-actions {
@@ -5696,15 +5783,23 @@ span.yui-citation-pill {
 }
 
 .yui-model-spec-token {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
   white-space: nowrap;
   flex-shrink: 0;
 }
 
 .yui-model-spec-sep {
   color: var(--yui-secondary);
+}
+
+@media (max-width: 360px) {
+  .yui-model-specs {
+    column-gap: 8px;
+    row-gap: 2px;
+  }
+
+  .yui-model-spec-sep {
+    display: none;
+  }
 }
 
 .yui-model-right {
@@ -5831,8 +5926,10 @@ span.yui-citation-pill {
 
 .yui-tabctx-domain-row {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
-  gap: 5px;
+  column-gap: 5px;
+  row-gap: 2px;
   min-width: 0;
 }
 
@@ -5845,6 +5942,7 @@ span.yui-citation-pill {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  min-width: min(100%, 60px);
 }
 
 .yui-tabctx-kind {

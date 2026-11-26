@@ -1,4 +1,4 @@
-import { useRef, useState, type KeyboardEvent } from 'react';
+import { Fragment, useRef, useState, type KeyboardEvent } from 'react';
 import { ArrowDownIcon, LocalDeviceIcon } from '../icons/ApertureIcon.js';
 
 export type ModelCheckpointState = 'active' | 'cached' | 'download';
@@ -157,14 +157,14 @@ export function ModelRosterList({
                   </span>
                   <span className="yui-model-specs">
                     {specs.map((spec, specIdx) => (
-                      <span key={spec} className="yui-model-spec-token">
+                      <Fragment key={spec}>
                         {specIdx > 0 ? (
                           <span className="yui-model-spec-sep" aria-hidden="true">
                             ·
                           </span>
                         ) : null}
-                        <span className="yui-model-spec-val">{spec}</span>
-                      </span>
+                        <span className="yui-model-spec-token">{spec}</span>
+                      </Fragment>
                     ))}
                   </span>
                 </span>

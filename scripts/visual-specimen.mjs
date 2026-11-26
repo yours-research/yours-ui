@@ -294,8 +294,11 @@ function ActiveChatPanel({ theme }: { theme: 'light' | 'dark' }) {
           actions={false}
           text={
             'Team saves **17% annually** above 8 seats.\\n\\n' +
-            '> Verified against active DOM with zero network calls.\\n\\n' +
-            '\`\`\`ts\\nconst savings = 1 - 200 / 250; // 0.20\\n\`\`\`'
+            '| Plan | Seats | Monthly | Annual | Mode |\\n' +
+            '|:---|---:|---:|---:|:---:|\\n' +
+            '| Pro | 10 | $200 | $2,000 | Local |\\n' +
+            '| Team | 10 | $250 | $2,500 | WebGPU |\\n\\n' +
+            '> Verified against active DOM with zero network calls.'
           }
         />
         <div className="yui-action-group">
@@ -1205,28 +1208,58 @@ function BudgetAndCitationPanel({ theme }: { theme: 'light' | 'dark' }) {
 
 function ShortcutAndToastPanel({ theme }: { theme: 'light' | 'dark' }) {
   const [toastOpen, setToastOpen] = useState(true);
+  const [drawerOpen, setDrawerOpen] = useState(false);
 
   return (
     <SidePanelShell
       theme={theme}
-      notch={<TopNotch items={NOTCH_ITEMS} expandedId={null} />}
+      veilOpen={drawerOpen}
+      onVeilClick={() => setDrawerOpen(false)}
+      notch={
+        <TopNotch
+          expandedId={drawerOpen ? 'threads' : null}
+          onClose={() => setDrawerOpen(false)}
+          items={[
+            { id: 'new', icon: 'compose', label: 'New', onClick: () => setDrawerOpen(false) },
+            {
+              id: 'threads',
+              icon: 'history',
+              label: 'Threads',
+              onClick: () => setDrawerOpen((prev) => !prev),
+            },
+            { id: 'tabs', icon: 'tab-stack', label: '1 tab', badgeDot: 'green' },
+            { id: 'saved', icon: 'bookmark', label: 'Saved' },
+          ]}
+          drawerContent={
+            drawerOpen ? (
+              <HookSidebarList
+                activeId="h1"
+                items={[
+                  { id: 'h1', title: 'Shortcuts & toast layer', meta: 'Now' },
+                  { id: 'h2', title: 'Local checkpoint backup', meta: '1h' },
+                ]}
+              />
+            ) : null
+          }
+        />
+      }
+      toast={
+        <StatusToast
+          open={toastOpen}
+          tone="local"
+          message="Memory snapshot backed up locally"
+          detail="148 records · 420 KB"
+          onUndo={() => {}}
+          onDismiss={() => setToastOpen(false)}
+        />
+      }
       footer={
-        <div className="yui-spec-foot">
-          <StatusToast
-            open={toastOpen}
-            tone="local"
-            message="Memory snapshot backed up locally"
-            detail="148 records · 420 KB"
-            onUndo={() => {}}
-            onDismiss={() => setToastOpen(false)}
-          />
-          <FloatingComposer
-            value=""
-            onChange={() => {}}
-            onSubmit={() => {}}
-            leftSlot={<StatusBadge tone="muted">Press ? for keys</StatusBadge>}
-          />
-        </div>
+        <FloatingComposer
+          value=""
+          onChange={() => {}}
+          onSubmit={() => {}}
+          leftSlot={<StatusBadge tone="muted">Press ? for keys</StatusBadge>}
+        />
       }
     >
       <ShortcutSheet
@@ -2005,6 +2038,44 @@ async function main() {
           }
         }
 
+        if (panel === 'shortcuts') {
+          // Open TopNotch drawer -> veilOpen=true, verify StatusToast Undo & Dismiss hit-tests resolve above .yui-veil
+          await page.locator('.yui-notch-btn').nth(1).click();
+          await page.waitForTimeout(160);
+          const toastHitAudit = await page.evaluate(() => {
+            const veil = document.querySelector('.yui-veil.is-open');
+            const toast = document.querySelector('[data-slot="status-toast"]');
+            if (!veil || !toast) return { missing: true, hasVeil: Boolean(veil), hasToast: Boolean(toast) };
+            const undoBtn = Array.from(toast.querySelectorAll('button')).find((b) =>
+              b.textContent?.includes('Undo'),
+            );
+            const dismissBtn = toast.querySelector('[aria-label="Dismiss notification"]');
+            if (!undoBtn || !dismissBtn) return { missingBtn: true };
+            const uRect = undoBtn.getBoundingClientRect();
+            const dRect = dismissBtn.getBoundingClientRect();
+            const uHit = document.elementFromPoint(uRect.left + uRect.width / 2, uRect.top + uRect.height / 2);
+            const dHit = document.elementFromPoint(dRect.left + dRect.width / 2, dRect.top + dRect.height / 2);
+            return {
+              undoInsideToast: Boolean(uHit && toast.contains(uHit)),
+              dismissInsideToast: Boolean(dHit && toast.contains(dHit)),
+            };
+          });
+          if (
+            toastHitAudit.missing ||
+            toastHitAudit.missingBtn ||
+            !toastHitAudit.undoInsideToast ||
+            !toastHitAudit.dismissInsideToast
+          ) {
+            throw new Error(
+              `StatusToast over veil hit-test failed (${theme}): ${JSON.stringify(toastHitAudit)}`,
+            );
+          }
+          await page.locator('[data-slot="status-toast"] [aria-label="Dismiss notification"]').click();
+          if ((await page.locator('[data-slot="status-toast"]').count()) !== 0) {
+            throw new Error(`StatusToast did not dismiss over veil (${theme})`);
+          }
+        }
+
         if (panel === 'budget') {
           const budgetContrast = await page.evaluate(() => {
             const parseRgba = (str) => {
@@ -2095,10 +2166,10 @@ async function main() {
         }
       }
 
-      // 400px width verification on Data, Shortcuts, Welcome, Palette, Diff, Trace, Drawers & Budget panels + reduced-motion audit
+      // 400px width verification on Chat, Data, Shortcuts, Welcome, Palette, Diff, Trace, Drawers & Budget panels + reduced-motion audit
       await page.setViewportSize({ width: 400, height: 828 });
       await page.emulateMedia({ reducedMotion: 'reduce' });
-      for (const widePanel of ['data', 'shortcuts', 'welcome', 'palette', 'diff', 'trace', 'drawers', 'budget']) {
+      for (const widePanel of ['chat', 'data', 'shortcuts', 'welcome', 'palette', 'diff', 'trace', 'drawers', 'budget']) {
         await page.goto(`${baseUrl}/?mode=single&theme=${theme}&panel=${widePanel}&width=400`, {
           waitUntil: 'networkidle',
         });
@@ -2274,8 +2345,19 @@ async function main() {
         }
         if (narrowPanel === 'drawers') {
           const drawer340Audit = await page.evaluate(() => {
-            const specVals = Array.from(document.querySelectorAll('[data-slot="model-roster-list"] .yui-model-spec-val'));
+            const specVals = Array.from(
+              document.querySelectorAll('[data-slot="model-roster-list"] .yui-model-spec-token'),
+            );
             const clippedSpec = specVals.find((el) => el.scrollWidth > el.clientWidth + 1);
+            const visibleSeps = Array.from(
+              document.querySelectorAll('[data-slot="model-roster-list"] .yui-model-spec-sep'),
+            ).filter((sep) => getComputedStyle(sep).display !== 'none').length;
+            const snippetDomain = Array.from(
+              document.querySelectorAll('[data-slot="tab-context-list"] .yui-tabctx-domain'),
+            ).at(-1);
+            const snippetDomainClipped = snippetDomain
+              ? snippetDomain.scrollWidth > snippetDomain.clientWidth + 1
+              : true;
             const tabTokInDomain = document.querySelectorAll(
               '[data-slot="tab-context-list"] .yui-tabctx-domain-row .yui-tabctx-tok',
             ).length;
@@ -2283,11 +2365,19 @@ async function main() {
             const titleWidth = firstTitle ? Math.round(firstTitle.getBoundingClientRect().width) : 0;
             return {
               clippedText: clippedSpec ? clippedSpec.textContent : null,
+              visibleSeps,
+              snippetDomainClipped,
               tabTokInDomain,
               titleWidth,
             };
           });
-          if (drawer340Audit.clippedText || drawer340Audit.tabTokInDomain < 3 || drawer340Audit.titleWidth < 130) {
+          if (
+            drawer340Audit.clippedText ||
+            drawer340Audit.visibleSeps !== 0 ||
+            drawer340Audit.snippetDomainClipped ||
+            drawer340Audit.tabTokInDomain < 3 ||
+            drawer340Audit.titleWidth < 130
+          ) {
             throw new Error(`340px drawers legibility audit failed (${theme}): ${JSON.stringify(drawer340Audit)}`);
           }
           const drawersNarrowPath = path.join(OUT_DIR, `specimen-${theme}-drawers-340.png`);

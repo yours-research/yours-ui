@@ -2075,4 +2075,46 @@ describe('@yours/ui chat & runtime primitives', () => {
     expect(cssSource).toContain('.yui-budget-progress');
     expect(cssSource).toContain('.yui-fn-quote.is-warm');
   });
+
+  it('parses and renders GFM Markdown pipe-tables in StreamingResponse including alignments and partial streaming rows', async () => {
+    const md = [
+      'Here is the benchmark comparison:',
+      '',
+      '| Model | Speed | Size | Note |',
+      '|:---|---:|:---:|---|',
+      '| **Qwen3.5-4B** | `44 tok/s` | 2.4 GB | Local OPFS \\| GPU |',
+      '| Gemma 4 E4B | 39 tok/s | 2.7 GB | Warm cache |',
+    ].join('\n');
+
+    const el = renderNode(<StreamingResponse text={md} status="done" actions={false} />);
+    const tableWrap = el.querySelector('[data-slot="streaming-response-table"]');
+    expect(tableWrap).toBeTruthy();
+
+    const ths = Array.from(tableWrap!.querySelectorAll('th'));
+    expect(ths.map((n) => n.textContent)).toEqual(['Model', 'Speed', 'Size', 'Note']);
+    expect(ths[0].classList.contains('is-left')).toBe(true);
+    expect(ths[1].classList.contains('is-right')).toBe(true);
+    expect(ths[2].classList.contains('is-center')).toBe(true);
+
+    const rows = Array.from(tableWrap!.querySelectorAll('tbody tr'));
+    expect(rows.length).toBe(2);
+    expect(rows[0].querySelector('strong')?.textContent).toBe('Qwen3.5-4B');
+    expect(rows[0].querySelector('code')?.textContent).toBe('44 tok/s');
+    expect(rows[0].textContent).toContain('Local OPFS | GPU');
+
+    // Partial trailing row during streaming renders safely without crashing
+    const partialMd = [
+      '| Col A | Col B |',
+      '|---|---|',
+      '| cell-1 |',
+    ].join('\n');
+    rerenderNode(<StreamingResponse text={partialMd} status="streaming" speed={200} actions={false} />);
+    expect(el.querySelector('.yui-sr')).toBeTruthy();
+
+    const cssSource = await readSourceFile('../src/styles/components.css');
+    expect(cssSource).toContain('.yui-toast-overlay');
+    expect(cssSource).toContain('z-index: 45');
+    expect(cssSource).toContain('.yui-sr-table');
+    expect(cssSource).toContain('@media (max-width: 360px)');
+  });
 });

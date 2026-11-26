@@ -876,4 +876,34 @@ describe('@yours/ui layout & TopNotch primitives', () => {
     });
     expect(wrap.getAttribute('data-fade-bottom')).toBe('true');
   });
+
+  it('mounts SidePanelShell toast slot inside .yui-toast-overlay with and without footer', () => {
+    const el = renderNode(
+      <div>
+        <SidePanelShell
+          theme="light"
+          veilOpen
+          toast={<div data-testid="toast-with-footer">Toast A</div>}
+          footer={<div data-testid="footer-node">Footer</div>}
+        >
+          <div>Body</div>
+        </SidePanelShell>
+        <SidePanelShell
+          theme="dark"
+          toast={<div data-testid="toast-standalone">Toast B</div>}
+        >
+          <div>Body 2</div>
+        </SidePanelShell>
+      </div>,
+    );
+
+    const shells = el.querySelectorAll('.yui-shell');
+    const withFooterOverlay = shells[0].querySelector('.yui-toast-overlay');
+    const standaloneOverlay = shells[1].querySelector('.yui-toast-overlay');
+
+    expect(withFooterOverlay?.classList.contains('yui-toast-overlay--standalone')).toBe(false);
+    expect(withFooterOverlay?.textContent).toContain('Toast A');
+    expect(standaloneOverlay?.classList.contains('yui-toast-overlay--standalone')).toBe(true);
+    expect(standaloneOverlay?.textContent).toContain('Toast B');
+  });
 });
