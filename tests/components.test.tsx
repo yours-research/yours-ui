@@ -29,6 +29,7 @@ import {
   ModelDownloadGate,
   ModelDownloadProgressBar,
   PermissionApprovalCard,
+  PermissionCard,
   PromptCapsuleStack,
   QuotedContextBanner,
   ReasoningTrace,
@@ -45,6 +46,7 @@ import {
   ThreadHistoryDrawer,
   ToastPill,
   ToolStepCard,
+  ToolTraceList,
   UserMessageBubble,
   VoiceDictationPill,
   VoiceSessionBar,
@@ -52,6 +54,7 @@ import {
   type StreamingResponseProps,
   type StreamingResponseStatus,
 } from '../src/components/index.js';
+import { SidePanelShell } from '../src/layout/index.js';
 import DefaultStreamingResponse from '../src/components/StreamingResponse.js';
 
 interface FsModule {
@@ -1721,5 +1724,121 @@ describe('@yours/ui chat & runtime primitives', () => {
     expect(cssSource).toContain('.yui-palette-card');
     expect(cssSource).toContain('.yui-empty-panel');
     expect(cssSource).toContain('.yui-diff-card');
+  });
+
+  it('renders ToolTraceList collapsible steps, PermissionCard actions with Enter/Escape keys, and SidePanelShell overlay layering', async () => {
+    const onAllowOnce = vi.fn();
+    const onDeny = vi.fn();
+    const onAlwaysSite = vi.fn();
+    const onToggleStep = vi.fn();
+
+    const el = renderNode(
+      <SidePanelShell
+        theme="light"
+        veilOpen
+        overlay={
+          <CommandPalette
+            open
+            actions={[{ id: 'a1', label: 'Run trace check', group: 'Runtime' }]}
+          />
+        }
+      >
+        <ToolTraceList
+          onToggleStep={onToggleStep}
+          steps={[
+            {
+              id: 's1',
+              tool: 'read_tab',
+              label: 'yours.sh/spec',
+              status: 'done',
+              latencyLabel: '42ms',
+              input: '{"url":"https://yours.sh/spec"}',
+              output: '{"tokens":1240}',
+            },
+            {
+              id: 's2',
+              tool: 'search_web_tab',
+              label: 'WebGPU subgroup support',
+              status: 'running',
+              latencyLabel: '118ms',
+            },
+            {
+              id: 's3',
+              tool: 'run_sandbox',
+              label: 'Blocked network egress',
+              status: 'blocked',
+              latencyLabel: 'blocked',
+              output: 'Prevented by @yours/guard Lethal Trifecta rule',
+            },
+            {
+              id: 's4',
+              tool: 'memory_query',
+              label: 'FTS5 timeout',
+              status: 'error',
+              latencyLabel: '502ms',
+            },
+          ]}
+        />
+        <PermissionCard
+          title="Allow outbound POST?"
+          domain="api.example.com"
+          scope="Submit structured page brief JSON"
+          ruleLabel="Lethal Trifecta · @yours/guard"
+          reason="Untrusted tab context + active memory store requested external POST."
+          onAllowOnce={onAllowOnce}
+          onDeny={onDeny}
+          onAlwaysSite={onAlwaysSite}
+        />
+      </SidePanelShell>,
+    );
+
+    // SidePanelShell overlay sits in .yui-stage-overlay sibling above .yui-veil
+    const stageOverlay = el.querySelector('.yui-stage-overlay');
+    const cmdPanel = stageOverlay?.querySelector('.yui-cmd-panel');
+    expect(stageOverlay).toBeTruthy();
+    expect(cmdPanel).toBeTruthy();
+    expect(el.querySelector('.yui-scroll-stage .yui-cmd-panel')).toBeNull();
+
+    // ToolTraceList step disclosure + status badges
+    const trace = el.querySelector('[data-slot="tool-trace-list"]') as HTMLElement;
+    expect(trace.querySelectorAll('.yui-trace-row').length).toBe(4);
+    const firstTrigger = trace.querySelector('.yui-trace-trigger') as HTMLButtonElement;
+    expect(firstTrigger.getAttribute('aria-expanded')).toBe('false');
+    act(() => {
+      firstTrigger.click();
+    });
+    expect(firstTrigger.getAttribute('aria-expanded')).toBe('true');
+    expect(onToggleStep).toHaveBeenCalledWith('s1');
+    expect(trace.textContent).toContain('{"url":"https://yours.sh/spec"}');
+
+    // Ledger collapse
+    const headBtn = trace.querySelector('.yui-trace-head') as HTMLButtonElement;
+    act(() => {
+      headBtn.click();
+    });
+    expect(headBtn.getAttribute('aria-expanded')).toBe('false');
+
+    // PermissionCard buttons + keyboard Escape / Enter
+    const perm = el.querySelector('[data-slot="permission-card"]') as HTMLElement;
+    expect(perm.textContent).toContain('api.example.com');
+    act(() => {
+      (Array.from(perm.querySelectorAll('button')).find((b) =>
+        b.textContent?.includes('Always for this site'),
+      ) as HTMLButtonElement).click();
+    });
+    expect(onAlwaysSite).toHaveBeenCalledTimes(1);
+
+    act(() => {
+      perm.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }));
+      perm.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
+    });
+    expect(onAllowOnce).toHaveBeenCalledTimes(1);
+    expect(onDeny).toHaveBeenCalledTimes(1);
+
+    const cssSource = await readSourceFile('../src/styles/components.css');
+    expect(cssSource).toContain('.yui-stage-overlay');
+    expect(cssSource).toContain('.yui-cmd-panel');
+    expect(cssSource).toContain('.yui-trace-card');
+    expect(cssSource).toContain('.yui-perm-card');
   });
 });
