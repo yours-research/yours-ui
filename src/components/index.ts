@@ -69,3 +69,9 @@ export {
   type ModelDownloadGateProps,
   type ModelDownloadProgress,
 } from './ModelDownloadGate.js';
+export {
+  StreamingResponse,
+  type StreamingResponseFeedback,
+  type StreamingResponseProps,
+  type StreamingResponseStatus,
+} from './StreamingResponse.js';
