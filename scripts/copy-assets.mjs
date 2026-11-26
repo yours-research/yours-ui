@@ -1,6 +1,8 @@
 import fs from 'node:fs';
+import { createRequire } from 'node:module';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { gzipSync } from 'node:zlib';
 import ts from 'typescript';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -8,12 +10,20 @@ const ROOT = path.resolve(__dirname, '..');
 const SRC_STYLES = path.join(ROOT, 'src', 'styles');
 const DIST = path.join(ROOT, 'dist');
 const DIST_STYLES = path.join(DIST, 'styles');
+const require = createRequire(import.meta.url);
+
+let esbuild = null;
+try {
+  esbuild = require('esbuild');
+} catch {
+  // Optional fast minifier; falls back cleanly to TypeScript printer + CSS minifier
+}
 
 /**
  * Minifies CSS while preserving string literals (`"..."` / `'...'`) verbatim
  * and keeping all custom properties, calc expressions, and selectors intact.
  */
-function minifyCss(css) {
+function fallbackMinifyCss(css) {
   let out = '';
   let i = 0;
   let quote = '';
@@ -81,8 +91,18 @@ function compactDistJs(dir) {
       compactDistJs(full);
     } else if (entry.isFile() && entry.name.endsWith('.js')) {
       const src = fs.readFileSync(full, 'utf8');
-      const sf = ts.createSourceFile(full, src, ts.ScriptTarget.ES2022);
-      const compacted = printer.printFile(sf);
+      let compacted;
+      if (esbuild) {
+        compacted = esbuild.transformSync(src, {
+          loader: 'js',
+          minifyWhitespace: true,
+          minifySyntax: true,
+          legalComments: 'none',
+        }).code;
+      } else {
+        const sf = ts.createSourceFile(full, src, ts.ScriptTarget.ES2022);
+        compacted = printer.printFile(sf);
+      }
       fs.writeFileSync(full, compacted, 'utf8');
     }
   }
@@ -94,7 +114,13 @@ fs.mkdirSync(DIST_STYLES, { recursive: true });
 for (const file of fs.readdirSync(SRC_STYLES)) {
   if (file.endsWith('.css')) {
     const rawCss = fs.readFileSync(path.join(SRC_STYLES, file), 'utf8');
-    const minified = file === 'index.css' ? rawCss : minifyCss(rawCss);
+    let minified = file === 'index.css' ? rawCss : fallbackMinifyCss(rawCss);
+    if (file !== 'index.css' && esbuild) {
+      const esCss = esbuild.transformSync(rawCss, { loader: 'css', minify: true }).code;
+      if (gzipSync(esCss, { level: 9 }).length < gzipSync(minified, { level: 9 }).length) {
+        minified = esCss;
+      }
+    }
     fs.writeFileSync(path.join(DIST_STYLES, file), minified, 'utf8');
   }
 }

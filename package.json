@@ -47,7 +47,8 @@
     "README.md",
     "CHANGELOG.md",
     "ARCHITECTURE.md",
-    "CONTRIBUTING.md"
+    "CONTRIBUTING.md",
+    "docs"
   ],
   "engines": {
     "node": ">=20.0.0"

@@ -1744,11 +1744,109 @@ function ControlsAndAuditPanel({ theme }: { theme: 'light' | 'dark' }) {
   );
 }
 
+function RtlShowcasePanel({ theme }: { theme: 'light' | 'dark' }) {
+  return (
+    <SidePanelShell
+      theme={theme}
+      notch={<TopNotch items={NOTCH_ITEMS} expandedId={null} />}
+      footer={
+        <FloatingComposer
+          value=""
+          onChange={() => {}}
+          onSubmit={() => {}}
+          placeholder="اسأل أي شيء محلياً..."
+          leftSlot={<StatusBadge tone="local" dot>WebGPU محلي</StatusBadge>}
+        />
+      }
+    >
+      <FindInThreadBar
+        query="محلي"
+        totalMatches={5}
+        currentMatch={2}
+        caseSensitive={false}
+        onToggleCaseSensitive={() => {}}
+        onPrev={() => {}}
+        onNext={() => {}}
+        onClose={() => {}}
+      />
+      <QuoteExcerptCard
+        quote="تظل كافة البيانات والنماذج معزولة بالكامل داخل المتصفح."
+        sourceTitle="بنية الخصوصية المحلية"
+        sourceDomain="yours.sh"
+        locator="§9"
+        onCopy={() => {}}
+      />
+      <TimelineCard
+        title="خطة التنفيذ"
+        subtitle="التحقق المحلي"
+        metaLabel="3 خطوات"
+        steps={[
+          { id: 'r1', label: 'تثبيت أوزان OPFS', detail: 'تم التحقق من SHA-256 محلياً', timestamp: '00:01', status: 'done' },
+          { id: 'r2', label: 'فحص سياسة CSP', detail: 'عزل كامل style-src self', timestamp: '00:02', status: 'active' },
+        ]}
+      />
+      <StorageQuotaCard
+        title="تخزين المتصفح"
+        subtitle="حصة OPFS و IndexedDB"
+        usedLabel="2.6 GB"
+        quotaLabel="12.0 GB"
+        entries={[
+          {
+            id: 'weights-rtl',
+            label: 'أوزان WGSL المخزنة',
+            detail: 'Qwen3.5-4B · INT4 OPFS',
+            sizeLabel: '2.4 GB',
+            percent: 20,
+            tone: 'weights',
+            status: 'verified',
+            onVerify: () => {},
+          },
+          {
+            id: 'vault-rtl',
+            label: 'خزنة الذاكرة المشفرة',
+            detail: 'IndexedDB AES-GCM',
+            sizeLabel: '160 MB',
+            percent: 4,
+            tone: 'vault',
+          },
+        ]}
+      />
+      <ModelParametersCard modelLabel="Qwen3.5-4B" />
+      <NetworkAuditCard
+        events={[
+          {
+            id: 'ne1',
+            target: 'telemetry.invalid',
+            detail: 'حظر الاتصال الخارجي',
+            decision: 'blocked',
+            timestamp: '05:48:02',
+          },
+        ]}
+      />
+      <PromptTemplateList
+        items={[
+          { id: 'pt1', command: '/summarize', title: 'تلخيص الصفحة', description: 'استخراج 5 نقاط محلياً', category: 'Page', shortcut: '⌘1', pinned: true },
+        ]}
+        onSelect={() => {}}
+      />
+      <DiffCard
+        filename="csp-guard.ts"
+        lines={[
+          { type: 'context', content: "const mode = 'strict';" },
+          { type: 'remove', content: "styleSrc: 'unsafe-inline'" },
+          { type: 'add', content: "styleSrc: 'self'" },
+        ]}
+      />
+    </SidePanelShell>
+  );
+}
+
 function SpecimenApp() {
   const params = new URLSearchParams(window.location.search);
   const mode = params.get('mode') || 'gallery';
   const theme = (params.get('theme') || 'light') as 'light' | 'dark';
   const panel = params.get('panel') || 'resting';
+  const dir = params.get('dir') === 'rtl' ? 'rtl' : undefined;
   const widthMode = params.get('width') || (params.get('narrow') === '1' ? '340' : '380');
   const singleClass =
     widthMode === '340'
@@ -1759,7 +1857,7 @@ function SpecimenApp() {
 
   if (mode === 'single') {
     return (
-      <div className={singleClass} data-theme={theme}>
+      <div className={singleClass} data-theme={theme} dir={dir}>
         {panel === 'resting' ? <RestingPanel theme={theme} /> : null}
         {panel === 'notch' ? <NotchExpandedPanel theme={theme} /> : null}
         {panel === 'chat' ? <ActiveChatPanel theme={theme} /> : null}
@@ -1782,6 +1880,7 @@ function SpecimenApp() {
         {panel === 'genui' ? <GenUiShowcasePanel theme={theme} /> : null}
         {panel === 'storage' ? <StorageAndFindPanel theme={theme} /> : null}
         {panel === 'controls' ? <ControlsAndAuditPanel theme={theme} /> : null}
+        {panel === 'rtl' ? <RtlShowcasePanel theme={theme} /> : null}
       </div>
     );
   }
@@ -3510,6 +3609,50 @@ async function main() {
           outputs.push(controlsNarrowPath);
         }
       }
+
+      // RTL (dir="rtl") narrow 340px layout, seam, WCAG AA, and zero-inline-style audit
+      await page.setViewportSize({ width: 340, height: 828 });
+      await page.goto(`${baseUrl}/?mode=single&theme=${theme}&panel=rtl&narrow=1&dir=rtl`, {
+        waitUntil: 'networkidle',
+      });
+      await waitForSpecimen(`rtl-340/${theme}`);
+      await auditPanelContrast(theme, 'rtl-340');
+      const rtlCheck = await page.evaluate(() => {
+        const root = document.getElementById('specimen-root');
+        const inlineStyleCount = root ? root.querySelectorAll('[style]').length : -1;
+        const docOverflow = document.documentElement.scrollWidth > 340;
+        const quote = document.querySelector('.yui-qec-quote');
+        const qStyle = quote ? getComputedStyle(quote) : null;
+        const leftEar = document.querySelector('.yui-notch-ear--left');
+        const rightEar = document.querySelector('.yui-notch-ear--right');
+        const housing = document.querySelector('.yui-notch-housing');
+        const lr = leftEar?.getBoundingClientRect();
+        const rr = rightEar?.getBoundingClientRect();
+        const hr = housing?.getBoundingClientRect();
+        const notchContiguous = Boolean(
+          lr && rr && hr && Math.round(hr.left - lr.right) <= 1 && Math.round(rr.left - hr.right) <= 1,
+        );
+        return {
+          inlineStyleCount,
+          docOverflow,
+          quoteRightBorder: qStyle ? parseFloat(qStyle.borderRightWidth) : 0,
+          quoteLeftBorder: qStyle ? parseFloat(qStyle.borderLeftWidth) : 0,
+          notchContiguous,
+        };
+      });
+      if (
+        rtlCheck.inlineStyleCount !== 0 ||
+        rtlCheck.docOverflow ||
+        rtlCheck.quoteRightBorder < 2 ||
+        rtlCheck.quoteLeftBorder > 0.5 ||
+        !rtlCheck.notchContiguous
+      ) {
+        throw new Error(`RTL 340px check failed (${theme}): ${JSON.stringify(rtlCheck)}`);
+      }
+      await blurActive();
+      const rtlPath = path.join(OUT_DIR, `specimen-${theme}-rtl-340.png`);
+      await page.screenshot({ path: rtlPath, fullPage: true });
+      outputs.push(rtlPath);
 
       // Forced-colors audit at 380px across settings, recovery, voice, templates, genui, storage & controls
       await page.setViewportSize({ width: 380, height: 828 });

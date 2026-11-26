@@ -3,14 +3,15 @@
 All notable milestones for **`@yours/ui`** are documented here.
 The library targets Chrome MV3 side panels (`340px–440px`), maintains zero runtime dependencies, zero JSX inline `style` attributes, and zero `dangerouslySetInnerHTML`.
 
-## Unreleased / Milestone 20 (PR #23)
+## Unreleased / Milestone 21 (PR #24)
 
-- Polished `StorageQuotaCard` `340px` alignment so wrapped `Verified` status pills align cleanly under the title text column while size readouts stay pinned to the top baseline (`align-self: flex-start`).
-- Added **`ModelParametersCard`** (`src/components/ModelParametersCard.tsx`) and **`NetworkAuditCard`** (`src/components/NetworkAuditCard.tsx`) exported from `@yours/ui/components` and `@yours/ui` (`0` inline styles, `340px`-safe, Light/Dark + `@media (forced-colors: active)`).
-- Extracted shared `useHorizontalFade` (`src/utils/clipboard.ts`) and `src/utils/spring.ts` (`sampleDampedSpring`, `useReducedMotion`) helpers across streaming, diff, code-block, table, and segmented-control components, keeping bundle totals at `85.11 KB` JS gzip (`<= 86.00 KB`) and `19.14 KB` CSS gzip (`<= 20.50 KB`).
-- Refreshed `ARCHITECTURE.md` to cover all 10 GenUI cards, `SidePanelShell` layering/`84px` fade cap, `src/utils/focus.ts`, MV3 bundle budgets, and full Light/Dark WCAG AA verification; added the `controls` specimen panel across `400px`/`340px` Light & Dark.
+- Reclaimed MV3 bundle size headroom via AST whitespace/syntax JS minification + min-gzip CSS output in `scripts/copy-assets.mjs` and duplicate card/selector consolidation in `src/styles/components.css` — cutting total JS to `76.48 KB` gzip (`<= 80.00 KB` budget) and total CSS to `18.81 KB` gzip (`<= 19.00 KB` budget).
+- Upgraded directional CSS rules across `SidePanelShell`, `TopNotch`, `FloatingComposer`, `QuoteExcerptCard`, `TimelineCard`, `DiffCard`, `FindInThreadBar`, `StorageQuotaCard`, `PromptTemplateList`, `CitationFootnoteList`, and drawer lists to CSS logical properties (`inset-inline`, `margin-inline-start`, `padding-inline-start`/`end`, `border-inline-start`, `text-align: start`/`end`) while keeping `TopNotch` SVG seams and diff code blocks clean under `dir="rtl"`.
+- Added Playwright `dir="rtl"` `340px` Light/Dark verification (`specimen-light-rtl-340.png` & `specimen-dark-rtl-340.png`) in `scripts/visual-specimen.mjs`, `esbuild` subpath tree-shaking/isolation checks in `tests/exports.test.ts`, and [`docs/CONSUMERS.md`](docs/CONSUMERS.md) linked from `README.md`.
 
 ## Milestone History (`v0.1.0`)
+
+- **Milestone 20 (PR #23):** Polished `StorageQuotaCard` `340px` alignment, added `ModelParametersCard` and `NetworkAuditCard`, extracted shared `useHorizontalFade` & `src/utils/spring.ts`, and refreshed `ARCHITECTURE.md`.
 
 - **Milestone 19 (PR #22):** Added `FindInThreadBar` & `StorageQuotaCard`, consolidated `src/utils/focus.ts` modal focus containment & restoration, upgraded muted/green-ink tokens, and expanded the Light & Dark WCAG AA contrast sweep across all specimen views.
 

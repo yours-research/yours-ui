@@ -173,8 +173,7 @@
 .yui-scroll-wrap--fade::after {
   content: "";
   position: absolute;
-  left: 0;
-  right: 0;
+  inset-inline: 0;
   pointer-events: none;
   z-index: 4;
   opacity: 0;
@@ -260,8 +259,7 @@
 
 .yui-toast-overlay {
   position: absolute;
-  left: 14px;
-  right: 14px;
+  inset-inline: 14px;
   bottom: calc(100% + 4px);
   z-index: 45;
   display: flex;
@@ -272,8 +270,7 @@
 
 .yui-toast-overlay--standalone {
   position: relative;
-  left: auto;
-  right: auto;
+  inset-inline: auto;
   bottom: auto;
   margin-top: auto;
   padding: 0 14px 14px 14px;
@@ -290,8 +287,7 @@
 .yui-notch-overlay {
   position: absolute;
   top: 0;
-  left: 0;
-  right: 0;
+  inset-inline: 0;
   z-index: 30;
   display: flex;
   justify-content: center;
@@ -299,6 +295,7 @@
 }
 
 .yui-notch-assembly {
+  direction: ltr;
   display: flex;
   flex-direction: row;
   align-items: flex-start;
@@ -443,7 +440,7 @@
 .yui-notch-dot {
   position: absolute;
   top: -3px;
-  right: -5px;
+  inset-inline-end: -5px;
   width: 6px;
   height: 6px;
   border-radius: 9999px;
@@ -601,7 +598,7 @@
 
 .yui-hook-rail-layer {
   position: absolute;
-  left: 5px;
+  inset-inline-start: 5px;
   top: 0;
   bottom: 0;
   width: 12px;
@@ -624,7 +621,7 @@
 
 .yui-hook-stem {
   position: absolute;
-  left: 0;
+  inset-inline-start: 0;
   top: 0;
   width: 1px;
   height: 0;
@@ -643,9 +640,13 @@
   background-color: currentColor;
 }
 
+[dir="rtl"] .yui-hook-corner {
+  transform: scaleX(-1);
+}
+
 .yui-hook-corner {
   position: absolute;
-  left: 0;
+  inset-inline-start: 0;
   top: 0;
   display: block;
   overflow: visible;
@@ -665,7 +666,7 @@
   justify-content: space-between;
   gap: 6px;
   cursor: pointer;
-  text-align: left;
+  text-align: start;
   transition: background-color 140ms ease;
 }
 
@@ -818,7 +819,7 @@
 }
 
 .yui-composer-right {
-  margin-left: auto;
+  margin-inline-start: auto;
   display: inline-flex;
   align-items: center;
   gap: 6px;
@@ -1121,7 +1122,7 @@
   padding: 10px 13px;
   box-shadow: var(--yui-capsule-shadow);
   cursor: pointer;
-  text-align: left;
+  text-align: start;
   color: var(--yui-ink);
   transition: transform 170ms var(--yui-spring), box-shadow 170ms ease, border-color 170ms ease;
 }
@@ -1345,12 +1346,22 @@
   min-width: 0;
 }
 
-.yui-code-block {
+.yui-code-block,
+.yui-tool-card,
+.yui-sources-list,
+.yui-download-card,
+.yui-mem-card,
+.yui-error-card,
+.yui-shortcut-sheet {
   background-color: var(--yui-capsule-bg);
   border: 1px solid var(--yui-capsule-border);
+  box-shadow: var(--yui-capsule-shadow);
+}
+
+.yui-code-block,
+.yui-tool-card {
   border-radius: 12px;
   overflow: hidden;
-  box-shadow: var(--yui-capsule-shadow);
 }
 
 .yui-code-head {
@@ -1465,7 +1476,7 @@
   border-radius: 6px;
   background: transparent;
   padding: 2px 4px;
-  margin-left: -4px;
+  margin-inline-start: -4px;
   cursor: pointer;
   font-family: var(--font-sans);
   font-size: 12.5px;
@@ -1520,12 +1531,12 @@
   display: flex;
   flex-direction: row;
   gap: 12px;
-  padding-left: 6px;
+  padding-inline-start: 6px;
 }
 
 .yui-reasoning-rail {
   width: 1px;
-  border-left: 1.5px dotted var(--yui-dot-muted);
+  border-inline-start: 1.5px dotted var(--yui-dot-muted);
   flex-shrink: 0;
 }
 
@@ -1533,14 +1544,6 @@
   font-size: 12px;
   line-height: 18px;
   color: var(--yui-secondary);
-}
-
-.yui-tool-card {
-  background-color: var(--yui-capsule-bg);
-  border: 1px solid var(--yui-capsule-border);
-  border-radius: 12px;
-  overflow: hidden;
-  box-shadow: var(--yui-capsule-shadow);
 }
 
 .yui-tool-card-head {
@@ -1673,11 +1676,8 @@
 }
 
 .yui-sources-list {
-  background-color: var(--yui-capsule-bg);
-  border: 1px solid var(--yui-capsule-border);
   border-radius: 13px;
   overflow: hidden;
-  box-shadow: var(--yui-capsule-shadow);
 }
 
 .yui-source-row {
@@ -1768,7 +1768,7 @@
   border: none;
   background: transparent;
   padding: 4px 2px;
-  text-align: left;
+  text-align: start;
   cursor: pointer;
   color: inherit;
   border-radius: 6px;
@@ -1784,11 +1784,8 @@
   align-items: center;
   justify-content: space-between;
   gap: 10px;
-  background-color: var(--yui-capsule-bg);
-  border: 1px solid var(--yui-capsule-border);
   border-radius: 13px;
   padding: 10px 12px;
-  box-shadow: var(--yui-capsule-shadow);
   font-size: 12px;
   line-height: 16px;
 }
@@ -2014,11 +2011,8 @@
 .yui-download-card {
   width: 100%;
   box-sizing: border-box;
-  background-color: var(--yui-capsule-bg);
-  border: 1px solid var(--yui-capsule-border);
   border-radius: 13px;
   padding: 12px 14px;
-  box-shadow: var(--yui-capsule-shadow);
   display: flex;
   flex-direction: column;
   gap: 9px;
@@ -2199,7 +2193,7 @@
 .yui-table-cell-val {
   width: 82px;
   flex-shrink: 0;
-  text-align: right;
+  text-align: end;
   font-variant-numeric: tabular-nums;
   color: var(--yui-ink);
   white-space: nowrap;
@@ -2236,7 +2230,7 @@
   border: none;
   border-bottom: 1px solid var(--yui-hairline);
   background: transparent;
-  text-align: left;
+  text-align: start;
   cursor: pointer;
   border-radius: 6px;
   transition: background-color 140ms ease;
@@ -2337,7 +2331,7 @@
 
 .yui-brief-list {
   margin: 0;
-  padding-left: 16px;
+  padding-inline-start: 16px;
   display: flex;
   flex-direction: column;
   gap: 6px;
@@ -2384,7 +2378,7 @@
 .yui-kv-val {
   font-weight: 500;
   color: var(--yui-ink);
-  text-align: right;
+  text-align: end;
   min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -2429,7 +2423,7 @@
   border: 1px solid var(--yui-hairline);
   border-radius: 11px;
   padding: 9px 12px;
-  text-align: left;
+  text-align: start;
   cursor: pointer;
   transition: background-color 140ms ease, border-color 140ms ease, box-shadow 140ms ease;
 }
@@ -2597,22 +2591,24 @@
 
 .yui-sr-quote {
   margin: 2px 0;
-  padding: 2px 0 2px 12px;
-  border-left: 2px solid var(--yui-cobalt);
+  padding-block: 2px;
+  padding-inline-start: 12px;
+  padding-inline-end: 0;
+  border-inline-start: 2px solid var(--yui-cobalt);
   color: var(--yui-secondary);
 }
 
 .yui-sr-ul,
 .yui-sr-ol {
   margin: 0;
-  padding-left: 18px;
+  padding-inline-start: 18px;
   display: flex;
   flex-direction: column;
   gap: 4px;
 }
 
 .yui-sr-li {
-  padding-left: 2px;
+  padding-inline-start: 2px;
 }
 
 .yui-sr-strong {
@@ -2658,7 +2654,7 @@
   display: inline-block;
   width: 2px;
   height: 1em;
-  margin-left: 2px;
+  margin-inline-start: 2px;
   vertical-align: -0.15em;
   border-radius: 9999px;
   background-color: var(--yui-ink);
@@ -2782,7 +2778,7 @@
   color: var(--yui-secondary);
   background-color: var(--yui-well-bg);
   border-bottom: 1px solid var(--yui-hairline);
-  text-align: left;
+  text-align: start;
   white-space: nowrap;
 }
 
@@ -2805,7 +2801,7 @@
 
 .yui-sr-th.is-right,
 .yui-sr-td.is-right {
-  text-align: right;
+  text-align: end;
 }
 
 .yui-sr-actions {
@@ -2923,8 +2919,7 @@
 .yui-cmd-popover--floating {
   position: absolute;
   bottom: calc(100% + 8px);
-  left: 0;
-  right: 0;
+  inset-inline: 0;
   z-index: 25;
 }
 
@@ -2983,7 +2978,7 @@
   align-items: center;
   justify-content: space-between;
   gap: 8px;
-  text-align: left;
+  text-align: start;
   cursor: pointer;
   transition: background-color 120ms ease;
 }
@@ -3234,7 +3229,7 @@ span.yui-citation-pill {
   align-items: center;
   justify-content: space-between;
   gap: 8px;
-  text-align: left;
+  text-align: start;
   cursor: pointer;
   transition: background-color 140ms ease, color 140ms ease;
 }
@@ -3400,7 +3395,7 @@ span.yui-citation-pill {
 .yui-cite-card {
   position: absolute;
   bottom: calc(100% + 7px);
-  left: 0;
+  inset-inline-start: 0;
   z-index: 26;
   width: 276px;
   max-width: calc(100vw - 44px);
@@ -3461,8 +3456,10 @@ span.yui-citation-pill {
 
 .yui-cite-snippet {
   margin: 0;
-  padding: 2px 0 2px 9px;
-  border-left: 2px solid var(--yui-cobalt);
+  padding-block: 2px;
+  padding-inline-start: 9px;
+  padding-inline-end: 0;
+  border-inline-start: 2px solid var(--yui-cobalt);
   font-size: 11.5px;
   line-height: 16px;
   color: var(--yui-secondary);
@@ -3587,7 +3584,7 @@ span.yui-citation-pill {
   background: transparent;
   padding: 0;
   margin: 0;
-  text-align: left;
+  text-align: start;
   font-family: var(--font-sans);
   font-size: 12.5px;
   line-height: 1.45;
@@ -3739,7 +3736,7 @@ span.yui-citation-pill {
   color: var(--yui-ink);
   font-variant-numeric: tabular-nums;
   min-width: 32px;
-  text-align: right;
+  text-align: end;
 }
 
 .yui-dl-progress {
@@ -3989,7 +3986,7 @@ span.yui-citation-pill {
   }
 
   .yui-voice-actions {
-    margin-left: auto;
+    margin-inline-start: auto;
   }
 }
 
@@ -4384,7 +4381,7 @@ span.yui-citation-pill {
   font-weight: 600;
   letter-spacing: 0.03em;
   text-transform: uppercase;
-  text-align: left;
+  text-align: start;
   padding: 7px 12px;
   border-bottom: 1px solid var(--yui-hairline);
   white-space: nowrap;
@@ -4447,7 +4444,7 @@ span.yui-citation-pill {
 
 .yui-data-th.is-right,
 .yui-data-td.is-right {
-  text-align: right;
+  text-align: end;
 }
 
 .yui-data-td.is-numeric {
@@ -4492,8 +4489,7 @@ span.yui-citation-pill {
 .yui-artifact-scroll-wrap::after {
   content: "";
   position: absolute;
-  left: 0;
-  right: 0;
+  inset-inline: 0;
   bottom: 0;
   height: 24px;
   pointer-events: none;
@@ -4570,16 +4566,8 @@ span.yui-citation-pill {
 }
 
 .yui-shortcut-sheet {
-  width: 100%;
-  box-sizing: border-box;
-  flex-shrink: 0;
-  background-color: var(--yui-capsule-bg);
-  border: 1px solid var(--yui-capsule-border);
   border-radius: 14px;
-  box-shadow: var(--yui-capsule-shadow);
   overflow: hidden;
-  display: flex;
-  flex-direction: column;
 }
 
 .yui-shortcut-sheet .yui-genui-title,
@@ -4948,16 +4936,8 @@ span.yui-citation-pill {
 }
 
 .yui-diff-card {
-  width: 100%;
-  box-sizing: border-box;
-  flex-shrink: 0;
-  background-color: var(--yui-capsule-bg);
-  border: 1px solid var(--yui-capsule-border);
   border-radius: 14px;
-  box-shadow: var(--yui-capsule-shadow);
   overflow: hidden;
-  display: flex;
-  flex-direction: column;
 }
 
 .yui-diff-stats {
@@ -4985,6 +4965,8 @@ span.yui-citation-pill {
 }
 
 .yui-diff-lines {
+  direction: ltr;
+  text-align: left;
   display: table;
   width: 100%;
   min-width: 100%;
@@ -5013,7 +4995,7 @@ span.yui-citation-pill {
   width: 24px;
   min-width: 24px;
   padding: 1px 6px 1px 8px;
-  text-align: right;
+  text-align: end;
   user-select: none;
   color: var(--yui-secondary);
   font-variant-numeric: tabular-nums;
@@ -5048,16 +5030,8 @@ span.yui-citation-pill {
  * ToolTraceList & PermissionCard (Milestone #9)
  * ========================================================================== */
 .yui-trace-card {
-  width: 100%;
-  box-sizing: border-box;
-  flex-shrink: 0;
-  background-color: var(--yui-capsule-bg);
-  border: 1px solid var(--yui-capsule-border);
   border-radius: 14px;
-  box-shadow: var(--yui-capsule-shadow);
   overflow: hidden;
-  display: flex;
-  flex-direction: column;
 }
 
 .yui-trace-head {
@@ -5072,7 +5046,7 @@ span.yui-citation-pill {
   color: var(--yui-ink);
   font-family: var(--font-sans);
   cursor: pointer;
-  text-align: left;
+  text-align: start;
   transition: background-color 140ms ease;
 }
 
@@ -5147,7 +5121,7 @@ span.yui-citation-pill {
   border: none;
   background: transparent;
   font-family: var(--font-sans);
-  text-align: left;
+  text-align: start;
 }
 
 .yui-trace-trigger {
@@ -5277,16 +5251,9 @@ span.yui-citation-pill {
 }
 
 .yui-perm-card {
-  width: 100%;
-  box-sizing: border-box;
-  flex-shrink: 0;
-  background-color: var(--yui-capsule-bg);
   border: 1px solid var(--yui-strong);
   border-radius: 14px;
   padding: 12px 13px;
-  box-shadow: var(--yui-capsule-shadow);
-  display: flex;
-  flex-direction: column;
   gap: 10px;
 }
 
@@ -5380,7 +5347,7 @@ span.yui-citation-pill {
   font-size: 11.5px;
   line-height: 16px;
   color: var(--yui-ink);
-  text-align: left;
+  text-align: start;
   word-break: break-word;
   min-width: 0;
 }
@@ -5436,7 +5403,7 @@ span.yui-citation-pill {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  margin-left: auto;
+  margin-inline-start: auto;
 }
 
 .yui-perm-deny-btn {
@@ -5493,17 +5460,40 @@ span.yui-citation-pill {
   font-variant-numeric: tabular-nums;
 }
 
+.yui-data-card,
+.yui-diff-card,
+.yui-trace-card,
+.yui-perm-card,
+.yui-budget-card,
+.yui-shortcut-sheet,
+.yui-th-list,
+.yui-tabctx-list,
+.yui-fn-list,
+.yui-codecard,
+.yui-onb-card,
+.yui-recovery-card,
+.yui-voice-card,
+.yui-ptl-card,
+.yui-export-card,
+.yui-storage-card,
+.yui-params-card,
+.yui-audit-card {
+  width: 100%;
+  box-sizing: border-box;
+  flex-shrink: 0;
+  background-color: var(--yui-capsule-bg);
+  border: 1px solid var(--yui-capsule-border);
+  box-shadow: var(--yui-capsule-shadow);
+  display: flex;
+  flex-direction: column;
+}
+
 .yui-th-list {
   list-style: none;
   margin: 0;
   padding: 0;
-  background-color: var(--yui-capsule-bg);
-  border: 1px solid var(--yui-capsule-border);
   border-radius: 13px;
-  box-shadow: var(--yui-capsule-shadow);
   overflow: hidden;
-  display: flex;
-  flex-direction: column;
 }
 
 .yui-th-row {
@@ -5534,7 +5524,7 @@ span.yui-citation-pill {
   border: none;
   background: transparent;
   font-family: var(--font-sans);
-  text-align: left;
+  text-align: start;
   cursor: pointer;
 }
 
@@ -5691,7 +5681,7 @@ span.yui-citation-pill {
   align-items: center;
   justify-content: space-between;
   gap: 8px;
-  padding-right: 10px;
+  padding-inline-end: 10px;
   min-width: 0;
   transition: background-color 140ms ease;
 }
@@ -5717,7 +5707,7 @@ span.yui-citation-pill {
   border: none;
   background: transparent;
   font-family: var(--font-sans);
-  text-align: left;
+  text-align: start;
   cursor: pointer;
 }
 
@@ -5869,14 +5859,8 @@ span.yui-citation-pill {
   list-style: none;
   margin: 0;
   padding: 0;
-  width: 100%;
-  box-sizing: border-box;
-  background-color: var(--yui-capsule-bg);
-  border: 1px solid var(--yui-capsule-border);
   border-radius: 12px;
   overflow: hidden;
-  display: flex;
-  flex-direction: column;
 }
 
 .yui-tabctx-row {
@@ -5899,7 +5883,7 @@ span.yui-citation-pill {
   border: none;
   background: transparent;
   padding: 0;
-  text-align: left;
+  text-align: start;
   font-family: var(--font-sans);
 }
 
@@ -5989,7 +5973,7 @@ span.yui-citation-pill {
 }
 
 .yui-tabctx-tok {
-  margin-left: auto;
+  margin-inline-start: auto;
   font-family: var(--font-mono);
   font-size: 9.5px;
   line-height: 14px;
@@ -6044,16 +6028,8 @@ span.yui-citation-pill {
  * ContextBudgetMeter & CitationFootnoteList (Milestone #11)
  * ========================================================================== */
 .yui-budget-card {
-  width: 100%;
-  box-sizing: border-box;
-  flex-shrink: 0;
-  background-color: var(--yui-capsule-bg);
-  border: 1px solid var(--yui-capsule-border);
   border-radius: 14px;
-  box-shadow: var(--yui-capsule-shadow);
   overflow: hidden;
-  display: flex;
-  flex-direction: column;
 }
 
 .yui-budget-top {
@@ -6073,7 +6049,7 @@ span.yui-citation-pill {
   border: none;
   background: transparent;
   font-family: var(--font-sans);
-  text-align: left;
+  text-align: start;
 }
 
 .yui-budget-toggle {
@@ -6286,8 +6262,6 @@ span.yui-citation-pill {
   list-style: none;
   margin: 0;
   padding: 0;
-  display: flex;
-  flex-direction: column;
 }
 
 .yui-fn-row {
@@ -6354,8 +6328,11 @@ span.yui-citation-pill {
 .yui-fn-quote {
   margin: 0;
   padding: 7px 10px;
-  border-left: 2px solid var(--yui-strong);
-  border-radius: 0 8px 8px 0;
+  border-inline-start: 2px solid var(--yui-strong);
+  border-start-start-radius: 0;
+  border-end-start-radius: 0;
+  border-start-end-radius: 8px;
+  border-end-end-radius: 8px;
   background-color: var(--yui-well-bg);
   font-size: 11.5px;
   line-height: 17px;
@@ -6365,7 +6342,7 @@ span.yui-citation-pill {
 
 .yui-fn-quote.is-warm {
   background-color: var(--yui-warm-wash);
-  border-left-color: var(--yui-amber);
+  border-inline-start-color: var(--yui-amber);
 }
 
 .yui-fn-actions {
@@ -6403,16 +6380,8 @@ span.yui-citation-pill {
  * CodeBlockCard & OnboardingCard (Milestone #13)
  * ========================================================================== */
 .yui-codecard {
-  width: 100%;
-  box-sizing: border-box;
-  flex-shrink: 0;
-  background-color: var(--yui-capsule-bg);
-  border: 1px solid var(--yui-capsule-border);
   border-radius: 13px;
-  box-shadow: var(--yui-capsule-shadow);
   overflow: hidden;
-  display: flex;
-  flex-direction: column;
 }
 
 .yui-codecard-head {
@@ -6488,8 +6457,8 @@ span.yui-citation-pill {
   display: table-cell;
   width: 22px;
   min-width: 22px;
-  padding-right: 10px;
-  text-align: right;
+  padding-inline-end: 10px;
+  text-align: end;
   user-select: none;
   color: var(--yui-secondary);
   font-variant-numeric: tabular-nums;
@@ -6501,16 +6470,8 @@ span.yui-citation-pill {
 }
 
 .yui-onb-card {
-  width: 100%;
-  box-sizing: border-box;
-  flex-shrink: 0;
-  background-color: var(--yui-capsule-bg);
-  border: 1px solid var(--yui-capsule-border);
   border-radius: 15px;
   padding: 14px;
-  box-shadow: var(--yui-capsule-shadow);
-  display: flex;
-  flex-direction: column;
   gap: 12px;
 }
 
@@ -6688,16 +6649,8 @@ span.yui-citation-pill {
  * ErrorRecoveryCard & InlineNotice (Milestone 14)
  * ========================================================================== */
 .yui-recovery-card {
-  width: 100%;
-  box-sizing: border-box;
-  flex-shrink: 0;
-  background-color: var(--yui-capsule-bg);
-  border: 1px solid var(--yui-capsule-border);
   border-radius: 14px;
   padding: 12px 13px;
-  box-shadow: var(--yui-capsule-shadow);
-  display: flex;
-  flex-direction: column;
   gap: 10px;
 }
 
@@ -6790,7 +6743,7 @@ span.yui-citation-pill {
   line-height: 14px;
   font-weight: 500;
   cursor: pointer;
-  text-align: left;
+  text-align: start;
   transition: background-color 140ms ease, color 140ms ease;
 }
 
@@ -6977,7 +6930,7 @@ span.yui-citation-pill {
   border: none;
   background: transparent;
   padding: 1px 4px;
-  margin-left: auto;
+  margin-inline-start: auto;
   border-radius: 6px;
   font-family: var(--font-sans);
   font-size: 11px;
@@ -7067,16 +7020,8 @@ span.yui-citation-pill {
 }
 
 .yui-voice-card {
-  width: 100%;
-  box-sizing: border-box;
-  flex-shrink: 0;
-  background-color: var(--yui-capsule-bg);
-  border: 1px solid var(--yui-capsule-border);
   border-radius: 15px;
   padding: 13px 14px;
-  box-shadow: var(--yui-capsule-shadow);
-  display: flex;
-  flex-direction: column;
   gap: 10px;
 }
 
@@ -7138,7 +7083,7 @@ span.yui-citation-pill {
   display: inline-block;
   width: 2px;
   height: 13px;
-  margin-left: 3px;
+  margin-inline-start: 3px;
   vertical-align: -2px;
   border-radius: 1px;
   background-color: var(--yui-ink);
@@ -7243,16 +7188,8 @@ span.yui-citation-pill {
 .yui-storage-card,
 .yui-params-card,
 .yui-audit-card {
-  width: 100%;
-  box-sizing: border-box;
-  flex-shrink: 0;
-  background-color: var(--yui-capsule-bg);
-  border: 1px solid var(--yui-capsule-border);
   border-radius: 15px;
   padding: 13px 14px;
-  box-shadow: var(--yui-capsule-shadow);
-  display: flex;
-  flex-direction: column;
   gap: 10px;
 }
 
@@ -7351,7 +7288,7 @@ span.yui-citation-pill {
   display: flex;
   align-items: center;
   gap: 4px;
-  padding-right: 6px;
+  padding-inline-end: 6px;
   min-width: 0;
   transition: background-color 140ms ease;
 }
@@ -7374,7 +7311,7 @@ span.yui-citation-pill {
   display: flex;
   flex-direction: column;
   gap: 2px;
-  text-align: left;
+  text-align: start;
   cursor: pointer;
   font-family: var(--font-sans);
 }
@@ -7394,7 +7331,7 @@ span.yui-citation-pill {
 
   .yui-ptl-row {
     gap: 2px;
-    padding-right: 4px;
+    padding-inline-end: 4px;
   }
 
   .yui-ptl-main {
@@ -7604,7 +7541,7 @@ span.yui-citation-pill {
 .yui-tl-btn {
   border: none;
   background: transparent;
-  text-align: left;
+  text-align: start;
   font-family: var(--font-sans);
   cursor: pointer;
   border-radius: 6px;
@@ -7664,8 +7601,10 @@ span.yui-citation-pill {
 
 .yui-qec-quote {
   margin: 0;
-  padding: 2px 0 2px 11px;
-  border-left: 2.5px solid var(--yui-cobalt);
+  padding-block: 2px;
+  padding-inline-start: 11px;
+  padding-inline-end: 0;
+  border-inline-start: 2.5px solid var(--yui-cobalt);
   font-size: 12.5px;
   line-height: 18px;
   color: var(--yui-ink);
@@ -7740,6 +7679,8 @@ span.yui-citation-pill {
   white-space: nowrap;
   flex-shrink: 0;
   padding: 0 2px;
+  direction: ltr;
+  unicode-bidi: isolate;
 }
 
 .yui-find-count.is-empty {
@@ -7795,7 +7736,9 @@ span.yui-citation-pill {
   cursor: not-allowed;
 }
 
-.yui-storage-card {
+.yui-storage-card,
+.yui-params-card,
+.yui-audit-card {
   color: var(--yui-ink);
 }
 
@@ -7804,7 +7747,8 @@ span.yui-citation-pill {
   margin: 0;
 }
 
-.yui-storage-head {
+.yui-storage-head,
+.yui-params-head {
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
@@ -7819,6 +7763,8 @@ span.yui-citation-pill {
   font-variant-numeric: tabular-nums;
   white-space: nowrap;
   flex-shrink: 0;
+  direction: ltr;
+  unicode-bidi: isolate;
 }
 
 .yui-storage-used {
@@ -7975,15 +7921,22 @@ span.yui-citation-pill {
   font-weight: 500;
   flex-shrink: 0;
   align-self: flex-start;
+  direction: ltr;
+  unicode-bidi: isolate;
 }
 
-.yui-storage-row-sub {
+.yui-storage-row-sub,
+.yui-audit-row-sub {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 6px 8px;
   flex-wrap: wrap;
-  padding-left: 13px;
+  min-width: 0;
+}
+
+.yui-storage-row-sub {
+  padding-inline-start: 13px;
 }
 
 .yui-storage-row-detail {
@@ -8004,7 +7957,8 @@ span.yui-citation-pill {
   color: var(--yui-danger-ink);
 }
 
-.yui-storage-foot {
+.yui-storage-foot,
+.yui-params-foot {
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -8027,11 +7981,6 @@ span.yui-citation-pill {
 /* ==========================================================================
  * ModelParametersCard & NetworkAuditCard (Milestone 20)
  * ========================================================================== */
-.yui-params-card,
-.yui-audit-card {
-  color: var(--yui-ink);
-}
-
 .yui-params-card .yui-genui-title,
 .yui-params-card .yui-genui-muted,
 .yui-audit-card .yui-genui-title,
@@ -8039,13 +7988,6 @@ span.yui-citation-pill {
   margin: 0;
 }
 
-.yui-params-head {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 8px;
-  min-width: 0;
-}
 
 .yui-params-groups,
 .yui-params-sliders {
@@ -8093,15 +8035,6 @@ span.yui-citation-pill {
   cursor: pointer;
 }
 
-.yui-params-foot {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 8px;
-  flex-wrap: wrap;
-  padding-top: 8px;
-  border-top: 1px solid var(--yui-hairline);
-}
 
 .yui-audit-metrics {
   display: grid;
@@ -8244,113 +8177,22 @@ span.yui-citation-pill {
   }
 }
 
-.yui-find-case-btn:focus-visible,
-.yui-find-input:focus-visible,
-.yui-icon-btn:focus-visible,
-.yui-pill-btn:focus-visible,
-.yui-seg-btn:focus-visible,
-.yui-notch-btn:focus-visible,
-.yui-micro-pill:focus-visible,
-.yui-citation-pill:focus-visible,
-.yui-notch-opt-row:focus-visible,
-.yui-recovery-toggle:focus-visible,
-.yui-recovery-copy:focus-visible,
-.yui-notice-action:focus-visible,
-.yui-voice-ptt-btn:focus-visible,
-.yui-ptl-main:focus-visible,
-.yui-tl-btn:focus-visible,
-.yui-qec-link:focus-visible {
+[class*="yui-"]:is(a, button, input, select, textarea, [tabindex]):focus-visible {
   outline: 2px solid var(--focus-ring);
   outline-offset: 2px;
 }
 
 @media (prefers-reduced-motion: reduce) {
+  [class*="yui-"],
+  [class*="yui-"]::before,
+  [class*="yui-"]::after,
+  [class*="yui-"]::-webkit-progress-value,
   .yui-hook-rail-layer,
   .yui-hook-row,
-  .yui-hook-row-title,
-  .yui-hook-row-meta,
-  .yui-notch-housing,
-  .yui-notch-bar,
-  .yui-notch-btn,
-  .yui-notch-label,
-  .yui-notch-drawer,
-  .yui-disclosure,
-  .yui-ctx-sheet,
-  .yui-cite-card,
-  .yui-mem-card,
-  .yui-dl-progress::-webkit-progress-value,
-  .yui-vm-bar,
-  .yui-scroll-wrap--fade::before,
-  .yui-scroll-wrap--fade::after,
-  .yui-switch,
-  .yui-switch-thumb,
-  .yui-vault-drop,
-  .yui-vault-input,
-  .yui-data-scroll-wrap::after,
-  .yui-data-sort-icon,
-  .yui-artifact-scroll-wrap::after,
-  .yui-artifact-chevron,
-  .yui-status-toast,
-  .yui-cmd-panel,
-  .yui-palette-card,
-  .yui-empty-panel-chip,
-  .yui-trace-head,
-  .yui-trace-trigger,
-  .yui-trace-chevron,
-  .yui-perm-tertiary,
-  .yui-th-row,
-  .yui-model-row,
-  .yui-model-dl-btn,
-  .yui-tabctx-mute-btn,
-  .yui-budget-toggle,
-  .yui-budget-chevron,
-  .yui-budget-progress::-webkit-progress-value,
-  .yui-fn-btn,
-  .yui-onb-cta,
-  .yui-onb-secondary,
-  .yui-recovery-toggle,
   .yui-recovery-chevron,
-  .yui-recovery-trace,
-  .yui-recovery-copy,
   .yui-notice-action,
-  .yui-cmd-popover,
-  .yui-cmd-item,
-  .yui-seg-btn,
-  .yui-citation-pill,
-  .yui-notch-opt-row,
-  .yui-user-actions,
-  .yui-veil,
-  .yui-prompt-capsule,
-  .yui-user-row,
-  .yui-assistant-turn,
-  .yui-reasoning-body,
-  .yui-tool-card-body,
-  .yui-empty-state,
-  .yui-status-badge-dot,
-  .yui-status-dot--pulse,
-  .yui-composer,
-  .yui-chip-btn,
-  .yui-send-btn,
-  .yui-pill-btn,
-  .yui-micro-pill,
-  .yui-sr-link,
   .yui-sr-caret,
-  .yui-sr-code-copy,
-  .yui-sr-action-btn,
-  .yui-sr-action-btn.is-active .yui-icon,
-  .yui-sr-retry-icon.is-spinning,
-  .yui-sr-icon-swap,
-  .yui-voice-bar,
-  .yui-voice-bar.is-live,
-  .yui-voice-caret,
-  .yui-voice-ptt-btn,
-  .yui-alm-bar,
-  .yui-alm.is-animated .yui-alm-bar,
-  .yui-composer-cmd-btn,
-  .yui-ptl-row,
-  .yui-find-case-btn,
-  .yui-storage-seg,
-  .yui-check-progress-track::-webkit-progress-value {
+  .yui-sr-action-btn {
     transition: none;
     animation: none;
   }
@@ -8379,7 +8221,8 @@ span.yui-citation-pill {
   .yui-budget-card,
   .yui-diff-card,
   .yui-trace-card,
-  .yui-th-list,
+  .yui-shortcut-sheet,
+.yui-th-list,
   .yui-model-list,
   .yui-tabctx-list,
   .yui-fn-list,
@@ -8514,7 +8357,7 @@ span.yui-citation-pill {
   }
 
   .yui-qec-quote {
-    border-left-color: Highlight;
+    border-inline-start-color: Highlight;
   }
 
   .yui-model-dot.is-checked {
@@ -8560,37 +8403,7 @@ span.yui-citation-pill {
     background-color: Canvas;
   }
 
-  .yui-icon-btn:focus-visible,
-  .yui-pill-btn:focus-visible,
-  .yui-seg-btn:focus-visible,
-  .yui-notch-btn:focus-visible,
-  .yui-micro-pill:focus-visible,
-  .yui-citation-pill:focus-visible,
-  .yui-notch-opt-row:focus-visible,
-  .yui-switch:focus-visible,
-  .yui-onb-cta:focus-visible,
-  .yui-onb-secondary:focus-visible,
-  .yui-recovery-toggle:focus-visible,
-  .yui-recovery-copy:focus-visible,
-  .yui-notice-action:focus-visible,
-  .yui-voice-ptt-btn:focus-visible,
-  .yui-composer-cmd-btn:focus-visible,
-  .yui-ptl-main:focus-visible,
-  .yui-ptl-search:focus-visible,
-  .yui-tl-btn:focus-visible,
-  .yui-qec-link:focus-visible,
-  .yui-model-radio-btn:focus-visible,
-  .yui-tabctx-main-btn:focus-visible,
-  .yui-tabctx-mute-btn:focus-visible,
-  .yui-find-case-btn:focus-visible,
-  .yui-find-input:focus-visible,
-  .yui-storage-action-btn:focus-visible,
-  .yui-storage-clear-btn:focus-visible,
-  .yui-storage-clear-all:focus-visible,
-  .yui-range-input:focus-visible,
-  .yui-params-reset-btn:focus-visible,
-  .yui-audit-clear-btn:focus-visible,
-  .yui-audit-export-btn:focus-visible {
+  [class*="yui-"]:is(a, button, input, select, textarea, [tabindex]):focus-visible {
     outline: 2px solid Highlight;
     outline-offset: 2px;
   }

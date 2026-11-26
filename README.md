@@ -26,7 +26,7 @@
 
 **`@yours/ui`** is the MIT-licensed React component library, design token system, and 48-icon Aperture SVG kit for **Yours Research** (`Tactile Localism × Rare UI Minimalism`).
 
-Built specifically for local-first Chromium MV3 side panels (`340px–440px`), it pairs **Light Cotton Paper** (`#FAF8F5` / `#F2EFE9` / `#FFFFFF`) and **Dark Anodized Obsidian** (`#09090B` / `#111113` / `#18181B`) recessed-stage surfaces with pure React primitives — **zero runtime dependencies**, **zero Tailwind requirement**, and **zero `dangerouslySetInnerHTML`**.
+Built specifically for local-first Chromium MV3 side panels (`340px–440px`), it pairs **Light Cotton Paper** (`#FAF8F5` / `#F2EFE9` / `#FFFFFF`) and **Dark Anodized Obsidian** (`#09090B` / `#111113` / `#18181B`) recessed-stage surfaces with pure React primitives — **zero runtime dependencies**, **zero Tailwind requirement**, and **zero `dangerouslySetInnerHTML`**. See the [Consumer MV3 Integration Guide](./docs/CONSUMERS.md) for strict CSP configuration, subpath tree-shaking, focus management, and RTL/`forced-colors` details.
 
 ---
 
@@ -165,8 +165,8 @@ All public subpaths (`@yours/ui`, `@yours/ui/icons`, `@yours/ui/layout`, `@yours
 
 | Entrypoint | Raw | Gzip | Budget Guard |
 | :--- | :---: | :---: | :---: |
-| Total `dist/` JS (`83` ESM modules) | `289.55 KB` | `85.11 KB` | `<= 86.00 KB` |
-| `@yours/ui/styles` (`tokens.css` + `components.css` + `index.css`) | `143.13 KB` | `19.14 KB` | `<= 20.50 KB` |
+| Total `dist/` JS (`83` ESM modules) | `219.81 KB` | `76.48 KB` | `<= 80.00 KB` |
+| `@yours/ui/styles` (`tokens.css` + `components.css` + `index.css`) | `137.11 KB` | `18.81 KB` | `<= 19.00 KB` |
 
 Run `npm run build && npm run check:size` to inspect live raw and gzipped sizes per entrypoint.
 
