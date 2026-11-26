@@ -140,6 +140,8 @@ export function SidePanelApp() {
               <span>Pragma-1-4B</span>
             </button>
           }
+          onOpenCommands={() => setExpandedTab('threads')}
+          contextUsageLabel="3.2k / 8k"
         />
       }
     >
@@ -157,6 +159,17 @@ export function SidePanelApp() {
 }
 ```
 
+### Strict TypeScript Consumer & MV3 Bundle Budget
+
+All public subpaths (`@yours/ui`, `@yours/ui/icons`, `@yours/ui/layout`, `@yours/ui/components`, `@yours/ui/genui`, `@yours/ui/styles`) ship full `.d.ts` declarations verified under `strict: true`:
+
+| Entrypoint | Raw | Gzip | Budget Guard |
+| :--- | :---: | :---: | :---: |
+| Total `dist/` JS (`73` ESM modules) | `292.18 KB` | `86.10 KB` | `<= 96.00 KB` |
+| `@yours/ui/styles` (`tokens.css` + `components.css` + `index.css`) | `164.14 KB` | `20.21 KB` | `<= 32.00 KB` |
+
+Run `npm run build && npm run check:size` to inspect live raw and gzipped sizes per entrypoint.
+
 ---
 
 ## Subpath Exports & Complete Component Inventory
@@ -173,7 +186,7 @@ export function SidePanelApp() {
 ### `@yours/ui/components` Inventory
 
 - **Shell, Overlay & Navigation:** `CommandPalette`, `ContextCommandPopover`, `FloatingComposer`, `FloatingContextSheet`, `EmptyPanelState`, `EmptyState`, `KbdHint`, `OnboardingCard`, `PromptCapsuleStack`, `QuotedContextBanner`, `ScrollToBottomButton`, `SegmentedControl`, `ShortcutSheet`, `StatusBadge`, `StatusToast`, `SuggestionChipRow`, `ThreadHistoryDrawer`, `ThreadHistoryList`, `ToastPill`.
-- **Conversation, Citations & Diffs:** `ActionBar`, `AssistantMessage`, `AttachmentDropzone`, `AttachmentStrip`, `BranchPicker`, `CitationFootnoteList`, `CodeBlock`, `CodeBlockCard`, `DiffCard`, `FollowUpSuggestions`, `InlineCitationPill`, `InlineCitationPopover`, `InlineNotice`, `MessageSkeleton`, `SourcesDrawer`, `StreamingResponse`, `UserMessageBubble`, `VoiceDictationPill`, `VoiceSessionBar`.
+- **Conversation, Citations & Diffs:** `ActionBar`, `AssistantMessage`, `AttachmentDropzone`, `AttachmentStrip`, `AudioLevelMeter`, `BranchPicker`, `CitationFootnoteList`, `CodeBlock`, `CodeBlockCard`, `DiffCard`, `FollowUpSuggestions`, `InlineCitationPill`, `InlineCitationPopover`, `InlineNotice`, `MessageSkeleton`, `SourcesDrawer`, `StreamingResponse`, `UserMessageBubble`, `VoiceDictationPill`, `VoiceSessionBar`, `VoiceSessionCard`.
 - **Reasoning, Tools, Context & Guard:** `ContextBudgetMeter`, `PermissionApprovalCard`, `PermissionCard`, `ReasoningTrace`, `TabContextList`, `ToolStepCard`, `ToolTraceList`.
 - **Local Runtime, Models, Memory, Data & Settings:** `ArtifactPreviewCard`, `DataTableCard`, `ErrorRecoveryBanner`, `ErrorRecoveryCard`, `HardwareStatusStrip`, `LocalVaultExportCard`, `MemoryInspectorList`, `MemoryRecordCard`, `ModelDownloadGate`, `ModelDownloadProgressBar`, `ModelRosterList`, `SettingsSection`, `SettingsToggleRow`.
 

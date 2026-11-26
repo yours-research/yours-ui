@@ -803,9 +803,10 @@
 
 .yui-composer-toolbar {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   justify-content: space-between;
-  gap: 8px;
+  gap: 6px 8px;
 }
 
 .yui-composer-left {
@@ -817,10 +818,76 @@
 }
 
 .yui-composer-right {
+  margin-left: auto;
   display: inline-flex;
   align-items: center;
   gap: 6px;
   flex-shrink: 0;
+}
+
+.yui-composer-cmd-btn {
+  width: 28px;
+  height: 28px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background-color: var(--yui-chip-bg);
+  border: 1px solid var(--yui-hairline);
+  border-radius: 8px;
+  padding: 0;
+  color: var(--yui-secondary);
+  font-family: var(--font-mono);
+  font-size: 12px;
+  line-height: 1;
+  font-weight: 600;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: background-color 140ms ease, color 140ms ease, transform 120ms ease;
+}
+
+.yui-composer-cmd-btn:hover:not(:disabled) {
+  background-color: var(--yui-hover-bg);
+  color: var(--yui-ink);
+}
+
+.yui-composer-cmd-btn:active:not(:disabled) {
+  transform: scale(0.975);
+}
+
+.yui-composer-cmd-btn:focus-visible {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: 1px;
+}
+
+.yui-composer-cmd-btn:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+
+.yui-composer-usage {
+  padding: 2px 7px;
+  border-radius: 9999px;
+  background-color: var(--yui-well-bg);
+  border: 1px solid var(--yui-hairline);
+  font-family: var(--font-mono);
+  font-size: 10px;
+  line-height: 14px;
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+  color: var(--yui-secondary);
+  white-space: nowrap;
+}
+
+.yui-composer-usage.is-warning {
+  background-color: var(--yui-amber-soft);
+  border-color: transparent;
+  color: var(--yui-amber-ink);
+}
+
+.yui-composer-usage.is-critical {
+  background-color: var(--yui-danger-soft);
+  border-color: transparent;
+  color: var(--yui-danger-ink);
 }
 
 .yui-chip-btn {
@@ -6930,6 +6997,220 @@ span.yui-citation-pill {
   background-color: var(--yui-hover-bg);
 }
 
+/* ==========================================================================
+ * AudioLevelMeter & VoiceSessionCard (Milestone 15)
+ * ========================================================================== */
+.yui-alm {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  height: 18px;
+  flex-shrink: 0;
+}
+
+.yui-alm--sm {
+  gap: 2.5px;
+  height: 14px;
+}
+
+.yui-alm-bar {
+  width: 2.5px;
+  border-radius: 9999px;
+  background-color: var(--yui-secondary);
+  transform-origin: center;
+  transition: height 120ms ease, background-color 140ms ease;
+}
+
+.yui-alm-bar--0 { height: 4px; }
+.yui-alm-bar--1 { height: 6px; }
+.yui-alm-bar--2 { height: 9px; }
+.yui-alm-bar--3 { height: 12px; }
+.yui-alm-bar--4 { height: 15px; }
+.yui-alm-bar--5 { height: 18px; }
+
+.yui-alm--sm .yui-alm-bar--0 { height: 3px; }
+.yui-alm--sm .yui-alm-bar--1 { height: 5px; }
+.yui-alm--sm .yui-alm-bar--2 { height: 7px; }
+.yui-alm--sm .yui-alm-bar--3 { height: 10px; }
+.yui-alm--sm .yui-alm-bar--4 { height: 12px; }
+.yui-alm--sm .yui-alm-bar--5 { height: 14px; }
+
+.yui-alm--active .yui-alm-bar:not(.yui-alm-bar--0) {
+  background-color: var(--yui-green);
+}
+
+.yui-alm--speaking .yui-alm-bar:not(.yui-alm-bar--0) {
+  background-color: var(--yui-cobalt);
+}
+
+.yui-alm--muted .yui-alm-bar {
+  background-color: var(--yui-dot-muted);
+}
+
+.yui-alm.is-animated .yui-alm-bar:not(.yui-alm-bar--0) {
+  animation: yuiVoicePulse 580ms ease-in-out infinite;
+}
+
+.yui-alm.is-animated .yui-alm-bar:nth-child(2n) {
+  animation-delay: 90ms;
+}
+
+.yui-alm.is-animated .yui-alm-bar:nth-child(3n) {
+  animation-delay: 170ms;
+}
+
+.yui-voice-card {
+  width: 100%;
+  box-sizing: border-box;
+  flex-shrink: 0;
+  background-color: var(--yui-capsule-bg);
+  border: 1px solid var(--yui-capsule-border);
+  border-radius: 15px;
+  padding: 13px 14px;
+  box-shadow: var(--yui-capsule-shadow);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.yui-voice-card-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  min-width: 0;
+}
+
+.yui-voice-card-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  min-width: 0;
+}
+
+.yui-voice-card-title {
+  font-size: 12.5px;
+  line-height: 17px;
+  font-weight: 600;
+  letter-spacing: var(--tracking-tight);
+  color: var(--yui-ink);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.yui-voice-transcript {
+  background-color: var(--yui-well-bg);
+  border: 1px solid var(--yui-hairline);
+  border-radius: 10px;
+  padding: 9px 11px;
+  min-height: 44px;
+}
+
+.yui-voice-prose,
+.yui-voice-placeholder {
+  margin: 0;
+  font-size: 12.5px;
+  line-height: 18px;
+  word-break: break-word;
+}
+
+.yui-voice-committed {
+  color: var(--yui-ink);
+}
+
+.yui-voice-interim {
+  color: var(--yui-secondary);
+}
+
+.yui-voice-placeholder {
+  color: var(--yui-secondary);
+}
+
+.yui-voice-caret {
+  display: inline-block;
+  width: 2px;
+  height: 13px;
+  margin-left: 3px;
+  vertical-align: -2px;
+  border-radius: 1px;
+  background-color: var(--yui-ink);
+  animation: yui-sr-caret-pulse 1s ease-in-out infinite;
+}
+
+.yui-voice-card-controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px 8px;
+}
+
+.yui-voice-ptt-hint,
+.yui-voice-ptt-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 11px;
+  line-height: 15px;
+  color: var(--yui-secondary);
+  white-space: nowrap;
+}
+
+.yui-voice-ptt-btn {
+  padding: 3px 7px;
+  border-radius: 8px;
+  border: 1px solid var(--yui-hairline);
+  background-color: var(--yui-chip-bg);
+  font-family: var(--font-sans);
+  cursor: pointer;
+  transition: background-color 140ms ease, color 140ms ease, border-color 140ms ease;
+}
+
+.yui-voice-ptt-btn:hover {
+  background-color: var(--yui-hover-bg);
+  color: var(--yui-ink);
+}
+
+.yui-voice-ptt-btn.is-active {
+  background-color: var(--yui-send-bg);
+  border-color: var(--yui-send-bg);
+  color: var(--yui-send-fg);
+}
+
+.yui-voice-card-btns {
+  margin-left: auto;
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 5px;
+}
+
+.yui-voice-mute-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.yui-voice-privacy {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  padding-top: 6px;
+  border-top: 1px solid var(--yui-hairline);
+  font-family: var(--font-mono);
+  font-size: 10px;
+  line-height: 14px;
+  color: var(--yui-secondary);
+  text-align: center;
+}
+
+.yui-voice-privacy-icon {
+  color: var(--yui-secondary);
+  flex-shrink: 0;
+}
+
 .yui-icon-btn:focus-visible,
 .yui-pill-btn:focus-visible,
 .yui-seg-btn:focus-visible,
@@ -6939,7 +7220,8 @@ span.yui-citation-pill {
 .yui-notch-opt-row:focus-visible,
 .yui-recovery-toggle:focus-visible,
 .yui-recovery-copy:focus-visible,
-.yui-notice-action:focus-visible {
+.yui-notice-action:focus-visible,
+.yui-voice-ptt-btn:focus-visible {
   outline: 2px solid var(--focus-ring);
   outline-offset: 2px;
 }
@@ -7022,6 +7304,11 @@ span.yui-citation-pill {
   .yui-sr-icon-swap,
   .yui-voice-bar,
   .yui-voice-bar.is-live,
+  .yui-voice-caret,
+  .yui-voice-ptt-btn,
+  .yui-alm-bar,
+  .yui-alm.is-animated .yui-alm-bar,
+  .yui-composer-cmd-btn,
   .yui-check-progress-track::-webkit-progress-value {
     transition: none;
     animation: none;
@@ -7055,7 +7342,9 @@ span.yui-citation-pill {
   .yui-model-list,
   .yui-tabctx-list,
   .yui-fn-list,
-  .yui-notice {
+  .yui-notice,
+  .yui-voice-card,
+  .yui-voice-transcript {
     border: 1px solid CanvasText;
   }
 
@@ -7084,6 +7373,8 @@ span.yui-citation-pill {
   .yui-recovery-toggle,
   .yui-recovery-copy,
   .yui-notice-action,
+  .yui-composer-cmd-btn,
+  .yui-voice-ptt-btn,
   .yui-seg-btn {
     border: 1px solid ButtonText;
     color: ButtonText;
@@ -7100,11 +7391,27 @@ span.yui-citation-pill {
 
   .yui-seg-btn.is-active,
   .yui-sr-action-btn.is-active,
-  .yui-tabctx-mute-btn.is-muted {
+  .yui-tabctx-mute-btn.is-muted,
+  .yui-voice-ptt-btn.is-active,
+  .yui-micro-pill.is-active {
     border-color: Highlight;
     background-color: Highlight;
     color: HighlightText;
     forced-color-adjust: none;
+  }
+
+  .yui-alm-bar {
+    background-color: CanvasText;
+    forced-color-adjust: none;
+  }
+
+  .yui-alm--active .yui-alm-bar:not(.yui-alm-bar--0),
+  .yui-alm--speaking .yui-alm-bar:not(.yui-alm-bar--0) {
+    background-color: Highlight;
+  }
+
+  .yui-alm--muted .yui-alm-bar {
+    background-color: GrayText;
   }
 
   .yui-switch {
@@ -7163,6 +7470,7 @@ span.yui-citation-pill {
     background-color: Highlight;
   }
 
+  .yui-composer-usage,
   .yui-status-badge,
   .yui-recovery-badge,
   .yui-tabctx-kind,
@@ -7186,6 +7494,8 @@ span.yui-citation-pill {
   .yui-recovery-toggle:focus-visible,
   .yui-recovery-copy:focus-visible,
   .yui-notice-action:focus-visible,
+  .yui-voice-ptt-btn:focus-visible,
+  .yui-composer-cmd-btn:focus-visible,
   .yui-model-radio-btn:focus-visible,
   .yui-tabctx-main-btn:focus-visible,
   .yui-tabctx-mute-btn:focus-visible {

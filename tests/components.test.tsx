@@ -6,6 +6,7 @@ import {
   ArtifactPreviewCard,
   AttachmentDropzone,
   AttachmentStrip,
+  AudioLevelMeter,
   BranchPicker,
   CitationFootnoteList,
   CodeBlock,
@@ -59,6 +60,7 @@ import {
   UserMessageBubble,
   VoiceDictationPill,
   VoiceSessionBar,
+  VoiceSessionCard,
   type StreamingResponseFeedback,
   type StreamingResponseProps,
   type StreamingResponseStatus,
@@ -2270,5 +2272,85 @@ describe('@yours/ui chat & runtime primitives', () => {
     expect(forcedIdx).toBeGreaterThan(-1);
     expect(cssSource.slice(forcedIdx)).toContain('.yui-recovery-card');
     expect(cssSource.slice(forcedIdx)).toContain('.yui-notice');
+  });
+
+  it('renders AudioLevelMeter, VoiceSessionCard (transcript, mute/barge-in/end, privacy), and FloatingComposer command & token props without inline styles', async () => {
+    const onOpenCommands = vi.fn();
+    const onPushToTalk = vi.fn();
+    const onToggleBargeIn = vi.fn();
+    const onToggleMute = vi.fn();
+    const onEndSession = vi.fn();
+
+    const el = renderNode(
+      <div>
+        <AudioLevelMeter level={0.72} tone="active" bars={7} animated label="Mic level" />
+        <VoiceSessionCard
+          state="speech-detected"
+          elapsedLabel="00:18"
+          transcript="Compare the local WebGPU speeds"
+          interimTranscript="across the two checkpoints"
+          pushToTalkKey="Space"
+          onPushToTalk={onPushToTalk}
+          bargeInEnabled
+          onToggleBargeIn={onToggleBargeIn}
+          muted={false}
+          onToggleMute={onToggleMute}
+          onEndSession={onEndSession}
+        />
+        <FloatingComposer
+          value="Draft prompt"
+          onChange={() => {}}
+          onSubmit={() => {}}
+          onOpenCommands={onOpenCommands}
+          contextUsageLabel="6.4k / 8k"
+          contextUsageTone="warning"
+        />
+      </div>,
+    );
+
+    expect(el.querySelectorAll('[style]').length).toBe(0);
+
+    const standaloneMeter = el.querySelector('[data-slot="audio-level-meter"]') as HTMLElement;
+    expect(standaloneMeter.getAttribute('role')).toBe('meter');
+    expect(standaloneMeter.querySelectorAll('.yui-alm-bar').length).toBe(7);
+    expect(standaloneMeter.getAttribute('aria-valuenow')).toBe('72');
+
+    const voiceCard = el.querySelector('[data-slot="voice-session-card"]') as HTMLElement;
+    expect(voiceCard.querySelector('.yui-voice-committed')?.textContent).toBe(
+      'Compare the local WebGPU speeds',
+    );
+    expect(voiceCard.querySelector('.yui-voice-interim')?.textContent).toBe(
+      'across the two checkpoints',
+    );
+    expect(voiceCard.querySelector('.yui-voice-caret')).toBeTruthy();
+    expect(voiceCard.textContent).toContain('On-device STT');
+
+    act(() => {
+      (voiceCard.querySelector('.yui-voice-ptt-btn') as HTMLButtonElement).click();
+      (voiceCard.querySelector('.yui-voice-mute-pill') as HTMLButtonElement).click();
+      (voiceCard.querySelector('.yui-voice-end-btn') as HTMLButtonElement).click();
+      (el.querySelector('.yui-composer-cmd-btn') as HTMLButtonElement).click();
+    });
+    expect(onPushToTalk).toHaveBeenCalledTimes(1);
+    expect(onToggleMute).toHaveBeenCalledTimes(1);
+    expect(onEndSession).toHaveBeenCalledTimes(1);
+    expect(onOpenCommands).toHaveBeenCalledTimes(1);
+
+    const usageBadge = el.querySelector('.yui-composer-usage') as HTMLElement;
+    expect(usageBadge.textContent).toBe('6.4k / 8k');
+    expect(usageBadge.classList.contains('is-warning')).toBe(true);
+
+    // Zero-config backward compatibility: omitting optional props renders no extra buttons/badges
+    rerenderNode(<FloatingComposer value="" onChange={() => {}} onSubmit={() => {}} />);
+    expect(el.querySelector('.yui-composer-cmd-btn')).toBeNull();
+    expect(el.querySelector('.yui-composer-usage')).toBeNull();
+
+    const cssSource = await readSourceFile('../src/styles/components.css');
+    expect(cssSource).toContain('.yui-voice-card');
+    expect(cssSource).toContain('.yui-alm-bar--5');
+    expect(cssSource).toContain('.yui-composer-cmd-btn');
+    const forcedIdx = cssSource.indexOf('@media (forced-colors: active)');
+    expect(cssSource.slice(forcedIdx)).toContain('.yui-alm-bar');
+    expect(cssSource.slice(forcedIdx)).toContain('.yui-voice-card');
   });
 });

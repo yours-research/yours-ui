@@ -13,12 +13,19 @@ export interface FloatingComposerProps {
   topSlot?: ReactNode;
   leftSlot?: ReactNode;
   rightSlot?: ReactNode;
+  /** Optional slash-command palette trigger button on the left toolbar. */
+  onOpenCommands?: () => void;
+  commandsLabel?: string;
+  /** Optional compact context budget readout on the right toolbar (e.g. `3.2k / 8k`). */
+  contextUsageLabel?: string;
+  contextUsageTone?: 'neutral' | 'warning' | 'critical';
   ariaLabel?: string;
 }
 
 /**
  * Floating monochrome Page 9 composer capsule supporting Enter-to-send,
- * Shift+Enter newlines, customizable context/model left slots, and live stop toggle.
+ * Shift+Enter newlines, customizable context/model left slots, optional `/`
+ * command trigger & token counter badge, and live stop toggle.
  */
 export function FloatingComposer({
   value,
@@ -32,10 +39,20 @@ export function FloatingComposer({
   topSlot,
   leftSlot,
   rightSlot,
+  onOpenCommands,
+  commandsLabel = 'Open commands',
+  contextUsageLabel,
+  contextUsageTone = 'neutral',
   ariaLabel = 'Message prompt',
 }: FloatingComposerProps) {
   const canSend = !disabled && (isGenerating || value.trim().length > 0);
   const autoRows = Math.min(5, Math.max(1, value.split('\n').length));
+  const usageClass = [
+    'yui-composer-usage',
+    contextUsageTone !== 'neutral' ? `is-${contextUsageTone}` : '',
+  ]
+    .filter(Boolean)
+    .join(' ');
 
   return (
     <div className="yui-composer" aria-busy={isGenerating || undefined}>
@@ -61,8 +78,27 @@ export function FloatingComposer({
         />
       </div>
       <div className="yui-composer-toolbar">
-        <div className="yui-composer-left">{leftSlot}</div>
+        <div className="yui-composer-left">
+          {leftSlot}
+          {onOpenCommands ? (
+            <button
+              type="button"
+              className="yui-composer-cmd-btn"
+              disabled={disabled}
+              aria-label={commandsLabel}
+              title={commandsLabel}
+              onClick={onOpenCommands}
+            >
+              <span>/</span>
+            </button>
+          ) : null}
+        </div>
         <div className="yui-composer-right">
+          {contextUsageLabel ? (
+            <span className={usageClass} data-tone={contextUsageTone}>
+              {contextUsageLabel}
+            </span>
+          ) : null}
           {rightSlot}
           <button
             type="button"
