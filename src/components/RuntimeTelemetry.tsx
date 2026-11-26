@@ -13,6 +13,10 @@ export interface HardwareStatusStripProps {
   speedupLabel?: string | number;
   /** Accepted tokens per speculative step (e.g. `3.4` or `"3.4 tok/step"`). */
   acceptedTokLabel?: string | number;
+  /** Compact speculative mode chip (e.g. `"Tree · M=8"`). */
+  specModeLabel?: string;
+  /** Draft engine label chip (e.g. `"E0 draft"`). */
+  draftEngineLabel?: string;
   /** Quantized VRAM footprint delta label (e.g. `"-254 MiB"`). */
   vramDeltaLabel?: string;
   /** Additional compact telemetry pill labels rendered at the trailing edge. */
@@ -47,6 +51,8 @@ export function HardwareStatusStrip({
   sha256Verified = false,
   speedupLabel,
   acceptedTokLabel,
+  specModeLabel,
+  draftEngineLabel,
   vramDeltaLabel,
   telemetryChips,
   className,
@@ -54,6 +60,13 @@ export function HardwareStatusStrip({
   const stripClass = ['yui-hw-strip', className].filter(Boolean).join(' ');
   const speedupText = formatSpecChip(speedupLabel, 'x', 2);
   const acceptedText = formatSpecChip(acceptedTokLabel, ' tok/step', 1);
+  const pills = [
+    acceptedText,
+    specModeLabel,
+    draftEngineLabel,
+    vramDeltaLabel,
+    ...(telemetryChips ?? []),
+  ].filter((chip): chip is string => Boolean(chip));
 
   return (
     <div data-slot="hardware-status-strip" data-status={status} className={stripClass}>
@@ -67,15 +80,11 @@ export function HardwareStatusStrip({
       <div className="yui-hw-right">
         {memoryLabel ? <span className="yui-hw-metric">{memoryLabel}</span> : null}
         {speedupText ? <span className="yui-telem-chip is-spec">{speedupText}</span> : null}
-        {acceptedText ? <span className="yui-telem-chip">{acceptedText}</span> : null}
-        {vramDeltaLabel ? <span className="yui-telem-chip">{vramDeltaLabel}</span> : null}
-        {telemetryChips?.map((chip, idx) =>
-          chip ? (
-            <span key={`${chip}-${idx}`} className="yui-telem-chip">
-              {chip}
-            </span>
-          ) : null,
-        )}
+        {pills.map((chip, idx) => (
+          <span key={`${chip}-${idx}`} className="yui-telem-chip">
+            {chip}
+          </span>
+        ))}
         {sha256Verified ? (
           <span className="yui-hw-sha" title="SHA-256 checksum verified">
             <ShieldIcon size={11} />
