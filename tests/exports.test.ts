@@ -144,8 +144,12 @@ describe('@yours/ui built ESM & CSS exports smoke test', () => {
     expect(typeof rootMod.StorageQuotaCard).toBe('function');
     expect(typeof componentsMod.ModelParametersCard).toBe('function');
     expect(typeof componentsMod.NetworkAuditCard).toBe('function');
+    expect(typeof componentsMod.SitePermissionsList).toBe('function');
+    expect(typeof componentsMod.AgentHandoffCard).toBe('function');
     expect(typeof rootMod.ModelParametersCard).toBe('function');
     expect(typeof rootMod.NetworkAuditCard).toBe('function');
+    expect(typeof rootMod.SitePermissionsList).toBe('function');
+    expect(typeof rootMod.AgentHandoffCard).toBe('function');
     expect(typeof genuiMod.CompareTable).toBe('function');
     expect(typeof genuiMod.MetricStripCard).toBe('function');
     expect(typeof genuiMod.TimelineCard).toBe('function');
@@ -206,7 +210,7 @@ describe('@yours/ui built ESM & CSS exports smoke test', () => {
         "import { MicIcon, YoursMark } from '@yours/ui/icons';",
         "import { SidePanelShell, TopNotch } from '@yours/ui/layout';",
         "import { ErrorRecoveryCard, FloatingComposer, InlineNotice } from '@yours/ui/components';",
-        "import { PromptTemplateList, ExportSessionCard, FindInThreadBar, StorageQuotaCard, ModelParametersCard, NetworkAuditCard } from '@yours/ui/components';",
+        "import { PromptTemplateList, ExportSessionCard, FindInThreadBar, StorageQuotaCard, ModelParametersCard, NetworkAuditCard, SitePermissionsList, AgentHandoffCard } from '@yours/ui/components';",
         "import { CompareTable, MetricStripCard, QuoteExcerptCard, TimelineCard } from '@yours/ui/genui';",
         '',
         'export function ConsumerExample(props: FloatingComposerProps) {',
@@ -228,6 +232,8 @@ describe('@yours/ui built ESM & CSS exports smoke test', () => {
         '      <StorageQuotaCard usedLabel="2.6 GB" quotaLabel="12.0 GB" entries={[{ id: "w", label: "Weights", sizeLabel: "2.4 GB", percent: 20 }]} />',
         '      <ModelParametersCard modelLabel="Qwen3.5-4B" onReset={() => {}} />',
         '      <NetworkAuditCard events={[{ id: "e1", target: "api.example", decision: "blocked", timestamp: "12:01" }]} />',
+        '      <SitePermissionsList items={[{ id: "sp1", origin: "docs.yours.sh", scope: "Read active tab", mode: "once" }]} onModeChange={() => {}} onRevoke={() => {}} />',
+        '      <AgentHandoffCard title="Captcha required" reason="Verify humanity before submit" origin="checkout.example" onTakeOver={() => {}} onResume={() => {}} onCancel={() => {}} />',
         '      <MetricStripCard label="VRAM" primaryValue="2.4 GB" values={[2.1, 2.3, 2.4]} />',
         '      <CompareTable title="Bench" leftColumnTitle="A" rightColumnTitle="B" rows={[{ feature: "Speed", leftValue: "44", rightValue: "39" }]} />',
         '      <TimelineCard title="Plan" steps={[{ id: "s1", label: "Step 1", status: "done" }]} />',
@@ -301,7 +307,9 @@ describe('@yours/ui built ESM & CSS exports smoke test', () => {
         `const genui = await bundle("import { QuoteExcerptCard } from '@yours/ui/genui'; console.log(QuoteExcerptCard);");`,
         `assert(genui.includes('yui-qec-quote') && !genui.includes('yui-shell') && !genui.includes('yui-cmd-panel'));`,
         `const comp = await bundle("import { FindInThreadBar } from '@yours/ui/components'; console.log(FindInThreadBar);");`,
-        `assert(comp.includes('yui-find-bar') && !comp.includes('yui-shell') && !comp.includes('yui-qec-quote'));`,
+        `assert(comp.includes('yui-find-bar') && !comp.includes('yui-shell') && !comp.includes('yui-qec-quote') && !comp.includes('yui-handoff-card'));`,
+        `const handoff = await bundle("import { AgentHandoffCard, SitePermissionsList } from '@yours/ui/components'; console.log(AgentHandoffCard, SitePermissionsList);");`,
+        `assert(handoff.includes('yui-handoff-card') && handoff.includes('yui-sperm-card') && !handoff.includes('yui-shell') && !handoff.includes('yui-qec-quote'));`,
       ].join('\n'),
     );
 

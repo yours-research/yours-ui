@@ -1918,7 +1918,7 @@
 .yui-status-badge--amber {
   background-color: var(--yui-amber-soft);
   border-color: transparent;
-  color: var(--yui-amber);
+  color: var(--yui-amber-ink);
 }
 
 .yui-status-badge--danger {
@@ -5477,7 +5477,9 @@ span.yui-citation-pill {
 .yui-export-card,
 .yui-storage-card,
 .yui-params-card,
-.yui-audit-card {
+.yui-audit-card,
+.yui-sperm-card,
+.yui-handoff-card {
   width: 100%;
   box-sizing: border-box;
   flex-shrink: 0;
@@ -7187,7 +7189,9 @@ span.yui-citation-pill {
 .yui-export-card,
 .yui-storage-card,
 .yui-params-card,
-.yui-audit-card {
+.yui-audit-card,
+.yui-sperm-card,
+.yui-handoff-card {
   border-radius: 15px;
   padding: 13px 14px;
   gap: 10px;
@@ -7738,7 +7742,9 @@ span.yui-citation-pill {
 
 .yui-storage-card,
 .yui-params-card,
-.yui-audit-card {
+.yui-audit-card,
+.yui-sperm-card,
+.yui-handoff-card {
   color: var(--yui-ink);
 }
 
@@ -7984,7 +7990,11 @@ span.yui-citation-pill {
 .yui-params-card .yui-genui-title,
 .yui-params-card .yui-genui-muted,
 .yui-audit-card .yui-genui-title,
-.yui-audit-card .yui-genui-muted {
+.yui-audit-card .yui-genui-muted,
+.yui-sperm-card .yui-genui-title,
+.yui-sperm-card .yui-genui-muted,
+.yui-handoff-card .yui-genui-title,
+.yui-handoff-card .yui-genui-muted {
   margin: 0;
 }
 
@@ -8151,6 +8161,54 @@ span.yui-citation-pill {
   text-align: center;
 }
 
+.yui-handoff-card {
+  border-inline-start: 2.5px solid var(--yui-amber);
+}
+
+.yui-handoff-icon,
+.yui-sperm-lock {
+  color: var(--yui-amber-ink);
+}
+
+.yui-handoff-icon {
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+.yui-handoff-card .yui-setting-title-row {
+  display: flex;
+  flex-wrap: nowrap;
+  align-items: flex-start;
+  width: 100%;
+}
+
+.yui-handoff-card .yui-genui-title {
+  white-space: normal;
+  min-width: 0;
+}
+
+.yui-sperm-top {
+  flex-wrap: wrap;
+  gap: 6px 8px;
+}
+
+.yui-sperm-origin {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.yui-sperm-host {
+  direction: ltr;
+  unicode-bidi: isolate;
+}
+
+.yui-sperm-lock {
+  margin: 0;
+  font-size: 10.5px;
+  line-height: 14px;
+}
+
 @media (max-width: 360px) {
   .yui-find-bar {
     gap: 3px;
@@ -8163,7 +8221,9 @@ span.yui-citation-pill {
 
   .yui-storage-card,
   .yui-params-card,
-  .yui-audit-card {
+  .yui-audit-card,
+  .yui-sperm-card,
+  .yui-handoff-card {
     padding: 11px 12px;
   }
 
@@ -8242,6 +8302,8 @@ span.yui-citation-pill {
   .yui-storage-list,
   .yui-params-card,
   .yui-audit-card,
+  .yui-sperm-card,
+  .yui-handoff-card,
   .yui-audit-metric-tile,
   .yui-audit-empty {
     border: 1px solid CanvasText;

@@ -3,13 +3,15 @@
 All notable milestones for **`@yours/ui`** are documented here.
 The library targets Chrome MV3 side panels (`340px–440px`), maintains zero runtime dependencies, zero JSX inline `style` attributes, and zero `dangerouslySetInnerHTML`.
 
-## Unreleased / Milestone 21 (PR #24)
+## Unreleased / Milestone 22 (PR #25)
 
-- Reclaimed MV3 bundle size headroom via AST whitespace/syntax JS minification + min-gzip CSS output in `scripts/copy-assets.mjs` and duplicate card/selector consolidation in `src/styles/components.css` — cutting total JS to `76.48 KB` gzip (`<= 80.00 KB` budget) and total CSS to `18.81 KB` gzip (`<= 19.00 KB` budget).
-- Upgraded directional CSS rules across `SidePanelShell`, `TopNotch`, `FloatingComposer`, `QuoteExcerptCard`, `TimelineCard`, `DiffCard`, `FindInThreadBar`, `StorageQuotaCard`, `PromptTemplateList`, `CitationFootnoteList`, and drawer lists to CSS logical properties (`inset-inline`, `margin-inline-start`, `padding-inline-start`/`end`, `border-inline-start`, `text-align: start`/`end`) while keeping `TopNotch` SVG seams and diff code blocks clean under `dir="rtl"`.
-- Added Playwright `dir="rtl"` `340px` Light/Dark verification (`specimen-light-rtl-340.png` & `specimen-dark-rtl-340.png`) in `scripts/visual-specimen.mjs`, `esbuild` subpath tree-shaking/isolation checks in `tests/exports.test.ts`, and [`docs/CONSUMERS.md`](docs/CONSUMERS.md) linked from `README.md`.
+- Added `SitePermissionsList` (`src/components/SitePermissionsList.tsx`) — local revocable per-origin permission ledger (`Off` · `Once` · `Site` via `SegmentedControl`, optional `lockedReason` disabling persistent site-wide access on banking/sensitive flows, per-origin `Revoke` / `Revoke all`, and empty state `"No sites approved — all requests ask first"`).
+- Added `AgentHandoffCard` (`src/components/AgentHandoffCard.tsx`) — tactile human-in-the-loop pause & takeover card for login walls, CAPTCHAs, checkout steps, or sensitive forms with amber left accent, active origin, `paused at` step progress, `Take over tab` / `Resume` / `Cancel` controls, and zero inline styles.
+- Reused shared `.yui-storage-list` / `.yui-audit-row` / `.yui-perm-scope` layout styles in `src/styles/components.css` (`@media (forced-colors: active)` and `dir="rtl"` ready) to stay cleanly within the `<= 80.00 KB` JS gzip and `<= 19.00 KB` CSS gzip MV3 budgets, with full jsdom unit tests, `esbuild` tree-shaking checks, and Playwright Light/Dark/RTL/`400px`/`340px` audits.
 
 ## Milestone History (`v0.1.0`)
+
+- **Milestone 21 (PR #24):** Reclaimed MV3 bundle size headroom via AST whitespace/syntax JS minification + min-gzip CSS output in `scripts/copy-assets.mjs` and duplicate card/selector consolidation in `src/styles/components.css` — cutting total JS to `76.48 KB` gzip (`<= 80.00 KB` budget) and total CSS to `18.81 KB` gzip (`<= 19.00 KB` budget); upgraded directional styles to CSS logical properties with `dir="rtl"` `340px` Playwright verification, `esbuild` subpath tree-shaking checks, and [`docs/CONSUMERS.md`](docs/CONSUMERS.md).
 
 - **Milestone 20 (PR #23):** Polished `StorageQuotaCard` `340px` alignment, added `ModelParametersCard` and `NetworkAuditCard`, extracted shared `useHorizontalFade` & `src/utils/spring.ts`, and refreshed `ARCHITECTURE.md`.
 

@@ -93,6 +93,8 @@ import {
   SettingsToggleRow,
   ShortcutSheet,
   SidePanelShell,
+  SitePermissionsList,
+  AgentHandoffCard,
   SourcesDrawer,
   StatusBadge,
   StatusToast,
@@ -1744,6 +1746,84 @@ function ControlsAndAuditPanel({ theme }: { theme: 'light' | 'dark' }) {
   );
 }
 
+function PermissionsAndHandoffPanel({ theme }: { theme: 'light' | 'dark' }) {
+  const [statusMsg, setStatusMsg] = useState('Per-origin guardrails active');
+  const [handoffState, setHandoffState] = useState<'waiting' | 'user-active'>('waiting');
+  const [items, setItems] = useState([
+    {
+      id: 'sp1',
+      origin: 'docs.yours.sh',
+      scope: 'Read active tab DOM & headings',
+      mode: 'site' as 'off' | 'once' | 'site',
+      lastUsedLabel: '2m ago',
+    },
+    {
+      id: 'sp2',
+      origin: 'github.com',
+      scope: 'Read PR diff lines on current tab',
+      mode: 'once' as 'off' | 'once' | 'site',
+      lastUsedLabel: '14m ago',
+    },
+    {
+      id: 'sp3',
+      origin: 'pay.bank.invalid',
+      scope: 'Autofill address fields (payment locked)',
+      mode: 'once' as 'off' | 'once' | 'site',
+      lastUsedLabel: 'Just now',
+      lockedReason: 'Persistent site access locked on banking & checkout flows',
+    },
+  ]);
+
+  return (
+    <SidePanelShell
+      theme={theme}
+      notch={<TopNotch items={NOTCH_ITEMS} expandedId={null} />}
+      footer={
+        <FloatingComposer
+          value=""
+          onChange={() => {}}
+          onSubmit={() => {}}
+          leftSlot={<StatusBadge tone="amber" dot>{statusMsg}</StatusBadge>}
+        />
+      }
+    >
+      <AgentHandoffCard
+        title="Checkout & 2FA checkpoint"
+        reason="Paused at verification step so you can complete login and payment directly in the tab."
+        origin="pay.bank.invalid"
+        progressLabel="Step 3 of 4 · Confirm payment"
+        state={handoffState}
+        onTakeOver={() => {
+          setHandoffState('user-active');
+          setStatusMsg('User took over tab');
+        }}
+        onResume={() => {
+          setHandoffState('waiting');
+          setStatusMsg('Agent resumed after handoff');
+        }}
+        onCancel={() => setStatusMsg('Automated checkout cancelled')}
+      />
+      <SitePermissionsList
+        items={items}
+        onModeChange={(id, nextMode) => {
+          setItems((prev) =>
+            prev.map((item) => (item.id === id ? { ...item, mode: nextMode } : item)),
+          );
+          setStatusMsg('Updated ' + id + ' to ' + nextMode);
+        }}
+        onRevoke={(id) => {
+          setItems((prev) => prev.filter((item) => item.id !== id));
+          setStatusMsg('Revoked site permission');
+        }}
+        onRevokeAll={() => {
+          setItems([]);
+          setStatusMsg('All site permissions revoked');
+        }}
+      />
+    </SidePanelShell>
+  );
+}
+
 function RtlShowcasePanel({ theme }: { theme: 'light' | 'dark' }) {
   return (
     <SidePanelShell
@@ -1823,6 +1903,30 @@ function RtlShowcasePanel({ theme }: { theme: 'light' | 'dark' }) {
           },
         ]}
       />
+      <AgentHandoffCard
+        title="توقف مؤقت عند تسجيل الدخول"
+        reason="بانتظار إكمال التحقق الثنائي مباشرة في علامة التبويب."
+        origin="accounts.example.invalid"
+        progressLabel="الخطوة 2 من 4 · التحقق"
+        onTakeOver={() => {}}
+        onResume={() => {}}
+        onCancel={() => {}}
+      />
+      <SitePermissionsList
+        title="أذونات المواقع"
+        subtitle="سجل صلاحيات كل نطاق محلياً"
+        items={[
+          {
+            id: 'rtl-sp1',
+            origin: 'docs.yours.sh',
+            scope: 'قراءة نص التبويب النشط فقط',
+            mode: 'once',
+            lastUsedLabel: 'الآن',
+          },
+        ]}
+        onModeChange={() => {}}
+        onRevoke={() => {}}
+      />
       <PromptTemplateList
         items={[
           { id: 'pt1', command: '/summarize', title: 'تلخيص الصفحة', description: 'استخراج 5 نقاط محلياً', category: 'Page', shortcut: '⌘1', pinned: true },
@@ -1880,6 +1984,7 @@ function SpecimenApp() {
         {panel === 'genui' ? <GenUiShowcasePanel theme={theme} /> : null}
         {panel === 'storage' ? <StorageAndFindPanel theme={theme} /> : null}
         {panel === 'controls' ? <ControlsAndAuditPanel theme={theme} /> : null}
+        {panel === 'permissions' ? <PermissionsAndHandoffPanel theme={theme} /> : null}
         {panel === 'rtl' ? <RtlShowcasePanel theme={theme} /> : null}
       </div>
     );
@@ -1908,6 +2013,7 @@ function SpecimenApp() {
       <div className="yui-spec-frame"><TemplatesAndExportPanel theme={theme} /></div>
       <div className="yui-spec-frame"><StorageAndFindPanel theme={theme} /></div>
       <div className="yui-spec-frame"><ControlsAndAuditPanel theme={theme} /></div>
+      <div className="yui-spec-frame"><PermissionsAndHandoffPanel theme={theme} /></div>
       <div className="yui-spec-frame-auto"><GenUiShowcasePanel theme={theme} /></div>
     </div>
   );
@@ -2137,6 +2243,7 @@ async function main() {
       'genui',
       'storage',
       'controls',
+      'permissions',
     ];
     const auditPanelContrast = async (activeTheme, panelName) => {
       const failures = await page.evaluate((t) => {
@@ -2255,6 +2362,7 @@ async function main() {
             'welcome',
             'storage',
             'controls',
+            'permissions',
           ].includes(panel)
         ) {
           await auditPanelContrast(theme, panel);
@@ -2309,6 +2417,34 @@ async function main() {
           await page.locator('[data-slot="network-audit-card"] .yui-audit-clear-btn').click();
           if ((await page.locator('[data-slot="network-audit-card"] .yui-audit-empty').count()) !== 1) {
             throw new Error(`NetworkAuditCard clear log failed (${theme})`);
+          }
+        }
+
+        if (panel === 'permissions') {
+          const lockedDisabled = await page
+            .locator('[data-permission-id="sp3"] [role="radio"]')
+            .nth(2)
+            .isDisabled();
+          if (!lockedDisabled) {
+            throw new Error(`Expected locked Site option disabled for pay.bank.invalid (${theme})`);
+          }
+          await page.locator('[data-slot="agent-handoff-card"] button:has-text("Take over tab")').click();
+          if (
+            (await page.locator('[data-slot="agent-handoff-card"]').getAttribute('data-state')) !==
+            'user-active'
+          ) {
+            throw new Error(`AgentHandoffCard Take over tab did not enter user-active state (${theme})`);
+          }
+          await page.locator('[data-slot="agent-handoff-card"] button:has-text("Resume")').click();
+          await page.locator('[data-permission-id="sp2"] [role="radio"]').nth(2).click();
+          if (
+            (await page.locator('[data-permission-id="sp2"]').getAttribute('data-mode')) !== 'site'
+          ) {
+            throw new Error(`SitePermissionsList mode change failed (${theme})`);
+          }
+          await page.locator('[data-slot="site-permissions-list"] footer button').click();
+          if ((await page.locator('[data-slot="site-permissions-list"] .yui-audit-empty').count()) !== 1) {
+            throw new Error(`SitePermissionsList Revoke all empty state failed (${theme})`);
           }
         }
 
@@ -3286,7 +3422,7 @@ async function main() {
       // 400px width verification across key panels + reduced-motion audit
       await page.setViewportSize({ width: 400, height: 828 });
       await page.emulateMedia({ reducedMotion: 'reduce' });
-      for (const widePanel of ['chat', 'data', 'shortcuts', 'welcome', 'palette', 'diff', 'trace', 'drawers', 'budget', 'onboarding', 'recovery', 'voice', 'templates', 'genui', 'storage', 'controls']) {
+      for (const widePanel of ['chat', 'data', 'shortcuts', 'welcome', 'palette', 'diff', 'trace', 'drawers', 'budget', 'onboarding', 'recovery', 'voice', 'templates', 'genui', 'storage', 'controls', 'permissions']) {
         await page.goto(`${baseUrl}/?mode=single&theme=${theme}&panel=${widePanel}&width=400`, {
           waitUntil: 'networkidle',
         });
@@ -3331,6 +3467,7 @@ async function main() {
         'genui',
         'storage',
         'controls',
+        'permissions',
       ]) {
         await page.goto(`${baseUrl}/?mode=single&theme=${theme}&panel=${narrowPanel}&narrow=1`, {
           waitUntil: 'networkidle',
@@ -3608,6 +3745,18 @@ async function main() {
           await page.screenshot({ path: controlsNarrowPath });
           outputs.push(controlsNarrowPath);
         }
+        if (narrowPanel === 'permissions') {
+          const permOverflow = await page.evaluate(() => ({
+            overflow: document.documentElement.scrollWidth > 340,
+            inlineStyles: document.querySelectorAll('#specimen-root [style]').length,
+          }));
+          if (permOverflow.overflow || permOverflow.inlineStyles !== 0) {
+            throw new Error(`340px permissions check failed (${theme}): ${JSON.stringify(permOverflow)}`);
+          }
+          const permNarrowPath = path.join(OUT_DIR, `specimen-${theme}-permissions-340.png`);
+          await page.screenshot({ path: permNarrowPath });
+          outputs.push(permNarrowPath);
+        }
       }
 
       // RTL (dir="rtl") narrow 340px layout, seam, WCAG AA, and zero-inline-style audit
@@ -3657,7 +3806,7 @@ async function main() {
       // Forced-colors audit at 380px across settings, recovery, voice, templates, genui, storage & controls
       await page.setViewportSize({ width: 380, height: 828 });
       await page.emulateMedia({ forcedColors: 'active' });
-      for (const fcPanel of ['settings', 'recovery', 'voice', 'templates', 'genui', 'storage', 'controls']) {
+      for (const fcPanel of ['settings', 'recovery', 'voice', 'templates', 'genui', 'storage', 'controls', 'permissions']) {
         await page.goto(`${baseUrl}/?mode=single&theme=${theme}&panel=${fcPanel}`, {
           waitUntil: 'networkidle',
         });
