@@ -43,6 +43,7 @@ import {
   ChecklistCard,
   ChoicePromptCard,
   CitationFootnoteList,
+  CodeBlockCard,
   CommandPalette,
   CompareTable,
   ContextBudgetMeter,
@@ -70,6 +71,7 @@ import {
   ModelRosterList,
   NotchDrawerSearch,
   NotchOptionRow,
+  OnboardingCard,
   PageActionCard,
   PageBriefCard,
   PageIcon,
@@ -1206,6 +1208,57 @@ function BudgetAndCitationPanel({ theme }: { theme: 'light' | 'dark' }) {
   );
 }
 
+function OnboardingAndCodePanel({ theme }: { theme: 'light' | 'dark' }) {
+  const [initialized, setInitialized] = useState(false);
+
+  return (
+    <SidePanelShell
+      theme={theme}
+      notch={<TopNotch items={NOTCH_ITEMS} expandedId={null} />}
+      footer={
+        <FloatingComposer
+          value=""
+          onChange={() => {}}
+          onSubmit={() => {}}
+          leftSlot={
+            <StatusBadge tone="local" dot>
+              {initialized ? 'Qwen3.5-4B warm' : 'OPFS ready'}
+            </StatusBadge>
+          }
+        />
+      }
+    >
+      <OnboardingCard
+        checkpointLabel="Qwen3.5-4B · Q4F16"
+        cacheSizeLabel="2.6 GB"
+        adapterLabel="WebGPU ready"
+        ctaLabel={initialized ? 'Checkpoint initialized' : 'Download & initialize locally'}
+        loading={false}
+        secondaryLabel="Choose another checkpoint"
+        onInitialize={() => setInitialized(true)}
+        onSecondaryAction={() => {}}
+      />
+      <CodeBlockCard
+        title="decode_kernel.wgsl"
+        language="wgsl"
+        showLineNumbers
+        code={
+          '@compute @workgroup_size(256, 1, 1)\\n' +
+          'fn kv_dequant_q4(@builtin(global_invocation_id) gid: vec3<u32>) {\\n' +
+          '  let packed = kv_cache_q4[gid.x]; // subgroup quantized load across OPFS ring\\n' +
+          '  workgroupBarrier();\\n' +
+          '}'
+        }
+      />
+      <StreamingResponse
+        status="done"
+        actions={false}
+        text={'\\x60\\x60\\x60bash\\nnpm exec @yours/cli verify --webgpu\\n\\x60\\x60\\x60'}
+      />
+    </SidePanelShell>
+  );
+}
+
 function ShortcutAndToastPanel({ theme }: { theme: 'light' | 'dark' }) {
   const [toastOpen, setToastOpen] = useState(true);
   const [drawerOpen, setDrawerOpen] = useState(false);
@@ -1320,6 +1373,7 @@ function SpecimenApp() {
         {panel === 'trace' ? <TraceAndPermissionPanel theme={theme} /> : null}
         {panel === 'drawers' ? <DrawerAndContextPanel theme={theme} /> : null}
         {panel === 'budget' ? <BudgetAndCitationPanel theme={theme} /> : null}
+        {panel === 'onboarding' ? <OnboardingAndCodePanel theme={theme} /> : null}
         {panel === 'genui' ? <GenUiShowcasePanel theme={theme} /> : null}
       </div>
     );
@@ -1342,6 +1396,7 @@ function SpecimenApp() {
       <div className="yui-spec-frame"><TraceAndPermissionPanel theme={theme} /></div>
       <div className="yui-spec-frame"><DrawerAndContextPanel theme={theme} /></div>
       <div className="yui-spec-frame"><BudgetAndCitationPanel theme={theme} /></div>
+      <div className="yui-spec-frame"><OnboardingAndCodePanel theme={theme} /></div>
       <div className="yui-spec-frame-auto"><GenUiShowcasePanel theme={theme} /></div>
     </div>
   );
@@ -1563,6 +1618,7 @@ async function main() {
       'trace',
       'drawers',
       'budget',
+      'onboarding',
       'genui',
     ];
     const blurActive = () =>
@@ -2076,6 +2132,67 @@ async function main() {
           }
         }
 
+        if (panel === 'onboarding') {
+          const onbContrast = await page.evaluate(() => {
+            const parseRgba = (str) => {
+              const m = str.match(/rgba?\(([^)]+)\)/);
+              if (!m) return null;
+              const parts = m[1].split(',').map((x) => parseFloat(x.trim()));
+              return [parts[0], parts[1], parts[2], parts[3] ?? 1];
+            };
+            const relLum = ([r, g, b]) => {
+              const f = (c) => {
+                const s = c / 255;
+                return s <= 0.03928 ? s / 12.92 : Math.pow((s + 0.055) / 1.055, 2.4);
+              };
+              return 0.2126 * f(r) + 0.7152 * f(g) + 0.0722 * f(b);
+            };
+            const effectiveBg = (el) => {
+              let cur = el;
+              while (cur && cur !== document.documentElement) {
+                const bg = parseRgba(getComputedStyle(cur).backgroundColor);
+                if (bg && bg[3] >= 0.95) return bg;
+                cur = cur.parentElement;
+              }
+              return [255, 255, 255, 1];
+            };
+            const selectors = [
+              '[data-slot="onboarding-card"] .yui-onb-title',
+              '[data-slot="onboarding-card"] .yui-onb-sub',
+              '[data-slot="onboarding-card"] .yui-onb-ckpt-label',
+              '[data-slot="onboarding-card"] .yui-onb-cache',
+              '[data-slot="onboarding-card"] .yui-onb-privacy',
+              '[data-slot="code-block-card"] .yui-codecard-title',
+              '[data-slot="code-block-card"] .yui-codecard-lang',
+              '[data-slot="code-block-card"] .yui-sr-code-copy',
+            ];
+            const bad = [];
+            for (const sel of selectors) {
+              for (const node of document.querySelectorAll(sel)) {
+                const fg = parseRgba(getComputedStyle(node).color);
+                const bg = effectiveBg(node);
+                if (!fg) continue;
+                const l1 = Math.max(relLum(fg), relLum(bg));
+                const l2 = Math.min(relLum(fg), relLum(bg));
+                const ratio = (l1 + 0.05) / (l2 + 0.05);
+                if (ratio < 4.5) {
+                  bad.push({ sel, ratio: Number(ratio.toFixed(2)), text: node.textContent });
+                }
+              }
+            }
+            return bad;
+          });
+          if (onbContrast.length > 0) {
+            throw new Error(`WCAG AA contrast audit failed (${theme}/onboarding): ${JSON.stringify(onbContrast)}`);
+          }
+          await page.locator('[data-slot="code-block-card"] .yui-sr-code-copy').click();
+          await page.locator('[data-slot="onboarding-card"] .yui-onb-cta').click();
+          const onbBadge = await page.locator('.yui-composer .yui-status-badge').textContent();
+          if (!onbBadge?.includes('warm')) {
+            throw new Error(`OnboardingCard initialize click did not update badge (${theme}): ${onbBadge}`);
+          }
+        }
+
         if (panel === 'budget') {
           const budgetContrast = await page.evaluate(() => {
             const parseRgba = (str) => {
@@ -2166,10 +2283,10 @@ async function main() {
         }
       }
 
-      // 400px width verification on Chat, Data, Shortcuts, Welcome, Palette, Diff, Trace, Drawers & Budget panels + reduced-motion audit
+      // 400px width verification on Chat, Data, Shortcuts, Welcome, Palette, Diff, Trace, Drawers, Budget & Onboarding panels + reduced-motion audit
       await page.setViewportSize({ width: 400, height: 828 });
       await page.emulateMedia({ reducedMotion: 'reduce' });
-      for (const widePanel of ['chat', 'data', 'shortcuts', 'welcome', 'palette', 'diff', 'trace', 'drawers', 'budget']) {
+      for (const widePanel of ['chat', 'data', 'shortcuts', 'welcome', 'palette', 'diff', 'trace', 'drawers', 'budget', 'onboarding']) {
         await page.goto(`${baseUrl}/?mode=single&theme=${theme}&panel=${widePanel}&width=400`, {
           waitUntil: 'networkidle',
         });
@@ -2207,6 +2324,7 @@ async function main() {
         'trace',
         'drawers',
         'budget',
+        'onboarding',
         'genui',
       ]) {
         await page.goto(`${baseUrl}/?mode=single&theme=${theme}&panel=${narrowPanel}&narrow=1`, {
@@ -2352,6 +2470,9 @@ async function main() {
             const visibleSeps = Array.from(
               document.querySelectorAll('[data-slot="model-roster-list"] .yui-model-spec-sep'),
             ).filter((sep) => getComputedStyle(sep).display !== 'none').length;
+            const tabSepCount = document.querySelectorAll(
+              '[data-slot="tab-context-list"] .yui-tabctx-sep',
+            ).length;
             const snippetDomain = Array.from(
               document.querySelectorAll('[data-slot="tab-context-list"] .yui-tabctx-domain'),
             ).at(-1);
@@ -2366,6 +2487,7 @@ async function main() {
             return {
               clippedText: clippedSpec ? clippedSpec.textContent : null,
               visibleSeps,
+              tabSepCount,
               snippetDomainClipped,
               tabTokInDomain,
               titleWidth,
@@ -2374,6 +2496,7 @@ async function main() {
           if (
             drawer340Audit.clippedText ||
             drawer340Audit.visibleSeps !== 0 ||
+            drawer340Audit.tabSepCount !== 0 ||
             drawer340Audit.snippetDomainClipped ||
             drawer340Audit.tabTokInDomain < 3 ||
             drawer340Audit.titleWidth < 130
@@ -2389,10 +2512,21 @@ async function main() {
           await page.screenshot({ path: budgetNarrowPath });
           outputs.push(budgetNarrowPath);
         }
+        if (narrowPanel === 'onboarding') {
+          const codeFade = await page
+            .locator('[data-slot="code-block-card"] .yui-data-scroll-wrap')
+            .getAttribute('data-scrollable-right');
+          if (codeFade !== 'true') {
+            throw new Error(`Expected CodeBlockCard horizontal scroll fade at 340px (${theme}), got ${codeFade}`);
+          }
+          const onbNarrowPath = path.join(OUT_DIR, `specimen-${theme}-onboarding-340.png`);
+          await page.screenshot({ path: onbNarrowPath });
+          outputs.push(onbNarrowPath);
+        }
       }
 
-      // Overview 16-up comparison sheet
-      await page.setViewportSize({ width: 6488, height: 900 });
+      // Overview 17-up comparison sheet
+      await page.setViewportSize({ width: 6892, height: 900 });
       await page.goto(`${baseUrl}/?mode=gallery&theme=${theme}`, { waitUntil: 'networkidle' });
       const overviewPath = path.join(OUT_DIR, `specimen-${theme}-overview.png`);
       await page.screenshot({ path: overviewPath, fullPage: true });

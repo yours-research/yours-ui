@@ -746,10 +746,46 @@ interface StreamingCodeBlockProps {
   caret?: ReactNode;
 }
 
-/** Internal line-by-line animated fenced code block with header copy swap. */
+/** Internal line-by-line animated fenced code block with header language tag, Copy swap, and scroll fade. */
 function StreamingCodeBlock({ lang, code, animate, caret }: StreamingCodeBlockProps) {
+  const scrollRef = useRef<HTMLDivElement | null>(null);
   const [copied, setCopied] = useState(false);
+  const [canScrollRight, setCanScrollRight] = useState(false);
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const syncFade = useCallback(() => {
+    const el = scrollRef.current;
+    if (!el) return;
+    const next = el.scrollWidth - el.clientWidth - el.scrollLeft > 2;
+    setCanScrollRight((prev) => (prev === next ? prev : next));
+  }, []);
+
+  useEffect(() => {
+    syncFade();
+    const el = scrollRef.current;
+    if (!el) return;
+
+    const onScroll = () => syncFade();
+    el.addEventListener('scroll', onScroll, { passive: true });
+
+    let ro: ResizeObserver | undefined;
+    if (typeof ResizeObserver !== 'undefined') {
+      ro = new ResizeObserver(() => syncFade());
+      ro.observe(el);
+    }
+
+    if (typeof window !== 'undefined') {
+      window.addEventListener('resize', onScroll, { passive: true });
+    }
+
+    return () => {
+      el.removeEventListener('scroll', onScroll);
+      ro?.disconnect();
+      if (typeof window !== 'undefined') {
+        window.removeEventListener('resize', onScroll);
+      }
+    };
+  }, [syncFade, code]);
 
   useEffect(() => {
     return () => {
@@ -765,11 +801,12 @@ function StreamingCodeBlock({ lang, code, animate, caret }: StreamingCodeBlockPr
   };
 
   const lines = code.split('\n');
+  const langLabel = (lang || 'text').trim() || 'text';
 
   return (
     <div className="yui-sr-code">
       <div className="yui-sr-code-header">
-        <span>{lang || 'text'}</span>
+        <span className="yui-sr-code-lang">{langLabel}</span>
         <button
           type="button"
           className="yui-sr-code-copy"
@@ -782,17 +819,24 @@ function StreamingCodeBlock({ lang, code, animate, caret }: StreamingCodeBlockPr
           <span>{copied ? 'Copied' : 'Copy'}</span>
         </button>
       </div>
-      <pre className="yui-sr-code-pre">
-        <code>
-          {lines.map((line, idx) => (
-            <Fragment key={idx}>
-              <CodeLine line={line} animate={animate} />
-              {idx < lines.length - 1 ? '\n' : null}
-            </Fragment>
-          ))}
-          {caret}
-        </code>
-      </pre>
+      <div
+        className={cx('yui-data-scroll-wrap', canScrollRight && 'has-right-fade')}
+        data-scrollable-right={canScrollRight ? 'true' : 'false'}
+      >
+        <div ref={scrollRef} className="yui-sr-code-scroll">
+          <pre className="yui-sr-code-pre">
+            <code>
+              {lines.map((line, idx) => (
+                <Fragment key={idx}>
+                  <CodeLine line={line} animate={animate} />
+                  {idx < lines.length - 1 ? '\n' : null}
+                </Fragment>
+              ))}
+              {caret}
+            </code>
+          </pre>
+        </div>
+      </div>
     </div>
   );
 }
