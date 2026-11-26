@@ -28,6 +28,7 @@ import {
   MessageSkeleton,
   ModelDownloadGate,
   ModelDownloadProgressBar,
+  ModelRosterList,
   PermissionApprovalCard,
   PermissionCard,
   PromptCapsuleStack,
@@ -43,7 +44,9 @@ import {
   StatusToast,
   StreamingResponse,
   SuggestionChipRow,
+  TabContextList,
   ThreadHistoryDrawer,
+  ThreadHistoryList,
   ToastPill,
   ToolStepCard,
   ToolTraceList,
@@ -1840,5 +1843,148 @@ describe('@yours/ui chat & runtime primitives', () => {
     expect(cssSource).toContain('.yui-cmd-panel');
     expect(cssSource).toContain('.yui-trace-card');
     expect(cssSource).toContain('.yui-perm-card');
+  });
+
+  it('supports ThreadHistoryList pin/two-step delete, ModelRosterList radiogroup keys, and TabContextList mute/detach', async () => {
+    const onSelectThread = vi.fn();
+    const onTogglePin = vi.fn();
+    const onDeleteThread = vi.fn();
+    const onSelectModel = vi.fn();
+    const onDownloadModel = vi.fn();
+    const onToggleMute = vi.fn();
+    const onDetach = vi.fn();
+
+    const el = renderNode(
+      <div>
+        <ThreadHistoryList
+          activeId="th1"
+          onSelect={onSelectThread}
+          onTogglePin={onTogglePin}
+          onDelete={onDeleteThread}
+          items={[
+            {
+              id: 'th1',
+              title: 'WebGPU subgroup reduction tuning',
+              preview: 'Switching KV cache from fp16 to int8 doubled context...',
+              timestamp: '2m ago',
+              turnCount: 6,
+              groupLabel: 'Today',
+              pinned: true,
+            },
+            {
+              id: 'th2',
+              title: 'CSP audit on Chrome side panel',
+              preview: 'Verified zero inline styles and strict script-src self.',
+              timestamp: 'Yesterday',
+              turnCount: 4,
+              groupLabel: 'Yesterday',
+            },
+          ]}
+        />
+        <ModelRosterList
+          selectedId="m1"
+          onSelectModel={onSelectModel}
+          onDownloadModel={onDownloadModel}
+          models={[
+            {
+              id: 'm1',
+              name: 'Qwen3.5-4B',
+              quantLabel: 'Q4F16',
+              sizeLabel: '2.4 GB',
+              vramLabel: '3.1 GB VRAM',
+              speedLabel: '44 tok/s',
+              state: 'active',
+            },
+            {
+              id: 'm2',
+              name: 'Gemma 4 E4B',
+              quantLabel: 'Q4',
+              sizeLabel: '2.7 GB',
+              vramLabel: '3.4 GB VRAM',
+              speedLabel: '39 tok/s',
+              state: 'cached',
+            },
+            {
+              id: 'm3',
+              name: 'Llama-3.2-3B',
+              quantLabel: 'Q4',
+              sizeLabel: '1.9 GB',
+              state: 'download',
+            },
+          ]}
+        />
+        <TabContextList
+          onToggleMute={onToggleMute}
+          onDetach={onDetach}
+          items={[
+            {
+              id: 'tc1',
+              domain: 'docs.rs',
+              title: 'wgpu ComputePassEncoder subgroup barriers',
+              tokenLabel: '1.4k tok',
+              kind: 'tab',
+            },
+            {
+              id: 'tc2',
+              domain: 'yours.sh',
+              title: 'Highlighted kernel dispatch excerpt',
+              tokenLabel: '320 tok',
+              kind: 'snippet',
+              muted: true,
+            },
+          ]}
+        />
+      </div>,
+    );
+
+    // ThreadHistoryList sticky groups + two-step delete
+    const groups = Array.from(el.querySelectorAll('[data-slot="thread-history-group"]'));
+    expect(groups.length).toBe(2);
+    expect(groups[0].querySelector('.yui-th-group-title')?.textContent).toBe('Today');
+    expect(el.querySelector('[aria-current="true"]')?.textContent).toContain('WebGPU subgroup');
+
+    const delInitBtn = el.querySelector('[aria-label="Delete CSP audit on Chrome side panel"]') as HTMLButtonElement;
+    act(() => {
+      delInitBtn.click();
+    });
+    expect(onDeleteThread).not.toHaveBeenCalled();
+
+    const delConfirmBtn = el.querySelector('[aria-label="Confirm delete CSP audit on Chrome side panel"]') as HTMLButtonElement;
+    act(() => {
+      delConfirmBtn.click();
+    });
+    expect(onDeleteThread).toHaveBeenCalledWith('th2');
+
+    // ModelRosterList radiogroup + ArrowDown + Enter on download
+    const radios = Array.from(el.querySelectorAll('[data-slot="model-roster-list"] [role="radio"]')) as HTMLButtonElement[];
+    expect(radios.length).toBe(3);
+    expect(radios[0].getAttribute('aria-checked')).toBe('true');
+
+    act(() => {
+      radios[0].focus();
+      radios[0].dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowDown', bubbles: true }));
+    });
+    expect(onSelectModel).toHaveBeenCalledWith('m2');
+
+    act(() => {
+      radios[2].dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }));
+    });
+    expect(onDownloadModel).toHaveBeenCalledWith('m3');
+
+    // TabContextList mute + detach
+    const muteBtn = el.querySelector('[aria-label="Mute docs.rs"]') as HTMLButtonElement;
+    expect(muteBtn.getAttribute('aria-pressed')).toBe('false');
+    act(() => {
+      muteBtn.click();
+      (el.querySelector('[aria-label="Detach yours.sh"]') as HTMLButtonElement).click();
+    });
+    expect(onToggleMute).toHaveBeenCalledWith('tc1');
+    expect(onDetach).toHaveBeenCalledWith('tc2');
+
+    const cssSource = await readSourceFile('../src/styles/components.css');
+    expect(cssSource).toContain('grid-template-columns: 52px minmax(0, 1fr);');
+    expect(cssSource).toContain('.yui-th-root');
+    expect(cssSource).toContain('.yui-model-roster');
+    expect(cssSource).toContain('.yui-tabctx-list');
   });
 });

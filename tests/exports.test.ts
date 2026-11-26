@@ -79,6 +79,9 @@ describe('@yours/ui built ESM & CSS exports smoke test', () => {
     expect(typeof rootMod.DiffCard).toBe('function');
     expect(typeof rootMod.ToolTraceList).toBe('function');
     expect(typeof rootMod.PermissionCard).toBe('function');
+    expect(typeof rootMod.ThreadHistoryList).toBe('function');
+    expect(typeof rootMod.ModelRosterList).toBe('function');
+    expect(typeof rootMod.TabContextList).toBe('function');
 
     expect(typeof iconsMod.ApertureIcon).toBe('function');
     expect(typeof iconsMod.MatrixOrb).toBe('function');
@@ -93,6 +96,9 @@ describe('@yours/ui built ESM & CSS exports smoke test', () => {
     expect(typeof componentsMod.DiffCard).toBe('function');
     expect(typeof componentsMod.ToolTraceList).toBe('function');
     expect(typeof componentsMod.PermissionCard).toBe('function');
+    expect(typeof componentsMod.ThreadHistoryList).toBe('function');
+    expect(typeof componentsMod.ModelRosterList).toBe('function');
+    expect(typeof componentsMod.TabContextList).toBe('function');
     expect(typeof genuiMod.CompareTable).toBe('function');
     expect(typeof genuiMod.MetricStripCard).toBe('function');
   });
