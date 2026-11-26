@@ -61,7 +61,7 @@ export function StorageQuotaCard({
     return segment;
   });
 
-  const rootClass = cn('yui-card-shell yui-storage-card', className);
+  const rootClass = cn('yui-card-shell yui-card-pad yui-storage-card', className);
 
   return (
     <section data-slot="storage-quota-card" className={rootClass} aria-label={title}>

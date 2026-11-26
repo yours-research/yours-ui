@@ -1,8 +1,7 @@
 import { useId, useState, type ReactNode } from 'react';
 import { CheckIcon, ShieldIcon, TrashIcon, UploadIcon } from '../icons/ApertureIcon.js';
 import { CardHeaderChrome, cn } from './CardChrome.js';
-import { KbdHint } from './KbdHint.js';
-import { StatusBadge, type StatusBadgeTone } from './StatusBadge.js';
+import { KbdHint, StatusBadge, type StatusBadgeTone } from './FeedbackPrimitives.js';
 
 export interface SettingsToggleRowProps {
   label: string;
@@ -38,7 +37,7 @@ export function SettingsToggleRow({
 
   return (
     <div data-slot="settings-toggle-row" className={rowClass}>
-      <div className="yui-setting-copy">
+      <div className="yui-col yui-col-min">
         <div className="yui-setting-title-row">
           <span className="yui-setting-title">{label}</span>
           {badge ? <StatusBadge tone={badgeTone}>{badge}</StatusBadge> : null}
@@ -180,7 +179,7 @@ export function LocalVaultExportCard({
         right={recordCountLabel ? <StatusBadge tone="neutral">{recordCountLabel}</StatusBadge> : null}
       />
 
-      <div className="yui-vault-field">
+      <div className="yui-col yui-gap-4">
         <label htmlFor={inputId} className="yui-params-label">
           {passphraseLabel}
         </label>
@@ -215,7 +214,7 @@ export function LocalVaultExportCard({
           }}
         >
           <UploadIcon size={12} />
-          <span className="yui-vault-drop-label">
+          <span className="yui-ellipsis">
             {selectedFileName ?? fileDropLabel}
           </span>
           <input

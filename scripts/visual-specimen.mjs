@@ -119,6 +119,7 @@ import {
   UserMessageBubble,
   VoiceSessionBar,
   VoiceSessionCard,
+  WebSearchSourcesStrip,
   AudioLevelMeter,
 } from '../src/index.js';
 
@@ -1082,6 +1083,39 @@ function ToolShimmerChainPanel({ theme }: { theme: 'light' | 'dark' }) {
         detail="yours.sh/docs · 3 tabs"
         favicon={<PageIcon size={12} />}
         timer
+      />
+
+      <WebSearchSourcesStrip
+        sources={[
+          {
+            id: 'ws1',
+            title: 'Chromium Side Panel MV3 API',
+            url: 'https://developer.chrome.com/docs/extensions/reference/api/sidePanel',
+            snippet: 'Render isolated UI surfaces beside active browser tabs under strict CSP.',
+          },
+          {
+            id: 'ws2',
+            title: 'WebGPU Adapter Limits & Memory',
+            domain: 'w3.org',
+            url: 'https://www.w3.org/TR/webgpu/',
+            snippet: 'Inspect buffer headroom before loading quantized local weights.',
+          },
+          {
+            id: 'ws3',
+            title: 'OPFS Storage Quota Guide',
+            url: 'https://web.dev/articles/origin-private-file-system',
+          },
+          {
+            id: 'ws4',
+            title: 'Yours Research Local Tokens',
+            url: 'https://yours.sh/docs/tokens',
+          },
+          {
+            id: 'ws5',
+            title: 'CSS Container Query Reflow',
+            url: 'https://developer.mozilla.org/docs/Web/CSS/CSS_containment',
+          },
+        ]}
       />
 
       <ToolChain
@@ -3970,7 +4004,13 @@ async function main() {
           await page.screenshot({ path: shimmerActivePath });
           outputs.push(shimmerActivePath);
 
-          // Keyboard Enter expands settled ToolChain hairline rail; Space expands nested step I/O
+          // Keyboard Enter expands settled ToolChain hairline rail; Space expands nested step I/O & WebSearchSourcesStrip
+          const wssTrigger = page.locator('[data-slot="web-search-sources-strip"] .yui-wss-trigger');
+          await wssTrigger.focus();
+          await page.keyboard.press('Enter');
+          const wssMore = page.locator('[data-slot="web-search-sources-strip"] button:has-text("+1 more")');
+          await wssMore.focus();
+          await page.keyboard.press('Enter');
           const settledHeadLocator = page.locator('[data-slot="tool-trace-list"]').nth(1).locator('.yui-trace-head');
           await settledHeadLocator.focus();
           await page.keyboard.press('Enter');
@@ -3987,17 +4027,24 @@ async function main() {
             const settled = chains[1];
             const rail = settled?.querySelector('.yui-trace-rail-list');
             const firstTrigger = settled?.querySelector('.yui-trace-trigger');
+            const wss = document.querySelector('[data-slot="web-search-sources-strip"]');
+            const wssCards = wss ? Array.from(wss.querySelectorAll('.yui-wss-card')) : [];
+            const wssGrid = wss?.querySelector('.yui-wss-grid');
+            const wssCols = wssGrid ? getComputedStyle(wssGrid).gridTemplateColumns.trim().split(/\s+/).length : 0;
             return {
               settledExpanded: settled?.querySelector('.yui-trace-head')?.getAttribute('aria-expanded'),
               hasRail: Boolean(rail),
               railBeforeWidth: rail ? getComputedStyle(rail, '::before').width : null,
               firstStepExpanded: firstTrigger?.getAttribute('aria-expanded'),
               hasInputPayload: settled?.textContent?.includes('mv3 tokens') ?? false,
+              wssExpanded: wss?.getAttribute('data-expanded'),
+              wssCardCount: wssCards.length,
+              wssCols,
               inlineStyles: Array.from(document.querySelectorAll('#specimen-root [style]')).filter(
                 (el) => (el.getAttribute('style') || '').trim().length > 0,
               ).length,
               shimmerInlineStyles: document.querySelectorAll(
-                '[data-slot="inline-tool-status"] [style], [data-slot="tool-trace-list"] [style]',
+                '[data-slot="inline-tool-status"] [style], [data-slot="tool-trace-list"] [style], [data-slot="web-search-sources-strip"] [style]',
               ).length,
               overflow: document.documentElement.scrollWidth > 340,
             };
@@ -4008,6 +4055,9 @@ async function main() {
             expandedShimmer.railBeforeWidth !== '1px' ||
             expandedShimmer.firstStepExpanded !== 'true' ||
             !expandedShimmer.hasInputPayload ||
+            expandedShimmer.wssExpanded !== 'true' ||
+            expandedShimmer.wssCardCount !== 5 ||
+            expandedShimmer.wssCols !== 1 ||
             expandedShimmer.inlineStyles !== 0 ||
             expandedShimmer.shimmerInlineStyles !== 0 ||
             expandedShimmer.overflow

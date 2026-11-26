@@ -3,7 +3,13 @@
 All notable milestones for **`@yours/ui`** are documented here.
 The library targets Chrome MV3 side panels (`340px–440px`), maintains zero runtime dependencies, zero JSX inline `style` attributes, and zero `dangerouslySetInnerHTML`.
 
-## Unreleased / Milestone 27 (PR #30)
+## Unreleased / Milestone 28 (PR #31)
+
+- **MV3 Bundle Headroom Reclamation:** Consolidated compatible component modules (`GenUiCards`, `ChatMessagePrimitives`, `InlineToolStatus`, `ThreadHistoryList`, `FeedbackPrimitives`, `InlineCitationPopover`) and deduplicated `tokens.css` / `components.css` rules while preserving every public export and token ordering (`dist/` JS `196.28 KB` raw / `75.66 KB` gzip across `62` ESM modules; `dist/` CSS `109.79 KB` raw / `18.20 KB` gzip across `3` files).
+- **Clean-Room Inline `WebSearchSourcesStrip` & `SourcesDrawer` (`variant="inline"`):** Added borderless inline web-search source disclosure strip matching `InlineToolStatus` and `ToolTraceList`: overlapping domain favicons with CSS `.is-hidden` broken-image monogram fallback, `"Searched N sites"` disclosure trigger, responsive `@container (max-width: 340px)` single-column reflow, safe `https?:` links (`noopener noreferrer`), `+N more` reveal, zero runtime deps, and zero inline `style=`.
+- **Verification:** `typecheck`, `build`, `check:size`, `npm test` (`66/66`), and `verify:visual` (Light/Dark 340px/380px/400px/320px/RTL/forced-colors/contrast) passing.
+
+## Milestone 27 (PR #30)
 
 - Added clean-room animated SVG tool status icons (`ToolStatusIcon`, `ToolStatusKind` across 12 states: `thinking`, `reading`, `searching`, `researching`, `tabs`, `analyzing`, `calculating`, `writing`, `memory`, `done`, `blocked`, `error`) in `src/icons/ToolStatusIcons.tsx` with pure monochrome `currentColor`, semantic `done`/`blocked`/`error` draw-in/shake micro-motion, zero inline `style=` attributes, and static `prefers-reduced-motion: reduce` fallbacks.
 - Added `ShimmerText` and `InlineToolStatus` (`src/components/InlineToolStatus.tsx`) plus theme-scoped `--yui-shimmer-ink` / `--yui-shimmer-shine` tokens (`src/styles/tokens.css`), featuring pure-CSS `background-clip: text` glare sweeps, rotating icon entrance, vertical blur-crossfade labels/details, `states` map overrides, CSS-only broken-favicon hiding (`.is-hidden`), continuous `1s` -> `Worked for Xs` / `Failed after Xs` timers, and `forced-colors` / `reduced-motion` static ink fallbacks.

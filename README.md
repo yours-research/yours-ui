@@ -38,7 +38,7 @@ SidePanelShell (outer bezel + recessed stage + focus veil + bottom sheet slot)
   ├── Stream Region
   │     ├── EmptyState / PromptCapsuleStack / MatrixOrb (idle · thinking · streaming)
   │     ├── StreamingResponse · UserMessageBubble · AssistantMessage · ActionBar
-  │     ├── InlineCitationPill · InlineCitationPopover · SourcesDrawer · BranchPicker
+  │     ├── InlineCitationPill · InlineCitationPopover · SourcesDrawer · WebSearchSourcesStrip · BranchPicker
   │     ├── ReasoningTrace · ToolStepCard · PermissionApprovalCard (@yours/guard)
   │     ├── ModelDownloadGate (@yours/models) · StatusBadge · VoiceDictationPill
   │     └── 8 Generative UI Primitives (CompareTable · ChecklistCard · MetricStripCard · ...)
@@ -165,8 +165,8 @@ All public subpaths (`@yours/ui`, `@yours/ui/icons`, `@yours/ui/layout`, `@yours
 
 | Entrypoint | Raw | Gzip | Budget Guard |
 | :--- | :---: | :---: | :---: |
-| Total `dist/` JS (`81` ESM modules) | `196.57 KB` | `79.59 KB` | `<= 80.00 KB` |
-| `@yours/ui/styles` (`tokens.css` + `components.css` + `index.css`) | `120.16 KB` | `19.00 KB` | `<= 19.00 KB` |
+| Total `dist/` JS (`62` ESM modules) | `196.28 KB` | `75.66 KB` | `<= 80.00 KB` |
+| `@yours/ui/styles` (`tokens.css` + `components.css` + `index.css`) | `109.79 KB` | `18.20 KB` | `<= 19.00 KB` |
 
 Run `npm run build && npm run check:size` to inspect live raw and gzipped sizes per entrypoint.
 
@@ -186,7 +186,7 @@ Run `npm run build && npm run check:size` to inspect live raw and gzipped sizes 
 ### `@yours/ui/components` Inventory
 
 - **Shell, Overlay & Navigation:** `CommandPalette`, `ContextCommandPopover`, `FindInThreadBar`, `FloatingComposer`, `FloatingContextSheet`, `EmptyPanelState`, `EmptyState`, `KbdHint`, `OfflineStatusBanner`, `OnboardingCard`, `PromptCapsuleStack`, `PromptTemplateList`, `QuotedContextBanner`, `ScrollToBottomButton`, `SegmentedControl`, `ShortcutSheet`, `StatusBadge`, `StatusToast`, `SuggestionChipRow`, `ThreadHistoryDrawer`, `ThreadHistoryList`, `ToastPill`.
-- **Conversation, Citations & Diffs:** `ActionBar`, `AssistantMessage`, `AttachmentDropzone`, `AttachmentStrip`, `AudioLevelMeter`, `BranchPicker`, `CitationFootnoteList`, `CodeBlock`, `CodeBlockCard`, `DiffCard`, `FollowUpSuggestions`, `InlineCitationPill`, `InlineCitationPopover`, `InlineNotice`, `MessageSkeleton`, `SessionCheckpointCard`, `SourcesDrawer`, `StreamingResponse`, `UserMessageBubble`, `VoiceDictationPill`, `VoiceSessionBar`, `VoiceSessionCard`.
+- **Conversation, Citations & Diffs:** `ActionBar`, `AssistantMessage`, `AttachmentDropzone`, `AttachmentStrip`, `AudioLevelMeter`, `BranchPicker`, `CitationFootnoteList`, `CodeBlock`, `CodeBlockCard`, `DiffCard`, `FollowUpSuggestions`, `InlineCitationPill`, `InlineCitationPopover`, `InlineNotice`, `MessageSkeleton`, `SessionCheckpointCard`, `SourcesDrawer`, `StreamingResponse`, `UserMessageBubble`, `VoiceDictationPill`, `VoiceSessionBar`, `VoiceSessionCard`, `WebSearchSourcesStrip`.
 - **Reasoning, Tools, Context & Guard:** `AgentHandoffCard`, `ConfirmActionCard`, `ContextBudgetMeter`, `InlineToolStatus`, `PageSelectionCard`, `PermissionApprovalCard`, `PermissionCard`, `ReasoningTrace`, `ShimmerText`, `SitePermissionsList`, `TabContextList`, `ToolChain`, `ToolStepCard`, `ToolTraceList`.
 - **Local Runtime, Models, Memory, Data & Settings:** `ArtifactPreviewCard`, `DataTableCard`, `DeviceCapabilityCard`, `ErrorRecoveryBanner`, `ErrorRecoveryCard`, `ExportSessionCard`, `HardwareStatusStrip`, `LocalVaultExportCard`, `MemoryInspectorList`, `MemoryRecordCard`, `ModelDownloadGate`, `ModelDownloadProgressBar`, `ModelParametersCard`, `ModelRosterList`, `NetworkAuditCard`, `SettingsSection`, `SettingsToggleRow`, `StorageQuotaCard`.
 

@@ -74,7 +74,7 @@ export function FindInThreadBar({
       aria-label="Find in thread"
       className={rootClass}
     >
-      <div className="yui-row yui-find-input-wrap">
+      <div className="yui-row yui-flex-1">
         <SearchIcon size={12.5} className="yui-privacy-icon" />
         <input
           ref={inputRef}

@@ -1,6 +1,6 @@
 import { useMemo, useRef, useState, type KeyboardEvent } from 'react';
 import { BookmarkIcon, SearchIcon, XIcon } from '../icons/ApertureIcon.js';
-import { KbdHint } from './KbdHint.js';
+import { KbdHint } from './FeedbackPrimitives.js';
 
 export interface PromptTemplateItem {
   id: string;
@@ -135,13 +135,13 @@ export function PromptTemplateList({
       aria-label={title}
       onKeyDown={handleListKeyDown}
     >
-      <div className="yui-ptl-head">
+      <div className="yui-row-between">
         <span className="yui-ptl-title">{title}</span>
-        <span className="yui-ptl-count">{visibleItems.length}</span>
+        <span className="yui-speed-readout">{visibleItems.length}</span>
       </div>
 
       {searchable ? (
-        <div className="yui-row yui-well yui-ptl-search-wrap">
+        <div className="yui-row yui-well">
           <SearchIcon size={12.5} className="yui-privacy-icon" />
           <input
             type="search"
@@ -185,7 +185,7 @@ export function PromptTemplateList({
       ) : null}
 
       {visibleItems.length === 0 ? (
-        <div className="yui-empty-box yui-ptl-empty" role="status">
+        <div className="yui-empty-box" role="status">
           {emptyLabel}
         </div>
       ) : (
@@ -221,7 +221,7 @@ export function PromptTemplateList({
                     <span className="yui-ptl-cmd">{item.command}</span>
                     <span className="yui-ellipsis yui-ptl-item-title">{item.title}</span>
                     {item.shortcut ? (
-                      <KbdHint keys={item.shortcut} size="xs" className="yui-ptl-kbd" />
+                      <KbdHint keys={item.shortcut} size="xs" className="yui-shrink-0" />
                     ) : null}
                   </div>
                   {item.description ? (

@@ -493,7 +493,7 @@ export function HookSidebarList({
       <nav
         data-slot="hook-sidebar"
         aria-label={label ?? 'Threads'}
-        className={cx('yui-hook-nav', className)}
+        className={cx('yui-col yui-gap-4', className)}
       >
         {label ? (
           <span data-slot="hook-sidebar-label" className="yui-hook-label">
@@ -520,7 +520,7 @@ export function HookSidebarList({
     <nav
       data-slot="hook-sidebar"
       aria-label={label ?? 'Threads'}
-      className={cx('yui-hook-nav', className)}
+      className={cx('yui-col yui-gap-4', className)}
     >
       {label ? (
         <span data-slot="hook-sidebar-label" className="yui-hook-label">

@@ -1,8 +1,7 @@
 import { useEffect, useRef } from 'react';
 import { UndoIcon, XIcon } from '../icons/ApertureIcon.js';
 import { useFocusTrap } from '../utils/focus.js';
-import { KbdHint } from './KbdHint.js';
-import { StatusBadge, type StatusBadgeTone } from './StatusBadge.js';
+import { KbdHint, StatusBadge, type StatusBadgeTone } from './FeedbackPrimitives.js';
 
 export interface ShortcutItem {
   id?: string;
@@ -109,7 +108,7 @@ export function ShortcutSheet({
         </header>
       ) : null}
 
-      <div className="yui-shortcut-groups">
+      <div className="yui-col">
         {resolvedGroups.map((group, gIdx) => (
           <div key={group.id ?? group.title ?? gIdx} className="yui-shortcut-group">
             {group.title ? <div className="yui-shortcut-group-title">{group.title}</div> : null}
@@ -174,16 +173,16 @@ export function StatusToast({
       aria-live="polite"
       className={toastClass}
     >
-      <div className="yui-status-toast-main">
+      <div className="yui-row yui-gap-8">
         <span className="yui-status-toast-dot" aria-hidden="true" />
-        <div className="yui-status-toast-copy">
+        <div className="yui-col yui-col-min">
           <span className="yui-status-toast-msg">{message}</span>
           {detail ? <span className="yui-status-toast-detail">{detail}</span> : null}
         </div>
       </div>
 
       {onUndo || onDismiss ? (
-        <div className="yui-status-toast-actions">
+        <div className="yui-action-group">
           {onUndo ? (
             <button type="button" className="yui-micro-pill" onClick={onUndo}>
               <UndoIcon size={11} />

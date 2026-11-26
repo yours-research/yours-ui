@@ -1082,7 +1082,7 @@ export function StreamingResponse({
       aria-busy={!settled || undefined}
       {...rest}
     >
-      <div key={run} className="yui-sr-body">
+      <div key={run} className="yui-col-8">
         {blocks.length === 0 ? (
           caretNode ? <p className="yui-sr-p">{caretNode}</p> : null
         ) : (
@@ -1196,7 +1196,7 @@ export function StreamingResponse({
       </div>
 
       {actions && settled ? (
-        <div className="yui-sr-actions" data-slot="streaming-response-actions">
+        <div className="yui-row yui-gap-4 yui-pt-2" data-slot="streaming-response-actions">
           <button
             type="button"
             className="yui-sr-action-btn"

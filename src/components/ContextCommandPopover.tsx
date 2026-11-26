@@ -1,7 +1,7 @@
 import { useEffect, useId, useState } from 'react';
 import { ApertureIcon } from '../icons/ApertureIcon.js';
 import type { ApertureIconName } from '../icons/iconData.js';
-import { KbdHint } from './KbdHint.js';
+import { KbdHint } from './FeedbackPrimitives.js';
 
 export interface ContextCommandItem {
   id: string;
@@ -190,7 +190,7 @@ export function ContextCommandPopover({
                     ) : null}
                   </span>
                 </span>
-                <span className="yui-cmd-item-right">
+                <span className="yui-action-group">
                   {item.badge ? <span className="yui-badge">{item.badge}</span> : null}
                   {item.shortcut ? <KbdHint keys={item.shortcut} size="xs" /> : null}
                 </span>
@@ -201,15 +201,15 @@ export function ContextCommandPopover({
       )}
 
       <div className="yui-cmd-foot">
-        <span className="yui-cmd-foot-hint">
+        <span className="yui-action-group">
           <KbdHint keys="↑↓" size="xs" />
           <span>Move</span>
         </span>
-        <span className="yui-cmd-foot-hint">
+        <span className="yui-action-group">
           <KbdHint keys="↵" size="xs" />
           <span>Select</span>
         </span>
-        <span className="yui-cmd-foot-hint">
+        <span className="yui-action-group">
           <KbdHint keys="Esc" size="xs" />
           <span>Close</span>
         </span>

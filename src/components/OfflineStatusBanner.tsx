@@ -1,6 +1,6 @@
 import { AlertIcon, CheckIcon, LocalDeviceIcon, RetryIcon, ShieldIcon } from '../icons/ApertureIcon.js';
 import { cn } from '../utils/clipboard.js';
-import { StatusBadge, type StatusBadgeTone } from './StatusBadge.js';
+import { StatusBadge, type StatusBadgeTone } from './FeedbackPrimitives.js';
 
 export type OfflineStatus = 'online' | 'offline-ready' | 'offline-degraded' | 'sync-paused';
 

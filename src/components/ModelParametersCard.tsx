@@ -112,7 +112,7 @@ export function ModelParametersCard({
   return (
     <section
       data-slot="model-parameters-card"
-      className={cn('yui-card-shell yui-params-card', className)}
+      className={cn('yui-card-shell yui-card-pad yui-params-card', className)}
       aria-label={title}
     >
       <CardHeaderChrome
@@ -122,8 +122,8 @@ export function ModelParametersCard({
         right={modelLabel ? <span className="yui-badge">{modelLabel}</span> : null}
       />
 
-      <div className="yui-params-groups">
-        <div className="yui-params-field">
+      <div className="yui-col-8">
+        <div className="yui-col yui-gap-4">
           <span className="yui-params-label">Thinking mode</span>
           <SegmentedControl
             size="sm"
@@ -134,7 +134,7 @@ export function ModelParametersCard({
             onChange={setThinking}
           />
         </div>
-        <div className="yui-params-field">
+        <div className="yui-col yui-gap-4">
           <span className="yui-params-label">GPU pacing</span>
           <SegmentedControl
             size="sm"
@@ -147,10 +147,10 @@ export function ModelParametersCard({
         </div>
       </div>
 
-      <div className="yui-params-sliders">
+      <div className="yui-col-8">
         {sliders.map(([key, label, min, max, step, val, setter, readout]) => (
-          <div key={key} className="yui-slider-row">
-            <div className="yui-slider-head">
+          <div key={key} className="yui-col yui-gap-4">
+            <div className="yui-row-between">
               <label htmlFor={`${baseId}-${key}`} className="yui-params-label">
                 {label}
               </label>

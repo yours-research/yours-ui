@@ -109,7 +109,7 @@ export function ExportSessionCard({
     onCopy?.(currentOptions);
   };
 
-  const rootClass = cn('yui-card-shell yui-export-card', className);
+  const rootClass = cn('yui-card-shell yui-card-pad yui-export-card', className);
 
   return (
     <section
@@ -118,10 +118,10 @@ export function ExportSessionCard({
       className={rootClass}
       aria-label={title}
     >
-      <div className="yui-col yui-export-head">
-        <div className="yui-export-title-row">
+      <div className="yui-col">
+        <div className="yui-row-between">
           <h3 className="yui-export-title">{title}</h3>
-          {metaLabel ? <span className="yui-export-meta">{metaLabel}</span> : null}
+          {metaLabel ? <span className="yui-speed-readout">{metaLabel}</span> : null}
         </div>
         {subtitle ? <p className="yui-export-sub">{subtitle}</p> : null}
       </div>

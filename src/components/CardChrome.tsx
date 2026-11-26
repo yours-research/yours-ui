@@ -75,7 +75,7 @@ export function CardSegmentBar({
 }) {
   return (
     <div className="yui-storage-bar" role="img" aria-label={ariaLabel}>
-      <svg className="yui-storage-bar-svg" viewBox="0 0 100 6" preserveAspectRatio="none" aria-hidden="true">
+      <svg viewBox="0 0 100 6" preserveAspectRatio="none" aria-hidden="true">
         {segments.map((seg) =>
           seg.width > 0 ? (
             <rect key={seg.id} x={seg.x} y={0} width={seg.width} height={6} className={seg.className} />
@@ -163,7 +163,7 @@ export interface CardMetaRow {
 export function CardMetaScope({ rows }: { rows: readonly CardMetaRow[] }) {
   if (rows.length === 0) return null;
   return (
-    <div className="yui-perm-scope">
+    <div className="yui-well yui-col-5 yui-m-0">
       {rows.map((row, idx) => (
         <div key={`${row.label}-${idx}`} className="yui-perm-meta-row">
           <span className="yui-perm-meta-label">{row.label}</span>

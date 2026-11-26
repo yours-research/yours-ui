@@ -67,8 +67,8 @@ export function ErrorRecoveryCard({
       aria-label={title}
       className={rootClass}
     >
-      <div className="yui-recovery-top" role="alert">
-        <div className="yui-recovery-head">
+      <div className="yui-col-5" role="alert">
+        <div className="yui-row-start yui-gap-8">
           <span className="yui-recovery-icon" aria-hidden="true">
             <AlertIcon size={14} />
           </span>
@@ -100,7 +100,7 @@ export function ErrorRecoveryCard({
 
           {traceOpen ? (
             <div id={traceId} className="yui-recovery-trace">
-              <div className="yui-recovery-trace-bar">
+              <div className="yui-row-between yui-bar-head">
                 <span className="yui-perm-meta-label">LOCAL TRACE</span>
                 <CardCopyButton
                   copied={copied}

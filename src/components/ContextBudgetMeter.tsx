@@ -76,7 +76,7 @@ export function ContextBudgetMeter({
       className={rootClass}
       aria-label={title}
     >
-      <div className="yui-budget-top">
+      <div className="yui-col">
         {hasBreakdown ? (
           <button
             type="button"
@@ -89,7 +89,7 @@ export function ContextBudgetMeter({
               <SlidersIcon size={12.5} className="yui-privacy-icon" />
               <span className="yui-budget-title">{title}</span>
             </span>
-            <span className="yui-budget-right">
+            <span className="yui-row yui-gap-5 yui-shrink-0">
               <span className="yui-budget-summary">{resolvedSummary}</span>
               <ChevronDownIcon
                 size={12}
@@ -126,9 +126,9 @@ export function ContextBudgetMeter({
           <div className="yui-disclosure-inner">
             <ul className="yui-list-plain yui-budget-breakdown" role="list">
               {segments.map((seg) => (
-                <li key={seg.id} className="yui-budget-seg-row" data-segment-id={seg.id}>
+                <li key={seg.id} className="yui-row-between" data-segment-id={seg.id}>
                   <span className="yui-budget-seg-label">{seg.label}</span>
-                  <span className="yui-row yui-budget-seg-vals">
+                  <span className="yui-row yui-shrink-0">
                     {seg.percent !== undefined ? (
                       <span className="yui-budget-seg-pct">{seg.percent}%</span>
                     ) : null}

@@ -2,7 +2,7 @@ import { useEffect, useId, useRef, useState, type KeyboardEvent } from 'react';
 import { AlertIcon } from '../icons/ApertureIcon.js';
 import { useReducedMotion } from '../utils/spring.js';
 import { CardFooterChrome, CardHeaderChrome, CardMetaScope, cn } from './CardChrome.js';
-import { StatusBadge } from './StatusBadge.js';
+import { StatusBadge } from './FeedbackPrimitives.js';
 
 export interface ConfirmActionSummaryRow {
   label: string;
@@ -127,7 +127,7 @@ export function ConfirmActionCard({
       data-slot="confirm-action-card"
       data-tone={tone}
       data-holding={holding ? 'true' : 'false'}
-      className={cn('yui-card-shell yui-confirm-card', tone === 'amber' ? 'is-amber' : 'is-danger', className)}
+      className={cn('yui-card-shell yui-card-pad yui-confirm-card', tone === 'amber' ? 'is-amber' : 'is-danger', className)}
       aria-label={title}
       onKeyDown={handleCardKeyDown}
     >
@@ -141,7 +141,7 @@ export function ConfirmActionCard({
       <CardMetaScope rows={rows} />
 
       {phraseRequired ? (
-        <div className="yui-confirm-field">
+        <div className="yui-col-5">
           <label htmlFor={inputId} className="yui-params-label">
             {confirmInputLabel ?? `Type "${confirmPhrase}" to confirm`}
           </label>
@@ -159,7 +159,7 @@ export function ConfirmActionCard({
       ) : null}
 
       {hasHold ? (
-        <div className="yui-confirm-hold-wrap">
+        <div className="yui-col-5">
           <div className="yui-row-between yui-wrap">
             <span className="yui-audit-detail">
               {holdHintLabel ?? `Hold ${Number((holdDurationMs / 1000).toFixed(1))}s or Space to confirm`}

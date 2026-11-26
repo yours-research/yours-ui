@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState, type KeyboardEvent } from 'react';
 import { HistoryIcon, UndoIcon } from '../icons/ApertureIcon.js';
 import { CardFooterChrome, CardHeaderChrome, CardMetaScope, cn, type CardMetaRow } from './CardChrome.js';
-import { StatusBadge } from './StatusBadge.js';
+import { StatusBadge } from './FeedbackPrimitives.js';
 
 export interface SessionCheckpointCardProps {
   title?: string;
@@ -86,7 +86,7 @@ export function SessionCheckpointCard({
     <section
       data-slot="session-checkpoint-card"
       data-confirming={confirming ? 'true' : 'false'}
-      className={cn('yui-card-shell yui-ckpt-card', className)}
+      className={cn('yui-card-shell yui-card-pad yui-ckpt-card', className)}
       aria-label={title}
     >
       <CardHeaderChrome

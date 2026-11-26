@@ -32,8 +32,8 @@ export function NotchDrawerSearch({
   count,
 }: NotchDrawerSearchProps) {
   return (
-    <div className="yui-drawer-search-row">
-      <div className="yui-drawer-search-left">
+    <div className="yui-row-between">
+      <div className="yui-row yui-flex-1 yui-muted-note">
         <SearchIcon size={12} />
         <input
           type="text"
@@ -105,7 +105,7 @@ export function NotchOptionRow({
           {subtitle ? <span className="yui-notch-opt-sub">{subtitle}</span> : null}
         </span>
       </span>
-      <span className="yui-notch-opt-right">
+      <span className="yui-action-group">
         {meta ? <span className="yui-notch-opt-meta">{meta}</span> : null}
         {selected ? <CheckIcon size={12} className="yui-notch-opt-check" /> : null}
       </span>

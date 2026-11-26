@@ -62,7 +62,7 @@ export function ModelDownloadGate({
         <p className="yui-optin-sub">{subtitle}</p>
       </div>
 
-      <div className="yui-starter-stack" role="radiogroup" aria-label="Select local model weights">
+      <div className="yui-w-full yui-col-8" role="radiogroup" aria-label="Select local model weights">
         {models.map((m) => {
           const checked = m.id === selectedModelId;
           return (
@@ -99,7 +99,7 @@ export function ModelDownloadGate({
 
       {hardwareLabel ? <div className="yui-speed-readout">{hardwareLabel}</div> : null}
       {error ? (
-        <div className="yui-error-card yui-error-card--full" role="alert">
+        <div className="yui-error-card yui-w-full" role="alert">
           <div className="yui-action-group">
             <AlertIcon size={14} className="yui-error-icon" />
             <span>{error}</span>

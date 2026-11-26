@@ -28,12 +28,12 @@ export function EmptyState({
 }: EmptyStateProps) {
   return (
     <div data-slot="empty-state" className={cn('yui-empty-state', className)}>
-      <div className="yui-empty-header">
+      <div className="yui-col-8 yui-center">
         <MatrixOrb state={orbState} size={orbSize} />
         <h2 className="yui-empty-title">{title}</h2>
         {subtitle ? <p className="yui-empty-subtitle">{subtitle}</p> : null}
       </div>
-      {children ? <div className="yui-empty-actions">{children}</div> : null}
+      {children ? <div className="yui-col-8">{children}</div> : null}
     </div>
   );
 }
@@ -69,12 +69,12 @@ export function EmptyPanelState({
 }: EmptyPanelStateProps) {
   return (
     <section data-slot="empty-panel-state" className={cn('yui-empty-panel', className)} aria-label={title}>
-      <div className="yui-empty-panel-hero">
+      <div className="yui-col-5 yui-center">
         <span className="yui-empty-panel-mark" aria-hidden="true">
           <YoursMark size={24} />
         </span>
         <h2 className="yui-empty-panel-title">{title}</h2>
-        {subtitle ? <p className="yui-empty-panel-sub">{subtitle}</p> : null}
+        {subtitle ? <p className="yui-empty-subtitle">{subtitle}</p> : null}
       </div>
 
       {starters.length > 0 ? (
@@ -98,7 +98,7 @@ export function EmptyPanelState({
       ) : null}
 
       {privacyLabel ? (
-        <footer className="yui-empty-panel-foot">
+        <footer className="yui-dl-telemetry-item yui-muted-note">
           <ShieldIcon size={11.5} />
           <span>{privacyLabel}</span>
         </footer>
