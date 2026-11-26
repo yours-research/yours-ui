@@ -2,13 +2,12 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useCopyFeedback, useHorizontalFade } from '../utils/clipboard.js';
 import {
   BookmarkIcon,
-  CheckIcon,
   ChevronDownIcon,
   ChevronUpIcon,
   CompareIcon,
-  CopyIcon,
   DocumentIcon,
 } from '../icons/ApertureIcon.js';
+import { CardCopyButton, CardScrollWrap, cn } from './CardChrome.js';
 
 export interface DataTableColumn {
   key: string;
@@ -139,13 +138,7 @@ export function DataTableCard({
     onCopy?.(formatted);
   };
 
-  const cardClass = ['yui-card-shell', 'yui-data-card', className].filter(Boolean).join(' ');
-  const scrollWrapClass = [
-    'yui-data-scroll-wrap',
-    canScrollRight ? 'is-scrollable-right' : '',
-  ]
-    .filter(Boolean)
-    .join(' ');
+  const cardClass = cn('yui-card-shell yui-data-card', className);
 
   return (
     <section
@@ -163,107 +156,90 @@ export function DataTableCard({
             </div>
             {subtitle ? <div className="yui-genui-muted">{subtitle}</div> : null}
           </div>
-          <button
-            type="button"
-            className="yui-micro-pill"
-            aria-label={copied ? 'Copied table' : `${copyLabel} ${copyFormat}`}
+          <CardCopyButton
+            copied={copied}
+            copyLabel={copyLabel}
+            ariaLabel={copied ? 'Copied table' : `${copyLabel} ${copyFormat}`}
             onClick={handleCopy}
-          >
-            {copied ? <CheckIcon size={11} /> : <CopyIcon size={11} />}
-            <span>{copied ? 'Copied' : copyLabel}</span>
-          </button>
+          />
         </div>
       ) : null}
 
-      <div
-        className={scrollWrapClass}
-        data-scrollable-right={canScrollRight ? 'true' : 'false'}
-      >
-        <div ref={scrollRef} className="yui-x-scroll">
-          <table className="yui-data-table">
-            <thead>
-              <tr>
+      <CardScrollWrap scrollRef={scrollRef} canScrollRight={canScrollRight}>
+        <table className="yui-data-table">
+          <thead>
+            <tr>
+              {columns.map((col) => {
+                const isSorted = activeSort?.key === col.key;
+                const ariaSort: 'ascending' | 'descending' | 'none' | undefined = col.sortable
+                  ? isSorted
+                    ? activeSort.direction === 'asc'
+                      ? 'ascending'
+                      : 'descending'
+                    : 'none'
+                  : undefined;
+                const thClass = cn(
+                  'yui-data-th',
+                  (col.align === 'right' || col.numeric) && 'is-right',
+                  col.sortable && 'is-sortable',
+                );
+                return (
+                  <th key={col.key} scope="col" className={thClass} aria-sort={ariaSort}>
+                    {col.sortable ? (
+                      <button
+                        type="button"
+                        className="yui-data-sort-btn"
+                        onClick={() => toggleSort(col.key)}
+                      >
+                        <span>{col.label}</span>
+                        {isSorted && activeSort.direction === 'asc' ? (
+                          <ChevronUpIcon size={11} className="yui-data-sort-icon is-active" />
+                        ) : (
+                          <ChevronDownIcon
+                            size={11}
+                            className={isSorted ? 'yui-data-sort-icon is-active' : 'yui-data-sort-icon'}
+                          />
+                        )}
+                      </button>
+                    ) : (
+                      col.label
+                    )}
+                  </th>
+                );
+              })}
+            </tr>
+          </thead>
+          <tbody>
+            {sortedRows.map((row, rowIdx) => (
+              <tr key={rowIdx} className="yui-data-tr">
                 {columns.map((col) => {
-                  const isSorted = activeSort?.key === col.key;
-                  const ariaSort: 'ascending' | 'descending' | 'none' | undefined = col.sortable
-                    ? isSorted
-                      ? activeSort.direction === 'asc'
-                        ? 'ascending'
-                        : 'descending'
-                      : 'none'
-                    : undefined;
-                  const thClass = [
-                    'yui-data-th',
-                    col.align === 'right' || col.numeric ? 'is-right' : '',
-                    col.sortable ? 'is-sortable' : '',
-                  ]
-                    .filter(Boolean)
-                    .join(' ');
+                  const tdClass = cn(
+                    'yui-data-td',
+                    (col.align === 'right' || col.numeric) && 'is-right',
+                    col.numeric && 'is-numeric',
+                  );
                   return (
-                    <th key={col.key} scope="col" className={thClass} aria-sort={ariaSort}>
-                      {col.sortable ? (
-                        <button
-                          type="button"
-                          className="yui-data-sort-btn"
-                          onClick={() => toggleSort(col.key)}
-                        >
-                          <span>{col.label}</span>
-                          {isSorted && activeSort.direction === 'asc' ? (
-                            <ChevronUpIcon size={11} className="yui-data-sort-icon is-active" />
-                          ) : (
-                            <ChevronDownIcon
-                              size={11}
-                              className={
-                                isSorted ? 'yui-data-sort-icon is-active' : 'yui-data-sort-icon'
-                              }
-                            />
-                          )}
-                        </button>
-                      ) : (
-                        col.label
-                      )}
-                    </th>
+                    <td key={col.key} className={tdClass}>
+                      {String(row[col.key] ?? '')}
+                    </td>
                   );
                 })}
               </tr>
-            </thead>
-            <tbody>
-              {sortedRows.map((row, rowIdx) => (
-                <tr key={rowIdx} className="yui-data-tr">
-                  {columns.map((col) => {
-                    const tdClass = [
-                      'yui-data-td',
-                      col.align === 'right' || col.numeric ? 'is-right' : '',
-                      col.numeric ? 'is-numeric' : '',
-                    ]
-                      .filter(Boolean)
-                      .join(' ');
-                    return (
-                      <td key={col.key} className={tdClass}>
-                        {String(row[col.key] ?? '')}
-                      </td>
-                    );
-                  })}
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </div>
+            ))}
+          </tbody>
+        </table>
+      </CardScrollWrap>
 
       {footerLabel || (!title && !subtitle && !badge) ? (
         <div className="yui-genui-foot">
           <span className="yui-genui-muted">{footerLabel ?? ''}</span>
           {!title && !subtitle && !badge ? (
-            <button
-              type="button"
-              className="yui-micro-pill"
-              aria-label={copied ? 'Copied table' : `${copyLabel} ${copyFormat}`}
+            <CardCopyButton
+              copied={copied}
+              copyLabel={copyLabel}
+              ariaLabel={copied ? 'Copied table' : `${copyLabel} ${copyFormat}`}
               onClick={handleCopy}
-            >
-              {copied ? <CheckIcon size={11} /> : <CopyIcon size={11} />}
-              <span>{copied ? 'Copied' : copyLabel}</span>
-            </button>
+            />
           ) : null}
         </div>
       ) : null}
@@ -354,20 +330,11 @@ export function ArtifactPreviewCard({
     onCopy?.(preview);
   };
 
-  const cardClass = ['yui-card-shell', 'yui-artifact-card', className].filter(Boolean).join(' ');
-  const disclosureClass = ['yui-disclosure', isExpanded ? 'is-open' : '']
-    .filter(Boolean)
-    .join(' ');
-  const chevronClass = ['yui-artifact-chevron', isExpanded ? 'is-open' : '']
-    .filter(Boolean)
-    .join(' ');
-  const scrollWrapClass = [
-    'yui-artifact-scroll-wrap',
-    hasBottomFade ? 'has-bottom-fade' : '',
-  ]
-    .filter(Boolean)
-    .join(' ');
-  const preClass = ['yui-artifact-pre', capped ? 'is-capped' : ''].filter(Boolean).join(' ');
+  const cardClass = cn('yui-card-shell yui-artifact-card', className);
+  const disclosureClass = cn('yui-disclosure', isExpanded && 'is-open');
+  const chevronClass = cn('yui-artifact-chevron', isExpanded && 'is-open');
+  const scrollWrapClass = cn('yui-artifact-scroll-wrap', hasBottomFade && 'has-bottom-fade');
+  const preClass = cn('yui-artifact-pre', capped && 'is-capped');
 
   return (
     <article
@@ -385,16 +352,13 @@ export function ArtifactPreviewCard({
           {meta ? <div className="yui-artifact-meta">{meta}</div> : null}
         </div>
         <div className="yui-action-group">
-          <button
-            type="button"
-            className="yui-micro-pill"
-            data-slot="artifact-header-copy"
-            aria-label={copied ? 'Copied artifact' : `${copyLabel} ${title}`}
+          <CardCopyButton
+            copied={copied}
+            copyLabel={copyLabel}
+            dataSlot="artifact-header-copy"
+            ariaLabel={copied ? 'Copied artifact' : `${copyLabel} ${title}`}
             onClick={handleCopy}
-          >
-            {copied ? <CheckIcon size={11} /> : <CopyIcon size={11} />}
-            <span>{copied ? 'Copied' : copyLabel}</span>
-          </button>
+          />
           {collapsible ? (
             <button
               type="button"

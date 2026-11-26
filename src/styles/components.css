@@ -1796,7 +1796,7 @@ span.yui-citation-pill {
 }
 
 .yui-mem-summary-btn:focus-visible {
-  outline: 2px solid var(--focus-ring); outline-offset: 2px; border-radius: 4px;
+  border-radius: 4px;
 }
 
 .yui-mem-detail {
@@ -2049,7 +2049,7 @@ input,
 select,
 textarea,
 [tabindex]):focus-visible {
-  outline: 2px solid var(--focus-ring); outline-offset: 2px;
+  outline: 2px solid var(--yui-cobalt); outline-offset: 2px;
 }
 
 .yui-vault-file-input {
@@ -3732,8 +3732,9 @@ textarea,
   .yui-sr-action-btn,
   .yui-recovery-chevron,
   .yui-notice-action {
-    transition: none;
-    animation: none;
+    transition: none !important;
+    animation: none !important;
+    scroll-behavior: auto !important;
   }
 }
 

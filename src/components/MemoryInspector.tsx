@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { TrashIcon, UndoIcon } from '../icons/ApertureIcon.js';
-import { EmptyState } from './EmptyState.js';
+import { EmptyState } from './EmptyStates.js';
 import { SegmentedControl, type SegmentedOption } from './SegmentedControl.js';
 import { StatusBadge, type StatusBadgeTone } from './StatusBadge.js';
 

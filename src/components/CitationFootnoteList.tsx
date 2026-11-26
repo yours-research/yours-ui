@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
-import { CheckIcon, CopyIcon, ExternalLinkIcon } from '../icons/ApertureIcon.js';
+import { ExternalLinkIcon } from '../icons/ApertureIcon.js';
+import { CardCopyButton, cn } from './CardChrome.js';
 import type { InlineCitationSource } from './InlineCitationPopover.js';
 
 export interface CitationFootnoteItem {
@@ -67,7 +68,7 @@ export function CitationFootnoteList({
     onCopyQuote?.(citation);
   };
 
-  const rootClass = ['yui-card-shell', 'yui-fn-card', className].filter(Boolean).join(' ');
+  const rootClass = cn('yui-card-shell yui-fn-card', className);
 
   return (
     <section
@@ -86,7 +87,7 @@ export function CitationFootnoteList({
             activeIndex !== undefined && String(activeIndex) === String(item.index);
           const isCopied = copiedId === item.id;
           const isWarm = item.highlight === 'warm';
-          const rowClass = ['yui-fn-row', isActive ? 'is-active' : ''].filter(Boolean).join(' ');
+          const rowClass = cn('yui-fn-row', isActive && 'is-active');
           const metaParts = [item.domain, item.locator].filter(Boolean);
 
           return (
@@ -132,15 +133,14 @@ export function CitationFootnoteList({
                   </a>
                 ) : null}
 
-                <button
-                  type="button"
+                <CardCopyButton
+                  copied={isCopied}
+                  copyLabel={copyLabel}
+                  copiedLabel={copiedLabel}
                   className="yui-micro-pill yui-fn-btn"
-                  aria-label={`${copyLabel} ${item.index}`}
+                  ariaLabel={`${copyLabel} ${item.index}`}
                   onClick={() => handleCopy(item)}
-                >
-                  {isCopied ? <CheckIcon size={11} /> : <CopyIcon size={11} />}
-                  <span>{isCopied ? copiedLabel : copyLabel}</span>
-                </button>
+                />
               </div>
             </li>
           );

@@ -147,6 +147,7 @@ export function SegmentedControl<T extends string = string>({
       const candidate = options[idx];
       if (candidate && !candidate.disabled) {
         onChange(candidate.value);
+        btnRefs.current[idx]?.focus();
         return;
       }
     }
@@ -190,6 +191,12 @@ export function SegmentedControl<T extends string = string>({
               } else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') {
                 e.preventDefault();
                 stepSelection(idx, -1);
+              } else if (e.key === 'Home') {
+                e.preventDefault();
+                stepSelection(-1, 1);
+              } else if (e.key === 'End') {
+                e.preventDefault();
+                stepSelection(0, -1);
               }
             }}
           >

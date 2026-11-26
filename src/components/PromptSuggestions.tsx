@@ -1,4 +1,4 @@
-import { ApertureIcon, ArrowDownIcon, ArrowRightIcon } from '../icons/ApertureIcon.js';
+import { ApertureIcon, ArrowDownIcon, ArrowRightIcon, XIcon } from '../icons/ApertureIcon.js';
 import type { ApertureIconName } from '../icons/iconData.js';
 
 export interface PromptStarterItem {
@@ -14,9 +14,7 @@ export interface PromptCapsuleStackProps {
   onSelect: (item: PromptStarterItem) => void;
 }
 
-/**
- * Stacked Page 9 starter prompt capsules anchored beneath the 21-dot MatrixOrb.
- */
+/** Stacked Page 9 starter prompt capsules anchored beneath the 21-dot MatrixOrb. */
 export function PromptCapsuleStack({ items, onSelect }: PromptCapsuleStackProps) {
   return (
     <div className="yui-starter-stack">
@@ -31,15 +29,29 @@ export function PromptCapsuleStack({ items, onSelect }: PromptCapsuleStackProps)
             {item.icon ? <ApertureIcon name={item.icon} size={14} /> : null}
             <span>
               <span className="yui-prompt-capsule-title">{item.label}</span>
-              {item.subtitle ? (
-                <div className="yui-prompt-capsule-sub">{item.subtitle}</div>
-              ) : null}
+              {item.subtitle ? <div className="yui-prompt-capsule-sub">{item.subtitle}</div> : null}
             </span>
           </span>
           <ArrowRightIcon size={12} />
         </button>
       ))}
     </div>
+  );
+}
+
+export interface FollowUpSuggestionsProps {
+  suggestions: readonly string[];
+  onSelect: (suggestion: string) => void;
+}
+
+/** Follow-up prompt list anchored cleanly after an assistant turn. */
+export function FollowUpSuggestions({ suggestions, onSelect }: FollowUpSuggestionsProps) {
+  if (suggestions.length === 0) return null;
+  return (
+    <PromptCapsuleStack
+      items={suggestions.map((s) => ({ id: s, label: s }))}
+      onSelect={(item) => onSelect(item.label)}
+    />
   );
 }
 
@@ -86,5 +98,30 @@ export function ScrollToBottomButton({
     >
       <ArrowDownIcon size={14} strokeWidth={2} />
     </button>
+  );
+}
+
+export interface QuotedContextBannerProps {
+  quote: string;
+  onDismiss?: () => void;
+}
+
+/** Selected text quote block anchored at the top of the composer. */
+export function QuotedContextBanner({ quote, onDismiss }: QuotedContextBannerProps) {
+  return (
+    <div className="yui-quote-banner">
+      <div className="yui-quote-accent" aria-hidden="true" />
+      <div className="yui-quote-text">{quote}</div>
+      {onDismiss ? (
+        <button
+          type="button"
+          className="yui-icon-btn"
+          aria-label="Remove quote"
+          onClick={onDismiss}
+        >
+          <XIcon size={12} />
+        </button>
+      ) : null}
+    </div>
   );
 }

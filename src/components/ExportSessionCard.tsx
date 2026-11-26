@@ -1,7 +1,7 @@
 import { useState } from 'react';
-import { ArrowDownIcon, CheckIcon, CopyIcon } from '../icons/ApertureIcon.js';
+import { ArrowDownIcon } from '../icons/ApertureIcon.js';
 import { useCopyFeedback } from '../utils/clipboard.js';
-import { CardPrivacyNote, cn } from './CardChrome.js';
+import { CardCopyButton, CardPrivacyNote, cn } from './CardChrome.js';
 import { SegmentedControl, type SegmentedOption } from './SegmentedControl.js';
 
 export type ExportSessionFormat = 'markdown' | 'json' | 'text';
@@ -174,15 +174,14 @@ export function ExportSessionCard({
 
       <div className="yui-actions-end">
         {onCopy ? (
-          <button
-            type="button"
+          <CardCopyButton
+            copied={copied}
+            copyLabel={copyLabel}
             className="yui-pill-btn yui-export-copy-btn"
+            iconSize={12}
             disabled={disabled}
             onClick={handleCopy}
-          >
-            {copied ? <CheckIcon size={12} /> : <CopyIcon size={12} />}
-            <span>{copied ? 'Copied' : copyLabel}</span>
-          </button>
+          />
         ) : null}
         {onDownload ? (
           <button

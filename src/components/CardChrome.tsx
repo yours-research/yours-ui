@@ -1,9 +1,8 @@
-import type { ReactNode } from 'react';
-import { ShieldIcon } from '../icons/ApertureIcon.js';
+import type { ReactNode, RefObject } from 'react';
+import { CheckIcon, CopyIcon, ShieldIcon } from '../icons/ApertureIcon.js';
+import { cn } from '../utils/clipboard.js';
 
-/** Compact conditional class joiner shared across card primitives. */
-export const cn = (...parts: Array<string | false | null | undefined>) =>
-  parts.filter(Boolean).join(' ');
+export { cn };
 
 export interface CardHeaderChromeProps {
   icon?: ReactNode;
@@ -83,6 +82,74 @@ export function CardSegmentBar({
           ) : null,
         )}
       </svg>
+    </div>
+  );
+}
+
+export interface CardCopyButtonProps {
+  copied: boolean;
+  onClick: () => void;
+  copyLabel?: string;
+  copiedLabel?: string;
+  ariaLabel?: string;
+  className?: string;
+  iconSize?: number;
+  iconSwap?: boolean;
+  disabled?: boolean;
+  dataSlot?: string;
+}
+
+/** Shared copy toggle button with Check/Copy icon swap across cards. */
+export function CardCopyButton({
+  copied,
+  onClick,
+  copyLabel = 'Copy',
+  copiedLabel = 'Copied',
+  ariaLabel,
+  className = 'yui-micro-pill',
+  iconSize = 11,
+  iconSwap = false,
+  disabled,
+  dataSlot,
+}: CardCopyButtonProps) {
+  const glyph = copied ? <CheckIcon size={iconSize} /> : <CopyIcon size={iconSize} />;
+  return (
+    <button
+      type="button"
+      className={className}
+      data-slot={dataSlot}
+      aria-label={ariaLabel ?? (copied ? copiedLabel : copyLabel)}
+      disabled={disabled}
+      onClick={onClick}
+    >
+      {iconSwap ? <span key={copied ? 'c' : 'n'} className="yui-sr-icon-swap">{glyph}</span> : glyph}
+      <span>{copied ? copiedLabel : copyLabel}</span>
+    </button>
+  );
+}
+
+/** Shared horizontal overflow scroll container with edge-fade attribute. */
+export function CardScrollWrap({
+  scrollRef,
+  canScrollRight,
+  fadeClass = 'is-scrollable-right',
+  scrollClass = 'yui-x-scroll',
+  children,
+}: {
+  scrollRef: RefObject<HTMLDivElement | null>;
+  canScrollRight: boolean;
+  fadeClass?: string;
+  scrollClass?: string;
+  children: ReactNode;
+}) {
+  return (
+    <div
+      className={cn('yui-data-scroll-wrap', canScrollRight && fadeClass)}
+      data-scrollable-right={canScrollRight ? 'true' : 'false'}
+    >
+      <div ref={scrollRef} className={scrollClass}>
+        {children}
+      </div>
     </div>
   );
 }

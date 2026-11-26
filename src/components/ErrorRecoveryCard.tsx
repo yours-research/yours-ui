@@ -1,14 +1,13 @@
 import { useId, useState } from 'react';
 import {
   AlertIcon,
-  CheckIcon,
   ChevronDownIcon,
-  CopyIcon,
   LocalDeviceIcon,
   RetryIcon,
 } from '../icons/ApertureIcon.js';
 import { MatrixOrb } from '../icons/MatrixOrb.js';
 import { useCopyFeedback } from '../utils/clipboard.js';
+import { CardCopyButton, cn } from './CardChrome.js';
 
 export interface ErrorRecoveryCardProps {
   title: string;
@@ -58,10 +57,8 @@ export function ErrorRecoveryCard({
     onCopyDiagnostics?.(diagnostics);
   };
 
-  const rootClass = ['yui-card-shell', 'yui-recovery-card', className].filter(Boolean).join(' ');
-  const chevronClass = ['yui-recovery-chevron', traceOpen ? 'is-open' : '']
-    .filter(Boolean)
-    .join(' ');
+  const rootClass = cn('yui-card-shell yui-recovery-card', className);
+  const chevronClass = cn('yui-recovery-chevron', traceOpen && 'is-open');
 
   return (
     <section
@@ -105,15 +102,14 @@ export function ErrorRecoveryCard({
             <div id={traceId} className="yui-recovery-trace">
               <div className="yui-recovery-trace-bar">
                 <span className="yui-perm-meta-label">LOCAL TRACE</span>
-                <button
-                  type="button"
+                <CardCopyButton
+                  copied={copied}
+                  copyLabel="Copy diagnostics"
+                  ariaLabel="Copy diagnostics"
                   className="yui-micro-pill yui-recovery-copy"
-                  aria-label="Copy diagnostics"
+                  iconSize={11.5}
                   onClick={handleCopy}
-                >
-                  {copied ? <CheckIcon size={11.5} /> : <CopyIcon size={11.5} />}
-                  <span>{copied ? 'Copied' : 'Copy diagnostics'}</span>
-                </button>
+                />
               </div>
               <pre className="yui-recovery-pre yui-x-scroll">
                 <code>{diagnostics}</code>

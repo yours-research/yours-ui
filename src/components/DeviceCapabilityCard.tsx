@@ -203,7 +203,7 @@ export function DeviceCapabilityCard({
 
       <CardFooterChrome privacyNote={privacyNote}>
         {onRecheck ? (
-          <button type="button" className="yui-micro-pill" disabled={rechecking} onClick={onRecheck}>
+          <button type="button" className="yui-micro-pill" disabled={rechecking} aria-busy={rechecking || undefined} onClick={onRecheck}>
             <RetryIcon size={10.5} />
             <span>{recheckLabel}</span>
           </button>

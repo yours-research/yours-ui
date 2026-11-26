@@ -1,6 +1,5 @@
 import {
   Fragment,
-  useCallback,
   useEffect,
   useLayoutEffect,
   useMemo,
@@ -17,8 +16,9 @@ import {
   ThumbDownIcon,
   ThumbUpIcon,
 } from '../icons/ApertureIcon.js';
-import { useCopyFeedback, useHorizontalFade } from '../utils/clipboard.js';
+import { cn, useCopyFeedback, useHorizontalFade } from '../utils/clipboard.js';
 import { useReducedMotion } from '../utils/spring.js';
+import { CardCopyButton, CardScrollWrap } from './CardChrome.js';
 
 export type StreamingResponseStatus = 'streaming' | 'done' | 'stopped';
 export type StreamingResponseFeedback = 'up' | 'down' | null;
@@ -61,10 +61,7 @@ const MAX_STAGGER_MS = 60;
 const COPIED_MS = 1600;
 
 const SAFE_HREF = /^(https?:|mailto:|\/|#)/i;
-
-function cx(...parts: Array<string | false | null | undefined>): string {
-  return parts.filter(Boolean).join(' ');
-}
+const cx = cn;
 
 /**
  * Computes cumulative character end offsets for whole-word progressive reveal.
@@ -389,6 +386,14 @@ function tryParseTableStart(
   return { headers, aligns };
 }
 
+const isBlockBoundary = (line: string): boolean =>
+  line.trim() === '' ||
+  FENCE_OPEN_RE.test(line) ||
+  HEADING_RE.test(line) ||
+  QUOTE_RE.test(line) ||
+  UL_RE.test(line) ||
+  OL_RE.test(line);
+
 function collectListItems(
   lines: readonly string[],
   startIndex: number,
@@ -498,15 +503,7 @@ function parseBlocks(source: string): Block[] {
       let j = i + 2;
       while (j < lines.length) {
         const cur = lines[j];
-        if (
-          cur.trim() === '' ||
-          FENCE_OPEN_RE.test(cur) ||
-          HEADING_RE.test(cur) ||
-          QUOTE_RE.test(cur) ||
-          UL_RE.test(cur) ||
-          OL_RE.test(cur) ||
-          !cur.includes('|')
-        ) {
+        if (isBlockBoundary(cur) || !cur.includes('|')) {
           break;
         }
         const parsedRow = splitPipeRow(cur);
@@ -523,15 +520,7 @@ function parseBlocks(source: string): Block[] {
     const pLines: string[] = [];
     while (i < lines.length) {
       const cur = lines[i];
-      if (
-        cur.trim() === '' ||
-        FENCE_OPEN_RE.test(cur) ||
-        HEADING_RE.test(cur) ||
-        QUOTE_RE.test(cur) ||
-        UL_RE.test(cur) ||
-        OL_RE.test(cur) ||
-        tryParseTableStart(lines, i) !== null
-      ) {
+      if (isBlockBoundary(cur) || tryParseTableStart(lines, i) !== null) {
         break;
       }
       pLines.push(cur);
@@ -714,11 +703,6 @@ interface StreamingCodeBlockProps {
 function StreamingCodeBlock({ lang, code, animate, caret }: StreamingCodeBlockProps) {
   const { scrollRef, canScrollRight } = useHorizontalFade([code]);
   const { copied, triggerCopy } = useCopyFeedback(COPIED_MS);
-
-  const handleCopy = () => {
-    triggerCopy(code);
-  };
-
   const lines = code.split('\n');
   const langLabel = (lang || 'text').trim() || 'text';
 
@@ -726,36 +710,28 @@ function StreamingCodeBlock({ lang, code, animate, caret }: StreamingCodeBlockPr
     <div className="yui-sr-code">
       <div className="yui-sr-code-header">
         <span className="yui-sr-code-lang">{langLabel}</span>
-        <button
-          type="button"
+        <CardCopyButton
+          copied={copied}
           className="yui-sr-code-copy"
-          aria-label={copied ? 'Copied code' : 'Copy code'}
-          onClick={handleCopy}
-        >
-          <span key={copied ? 'check' : 'copy'} className="yui-sr-icon-swap">
-            {copied ? <CheckIcon size={12} /> : <CopyIcon size={12} />}
-          </span>
-          <span>{copied ? 'Copied' : 'Copy'}</span>
-        </button>
+          iconSize={12}
+          iconSwap
+          ariaLabel={copied ? 'Copied code' : 'Copy code'}
+          onClick={() => triggerCopy(code)}
+        />
       </div>
-      <div
-        className={cx('yui-data-scroll-wrap', canScrollRight && 'has-right-fade')}
-        data-scrollable-right={canScrollRight ? 'true' : 'false'}
-      >
-        <div ref={scrollRef} className="yui-x-scroll">
-          <pre className="yui-sr-code-pre">
-            <code>
-              {lines.map((line, idx) => (
-                <Fragment key={idx}>
-                  <CodeLine line={line} animate={animate} />
-                  {idx < lines.length - 1 ? '\n' : null}
-                </Fragment>
-              ))}
-              {caret}
-            </code>
-          </pre>
-        </div>
-      </div>
+      <CardScrollWrap scrollRef={scrollRef} canScrollRight={canScrollRight} fadeClass="has-right-fade">
+        <pre className="yui-sr-code-pre">
+          <code>
+            {lines.map((line, idx) => (
+              <Fragment key={idx}>
+                <CodeLine line={line} animate={animate} />
+                {idx < lines.length - 1 ? '\n' : null}
+              </Fragment>
+            ))}
+            {caret}
+          </code>
+        </pre>
+      </CardScrollWrap>
     </div>
   );
 }
@@ -783,51 +759,12 @@ function StreamingTable({
   wordCtx,
   caret,
 }: StreamingTableProps) {
-  const scrollRef = useRef<HTMLDivElement | null>(null);
-  const [canScrollRight, setCanScrollRight] = useState(false);
-
-  const syncFade = useCallback(() => {
-    const el = scrollRef.current;
-    if (!el) return;
-    const next = el.scrollWidth - el.clientWidth - el.scrollLeft > 2;
-    setCanScrollRight((prev) => (prev === next ? prev : next));
-  }, []);
-
-  useEffect(() => {
-    syncFade();
-    const el = scrollRef.current;
-    if (!el) return;
-
-    const onScroll = () => syncFade();
-    el.addEventListener('scroll', onScroll, { passive: true });
-
-    let ro: ResizeObserver | undefined;
-    if (typeof ResizeObserver !== 'undefined') {
-      ro = new ResizeObserver(() => syncFade());
-      ro.observe(el);
-    }
-
-    if (typeof window !== 'undefined') {
-      window.addEventListener('resize', onScroll, { passive: true });
-    }
-
-    return () => {
-      el.removeEventListener('scroll', onScroll);
-      ro?.disconnect();
-      if (typeof window !== 'undefined') {
-        window.removeEventListener('resize', onScroll);
-      }
-    };
-  }, [syncFade, headers, rows]);
+  const { scrollRef, canScrollRight } = useHorizontalFade([headers, rows]);
 
   return (
     <div className="yui-sr-table-card" data-slot="streaming-response-table">
-      <div
-        className={cx('yui-data-scroll-wrap', canScrollRight && 'has-right-fade')}
-        data-scrollable-right={canScrollRight ? 'true' : 'false'}
-      >
-        <div ref={scrollRef} className="yui-x-scroll">
-          <table className="yui-sr-table">
+      <CardScrollWrap scrollRef={scrollRef} canScrollRight={canScrollRight} fadeClass="has-right-fade">
+        <table className="yui-sr-table">
             <thead>
               <tr>
                 {headers.map((header, colIdx) => {
@@ -866,8 +803,7 @@ function StreamingTable({
               </tbody>
             ) : null}
           </table>
-        </div>
-      </div>
+      </CardScrollWrap>
     </div>
   );
 }

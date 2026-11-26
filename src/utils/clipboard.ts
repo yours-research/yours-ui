@@ -1,5 +1,9 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 
+/** Compact conditional class joiner shared cleanly across subpaths. */
+export const cn = (...parts: Array<string | false | null | undefined>): string =>
+  parts.filter(Boolean).join(' ');
+
 /**
  * Copies text safely inside strict MV3/headless environments and exposes a
  * timed `copied` flag with automatic unmount timer cleanup.
