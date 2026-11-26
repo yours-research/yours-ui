@@ -3,6 +3,7 @@ import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import {
   ActionBar,
+  AgentHandoffCard,
   ArtifactPreviewCard,
   AttachmentDropzone,
   AttachmentStrip,
@@ -51,7 +52,9 @@ import {
   SettingsSection,
   SettingsToggleRow,
   ShortcutSheet,
+  SitePermissionsList,
   SourcesDrawer,
+  type SitePermissionItem,
   StatusBadge,
   StatusToast,
   StorageQuotaCard,
@@ -2791,6 +2794,140 @@ describe('@yours/ui chat & runtime primitives', () => {
     expect(cssSource).toContain('.yui-storage-row-lead');
     expect(cssSource.slice(cssSource.indexOf('@media (forced-colors: active)'))).toContain(
       '.yui-audit-card',
+    );
+  });
+
+  it('renders SitePermissionsList & AgentHandoffCard with per-origin modes, locked site access, handoff callbacks, and zero inline styles', async () => {
+    const onModeChange = vi.fn();
+    const onRevoke = vi.fn();
+    const onRevokeAll = vi.fn();
+    const onTakeOver = vi.fn();
+    const onResume = vi.fn();
+    const onCancel = vi.fn();
+
+    function Harness() {
+      const [items, setItems] = useState<SitePermissionItem[]>([
+        {
+          id: 'sp1',
+          origin: 'docs.yours.sh',
+          scope: 'Read active tab DOM & headings',
+          mode: 'once',
+          lastUsedLabel: '2m ago',
+        },
+        {
+          id: 'sp2',
+          origin: 'checkout.bank.invalid',
+          scope: 'Fill shipping fields (no payment)',
+          mode: 'once',
+          lastUsedLabel: 'Just now',
+          lockedReason: 'Persistent site-wide access disabled on banking flows',
+        },
+      ]);
+      const [handoffState, setHandoffState] = useState<'waiting' | 'user-active'>('waiting');
+
+      return (
+        <div>
+          <SitePermissionsList
+            items={items}
+            onModeChange={(id, nextMode) => {
+              onModeChange(id, nextMode);
+              setItems((prev) =>
+                prev.map((item) => (item.id === id ? { ...item, mode: nextMode } : item)),
+              );
+            }}
+            onRevoke={(id) => {
+              onRevoke(id);
+              setItems((prev) => prev.filter((item) => item.id !== id));
+            }}
+            onRevokeAll={() => {
+              onRevokeAll();
+              setItems([]);
+            }}
+          />
+          <AgentHandoffCard
+            title="Login & 2FA checkpoint"
+            reason="Paused before signing in so you can complete 2FA directly."
+            origin="accounts.example.invalid"
+            progressLabel="Step 3 of 5 · Sign in"
+            state={handoffState}
+            onTakeOver={() => {
+              onTakeOver();
+              setHandoffState('user-active');
+            }}
+            onResume={onResume}
+            onCancel={onCancel}
+          />
+        </div>
+      );
+    }
+
+    const el = renderNode(<Harness />);
+    expect(el.querySelectorAll('[style]').length).toBe(0);
+
+    const list = el.querySelector('[data-slot="site-permissions-list"]') as HTMLElement;
+    expect(list.textContent).toContain('docs.yours.sh');
+    expect(list.textContent).toContain('Persistent site-wide access disabled on banking flows');
+
+    const docsRadios = Array.from(
+      list.querySelectorAll('[data-permission-id="sp1"] [role="radio"]'),
+    ) as HTMLButtonElement[];
+    const lockedSiteBtn = list.querySelectorAll(
+      '[data-permission-id="sp2"] [role="radio"]',
+    )[2] as HTMLButtonElement;
+    expect(lockedSiteBtn.disabled).toBe(true);
+
+    act(() => {
+      docsRadios.find((b) => b.textContent === 'Site')?.click();
+    });
+    expect(onModeChange).toHaveBeenCalledWith('sp1', 'site');
+    expect(list.querySelector('[data-permission-id="sp1"]')?.getAttribute('data-mode')).toBe('site');
+
+    const handoff = el.querySelector('[data-slot="agent-handoff-card"]') as HTMLElement;
+    expect(handoff.getAttribute('data-state')).toBe('waiting');
+    expect(handoff.textContent).toContain('Step 3 of 5 · Sign in');
+
+    const takeOverBtn = Array.from(handoff.querySelectorAll('button')).find(
+      (b) => b.textContent === 'Take over tab',
+    ) as HTMLButtonElement;
+    act(() => {
+      takeOverBtn.click();
+    });
+    expect(onTakeOver).toHaveBeenCalledTimes(1);
+    expect(handoff.getAttribute('data-state')).toBe('user-active');
+
+    const resumeBtn = Array.from(handoff.querySelectorAll('button')).find(
+      (b) => b.textContent === 'Resume',
+    ) as HTMLButtonElement;
+    const cancelBtn = Array.from(handoff.querySelectorAll('button')).find(
+      (b) => b.textContent === 'Cancel',
+    ) as HTMLButtonElement;
+    act(() => {
+      resumeBtn.click();
+      cancelBtn.click();
+    });
+    expect(onResume).toHaveBeenCalledTimes(1);
+    expect(onCancel).toHaveBeenCalledTimes(1);
+
+    act(() => {
+      (list.querySelector('[data-permission-id="sp1"] button.yui-storage-clear-btn') as HTMLButtonElement).click();
+    });
+    expect(onRevoke).toHaveBeenCalledWith('sp1');
+    expect(list.querySelectorAll('[data-permission-id]').length).toBe(1);
+
+    const revokeAllBtn = Array.from(list.querySelectorAll('footer button')).find(
+      (b) => b.textContent?.includes('Revoke all'),
+    ) as HTMLButtonElement;
+    act(() => {
+      revokeAllBtn.click();
+    });
+    expect(onRevokeAll).toHaveBeenCalledTimes(1);
+    expect(list.textContent).toContain('No sites approved — all requests ask first');
+
+    const cssSource = await readSourceFile('../src/styles/components.css');
+    expect(cssSource).toContain('.yui-sperm-card');
+    expect(cssSource).toContain('.yui-handoff-card');
+    expect(cssSource.slice(cssSource.indexOf('@media (forced-colors: active)'))).toContain(
+      '.yui-handoff-card',
     );
   });
 });
