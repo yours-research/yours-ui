@@ -42,10 +42,13 @@ import {
   BranchPicker,
   ChecklistCard,
   ChoicePromptCard,
+  CommandPalette,
   CompareTable,
   ContextCommandPopover,
   DataTableCard,
+  DiffCard,
   DraftCard,
+  EmptyPanelState,
   EmptyState,
   EntitySummaryCard,
   FloatingComposer,
@@ -746,6 +749,13 @@ function DataAndArtifactPanel({ theme }: { theme: 'light' | 'dark' }) {
         />
       }
     >
+      <HardwareStatusStrip
+        tierLabel="WebGPU FP16"
+        adapterLabel="M3 Max"
+        memoryLabel="2.6 GB"
+        status="ready"
+        sha256Verified
+      />
       <DataTableCard
         title="Local Decode Matrix"
         subtitle="OPFS Q4F16 quantized checkpoints on-device"
@@ -763,12 +773,14 @@ function DataAndArtifactPanel({ theme }: { theme: 'light' | 'dark' }) {
           { model: 'Qwen3.5-4B', quant: 'Q4F16', ttft: '74ms', tps: '91.6 t/s', vram: '2.6 GB' },
           { model: 'Pragma-1.5B', quant: 'Q4F16', ttft: '38ms', tps: '142.4 t/s', vram: '1.1 GB' },
           { model: 'Gemma-2B-Local', quant: 'INT4', ttft: '52ms', tps: '118.0 t/s', vram: '1.5 GB' },
+          { model: 'Phi-4-Mini', quant: 'INT4', ttft: '46ms', tps: '126.2 t/s', vram: '1.8 GB' },
         ]}
       />
       <ArtifactPreviewCard
         title="webgpu-audit-trace.md"
         fileType="MD"
-        meta="4.2 KB · 42 lines · SHA-256"
+        meta="4.2 KB · 30 lines · SHA-256"
+        capped
         expanded={expanded}
         onExpandedChange={setExpanded}
         onSave={() => {}}
@@ -783,8 +795,147 @@ function DataAndArtifactPanel({ theme }: { theme: 'light' | 'dark' }) {
           '- Throughput: 91.6 tok/s sustained across 2048-token sliding window',
           '- Latency budget: 74ms first token including DOM extract',
           '- Checksum tree: 32 shards verified against manifest root',
+          '- Kernel dispatch: fused RMSNorm + RoPE + SwiGLU WGSL pass',
+          '- Attention mode: grouped-query 8:2 with INT8 KV compression',
+          '- Browser sandbox: isolated dedicated Worker thread (no DOM access)',
+          '- Weight provenance: HuggingFace manifest Digest checked line-by-line',
+          '- Token streaming: WAAPI ink glide (zero inline DOM styles)',
+          '- Panel geometry: 340px–440px responsive Cotton Paper / Obsidian Dark',
           '- Verification result: 100% deterministic pass on CI runners',
         ].join('\\n')}
+      />
+    </SidePanelShell>
+  );
+}
+
+function WelcomeEmptyPanel({ theme }: { theme: 'light' | 'dark' }) {
+  const [prompt, setPrompt] = useState('');
+
+  return (
+    <SidePanelShell
+      theme={theme}
+      notch={<TopNotch items={NOTCH_ITEMS} expandedId={null} />}
+      footer={
+        <FloatingComposer
+          value={prompt}
+          onChange={setPrompt}
+          onSubmit={() => {}}
+          leftSlot={<StatusBadge tone="local" dot>WebGPU ready</StatusBadge>}
+        />
+      }
+    >
+      <EmptyPanelState
+        title="Ask locally on this page."
+        subtitle="Private WebGPU inference stays inside your browser."
+        starters={[
+          { id: 'w1', label: 'Summarize page', icon: 'document' },
+          { id: 'w2', label: 'Compare specs', icon: 'compare' },
+          { id: 'w3', label: 'Extract action items', icon: 'checklist' },
+        ]}
+        onSelectStarter={(item) => setPrompt(item.prompt ?? item.label)}
+      />
+    </SidePanelShell>
+  );
+}
+
+function CommandPaletteAndDiffPanel({ theme }: { theme: 'light' | 'dark' }) {
+  const [open, setOpen] = useState(true);
+
+  return (
+    <SidePanelShell
+      theme={theme}
+      veilOpen={open}
+      onVeilClick={() => setOpen(false)}
+      notch={<TopNotch items={NOTCH_ITEMS} expandedId={null} />}
+      footer={
+        <FloatingComposer
+          value=""
+          onChange={() => {}}
+          onSubmit={() => {}}
+          leftSlot={<StatusBadge tone="muted">Press ⌘K</StatusBadge>}
+        />
+      }
+    >
+      <CommandPalette
+        open={open}
+        onClose={() => setOpen(false)}
+        onSelectAction={() => {}}
+        actions={[
+          {
+            id: 'summarize',
+            label: 'Summarize active tab',
+            description: 'Generate structured Page Brief locally',
+            group: 'Page actions',
+            icon: 'document',
+            shortcut: ['⌘', 'S'],
+          },
+          {
+            id: 'switch-model',
+            label: 'Switch checkpoint',
+            description: 'Qwen3.5-4B · Q4F16 (OPFS)',
+            group: 'Runtime',
+            icon: 'local-device',
+            badge: 'Cached',
+            shortcut: ['⌘', 'M'],
+          },
+          {
+            id: 'voice',
+            label: 'Start local voice session',
+            description: 'Silero VAD + Whisper-tiny barge-in',
+            group: 'Runtime',
+            icon: 'mic',
+            shortcut: ['⌘', '⇧', 'V'],
+          },
+        ]}
+      />
+      <DiffCard
+        filename="src/runtime/decode.ts"
+        language="TS"
+        footerLabel="WebGPU shader kernel patch"
+        lines={[
+          { type: 'context', content: 'export const WORKGROUP_SIZE = 256;' },
+          { type: 'remove', content: 'const kvQuant = "fp16"; // baseline cache bandwidth usage' },
+          { type: 'add', content: 'const kvQuant = "int8"; // 2x context window headroom on OPFS GPUs' },
+          { type: 'add', content: 'const subgroupSync = true;' },
+        ]}
+      />
+    </SidePanelShell>
+  );
+}
+
+function DiffShowcasePanel({ theme }: { theme: 'light' | 'dark' }) {
+  return (
+    <SidePanelShell
+      theme={theme}
+      notch={<TopNotch items={NOTCH_ITEMS} expandedId={null} />}
+      footer={
+        <FloatingComposer
+          value=""
+          onChange={() => {}}
+          onSubmit={() => {}}
+          leftSlot={<StatusBadge tone="local" dot>Patch ready</StatusBadge>}
+        />
+      }
+    >
+      <DiffCard
+        filename="src/runtime/decode.ts"
+        language="TS"
+        footerLabel="Unified WebGPU diff"
+        lines={[
+          { type: 'context', content: 'export const WORKGROUP_SIZE = 256;' },
+          { type: 'remove', content: 'const kvQuant = "fp16"; // baseline cache bandwidth usage' },
+          { type: 'add', content: 'const kvQuant = "int8"; // 2x context window headroom on OPFS GPUs' },
+          { type: 'add', content: 'const subgroupSync = true;' },
+        ]}
+      />
+      <ArtifactPreviewCard
+        title="shader-trace.log"
+        fileType="LOG"
+        meta="2.9 KB · 30 lines · OPFS"
+        capped
+        preview={Array.from({ length: 28 }, (_, i) =>
+          '[' + String(i + 1).padStart(2, '0') + '] wgsl dispatch group=(32,1,1) dt=' + (1.1 + (i % 5) * 0.2).toFixed(1) + 'ms ok',
+        ).join('\\n')}
       />
     </SidePanelShell>
   );
@@ -868,6 +1019,9 @@ function SpecimenApp() {
         {panel === 'settings' ? <SettingsAndVaultPanel theme={theme} /> : null}
         {panel === 'data' ? <DataAndArtifactPanel theme={theme} /> : null}
         {panel === 'shortcuts' ? <ShortcutAndToastPanel theme={theme} /> : null}
+        {panel === 'welcome' ? <WelcomeEmptyPanel theme={theme} /> : null}
+        {panel === 'palette' ? <CommandPaletteAndDiffPanel theme={theme} /> : null}
+        {panel === 'diff' ? <DiffShowcasePanel theme={theme} /> : null}
         {panel === 'genui' ? <GenUiShowcasePanel theme={theme} /> : null}
       </div>
     );
@@ -884,6 +1038,9 @@ function SpecimenApp() {
       <div className="yui-spec-frame"><SettingsAndVaultPanel theme={theme} /></div>
       <div className="yui-spec-frame"><DataAndArtifactPanel theme={theme} /></div>
       <div className="yui-spec-frame"><ShortcutAndToastPanel theme={theme} /></div>
+      <div className="yui-spec-frame"><WelcomeEmptyPanel theme={theme} /></div>
+      <div className="yui-spec-frame"><CommandPaletteAndDiffPanel theme={theme} /></div>
+      <div className="yui-spec-frame"><DiffShowcasePanel theme={theme} /></div>
       <div className="yui-spec-frame-auto"><GenUiShowcasePanel theme={theme} /></div>
     </div>
   );
@@ -1099,6 +1256,9 @@ async function main() {
       'settings',
       'data',
       'shortcuts',
+      'welcome',
+      'palette',
+      'diff',
       'genui',
     ];
     for (const theme of ['light', 'dark']) {
@@ -1331,6 +1491,83 @@ async function main() {
           if (!headerCopiedText || !headerCopiedText.includes('Copied')) {
             throw new Error(`ArtifactPreviewCard header copy failed (${theme}): ${headerCopiedText}`);
           }
+
+          const hasCapFade = await page
+            .locator('[data-slot="artifact-preview-card"] .yui-artifact-scroll-wrap')
+            .getAttribute('data-bottom-fade');
+          if (hasCapFade !== 'true') {
+            throw new Error(`Expected capped ArtifactPreviewCard bottom fade, got ${hasCapFade}`);
+          }
+        }
+
+        if (panel === 'palette') {
+          const paletteInput = page.locator('[data-slot="command-palette"] [role="combobox"]');
+          const activeBefore = await paletteInput.getAttribute('aria-activedescendant');
+          await page.keyboard.press('ArrowDown');
+          const activeAfter = await paletteInput.getAttribute('aria-activedescendant');
+          if (!activeBefore || !activeAfter || activeBefore === activeAfter) {
+            throw new Error(
+              `CommandPalette ArrowDown did not update aria-activedescendant (${theme}): ${activeBefore} -> ${activeAfter}`,
+            );
+          }
+
+          // WCAG AA contrast audit across CommandPalette & DiffCard
+          const contrastFailures = await page.evaluate(() => {
+            const parseRgba = (str) => {
+              const m = str.match(/rgba?\(([^)]+)\)/);
+              if (!m) return null;
+              const parts = m[1].split(',').map((x) => parseFloat(x.trim()));
+              return [parts[0], parts[1], parts[2], parts[3] ?? 1];
+            };
+            const relLum = ([r, g, b]) => {
+              const f = (c) => {
+                const s = c / 255;
+                return s <= 0.03928 ? s / 12.92 : Math.pow((s + 0.055) / 1.055, 2.4);
+              };
+              return 0.2126 * f(r) + 0.7152 * f(g) + 0.0722 * f(b);
+            };
+            const effectiveBg = (el) => {
+              let cur = el;
+              while (cur && cur !== document.documentElement) {
+                const bg = parseRgba(getComputedStyle(cur).backgroundColor);
+                if (bg && bg[3] >= 0.95) return bg;
+                cur = cur.parentElement;
+              }
+              return [255, 255, 255, 1];
+            };
+            const selectors = [
+              '[data-slot="command-palette"] .yui-cmd-item-label',
+              '[data-slot="command-palette"] .yui-cmd-item-desc',
+              '[data-slot="command-palette"] .yui-palette-group-title',
+            ];
+            const bad = [];
+            for (const sel of selectors) {
+              for (const node of document.querySelectorAll(sel)) {
+                const fg = parseRgba(getComputedStyle(node).color);
+                const bg = effectiveBg(node);
+                if (!fg) continue;
+                const l1 = Math.max(relLum(fg), relLum(bg));
+                const l2 = Math.min(relLum(fg), relLum(bg));
+                const ratio = (l1 + 0.05) / (l2 + 0.05);
+                if (ratio < 4.5) {
+                  bad.push({ sel, ratio: Number(ratio.toFixed(2)), text: node.textContent });
+                }
+              }
+            }
+            return bad;
+          });
+          if (contrastFailures.length > 0) {
+            throw new Error(`WCAG AA contrast audit failed (${theme}/palette): ${JSON.stringify(contrastFailures)}`);
+          }
+        }
+
+        if (panel === 'diff') {
+          const capFade = await page
+            .locator('[data-slot="artifact-preview-card"] .yui-artifact-scroll-wrap')
+            .getAttribute('data-bottom-fade');
+          if (capFade !== 'true') {
+            throw new Error(`Expected capped ArtifactPreviewCard fade on diff panel (${theme}), got ${capFade}`);
+          }
         }
 
         // Capture TopNotch intermediate hover-grow (272px x 52px) state directly over resting
@@ -1353,10 +1590,10 @@ async function main() {
         }
       }
 
-      // 400px width verification on Data & Shortcuts panels + reduced-motion audit
+      // 400px width verification on Data, Shortcuts, Welcome, Palette & Diff panels + reduced-motion audit
       await page.setViewportSize({ width: 400, height: 828 });
       await page.emulateMedia({ reducedMotion: 'reduce' });
-      for (const widePanel of ['data', 'shortcuts']) {
+      for (const widePanel of ['data', 'shortcuts', 'welcome', 'palette', 'diff']) {
         await page.goto(`${baseUrl}/?mode=single&theme=${theme}&panel=${widePanel}&width=400`, {
           waitUntil: 'networkidle',
         });
@@ -1387,6 +1624,9 @@ async function main() {
         'settings',
         'data',
         'shortcuts',
+        'welcome',
+        'palette',
+        'diff',
         'genui',
       ]) {
         await page.goto(`${baseUrl}/?mode=single&theme=${theme}&panel=${narrowPanel}&narrow=1`, {
@@ -1486,10 +1726,31 @@ async function main() {
           await page.screenshot({ path: shortcutsNarrowPath });
           outputs.push(shortcutsNarrowPath);
         }
+        if (narrowPanel === 'welcome') {
+          const welcomeNarrowPath = path.join(OUT_DIR, `specimen-${theme}-welcome-340.png`);
+          await page.screenshot({ path: welcomeNarrowPath });
+          outputs.push(welcomeNarrowPath);
+        }
+        if (narrowPanel === 'palette') {
+          const paletteNarrowPath = path.join(OUT_DIR, `specimen-${theme}-palette-340.png`);
+          await page.screenshot({ path: paletteNarrowPath });
+          outputs.push(paletteNarrowPath);
+        }
+        if (narrowPanel === 'diff') {
+          const diffScrollFade = await page
+            .locator('[data-slot="diff-card"] .yui-data-scroll-wrap')
+            .getAttribute('data-scrollable-right');
+          if (diffScrollFade !== 'true') {
+            throw new Error(`Expected DiffCard horizontal scroll fade at 340px (${theme}), got ${diffScrollFade}`);
+          }
+          const diffNarrowPath = path.join(OUT_DIR, `specimen-${theme}-diff-340.png`);
+          await page.screenshot({ path: diffNarrowPath });
+          outputs.push(diffNarrowPath);
+        }
       }
 
-      // Overview 10-up comparison sheet
-      await page.setViewportSize({ width: 4060, height: 900 });
+      // Overview 13-up comparison sheet
+      await page.setViewportSize({ width: 5272, height: 900 });
       await page.goto(`${baseUrl}/?mode=gallery&theme=${theme}`, { waitUntil: 'networkidle' });
       const overviewPath = path.join(OUT_DIR, `specimen-${theme}-overview.png`);
       await page.screenshot({ path: overviewPath, fullPage: true });
