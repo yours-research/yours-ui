@@ -96,3 +96,12 @@ export {
   InlineCitationPill,
   type InlineCitationPillProps,
 } from './InlineCitationPill.js';
+export {
+  InlineCitationPopover,
+  type InlineCitationPopoverProps,
+  type InlineCitationSource,
+} from './InlineCitationPopover.js';
+export {
+  FloatingContextSheet,
+  type FloatingContextSheetProps,
+} from './FloatingContextSheet.js';

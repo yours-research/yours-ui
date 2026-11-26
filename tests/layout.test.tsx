@@ -76,13 +76,20 @@ describe('@yours/ui layout & TopNotch primitives', () => {
   it('renders SidePanelShell with theme override and veil interaction', () => {
     const onVeilClick = vi.fn();
     const el = renderNode(
-      <SidePanelShell theme="dark" veilOpen onVeilClick={onVeilClick} footer={<div>Composer</div>}>
+      <SidePanelShell
+        theme="dark"
+        veilOpen
+        onVeilClick={onVeilClick}
+        sheet={<div>Context Sheet Tray</div>}
+        footer={<div>Composer</div>}
+      >
         <div>Stage Content</div>
       </SidePanelShell>,
     );
 
     const shell = el.querySelector('.yui-shell');
     expect(shell?.getAttribute('data-theme')).toBe('dark');
+    expect(el.querySelector('.yui-sheet-region')?.textContent).toBe('Context Sheet Tray');
     const veil = el.querySelector('.yui-veil.is-open') as HTMLElement;
     expect(veil).toBeTruthy();
     act(() => {

@@ -33,15 +33,17 @@ Built specifically for local-first Chromium MV3 side panels (`340px–440px`), i
 ## Architecture Overview
 
 ```text
-SidePanelShell (outer bezel + recessed stage + focus veil)
-  ├── TopNotch (144x36 resting -> 272x52 hover-grow -> 272px unified drawer + HookSidebarList)
+SidePanelShell (outer bezel + recessed stage + focus veil + bottom sheet slot)
+  ├── TopNotch (144x36 resting -> 272x52 hover-grow -> 272px drawer + HookSidebarList + NotchOptionRow)
   ├── Stream Region
-  │     ├── PromptCapsuleStack / MatrixOrb (idle · thinking · streaming)
-  │     ├── UserMessageBubble + AssistantMessage + ActionBar (speed telemetry)
+  │     ├── EmptyState / PromptCapsuleStack / MatrixOrb (idle · thinking · streaming)
+  │     ├── StreamingResponse · UserMessageBubble · AssistantMessage · ActionBar
+  │     ├── InlineCitationPill · InlineCitationPopover · SourcesDrawer · BranchPicker
   │     ├── ReasoningTrace · ToolStepCard · PermissionApprovalCard (@yours/guard)
-  │     ├── ModelDownloadGate (@yours/models) · SourcesDrawer · VoiceDictationPill
+  │     ├── ModelDownloadGate (@yours/models) · StatusBadge · VoiceDictationPill
   │     └── 8 Generative UI Primitives (CompareTable · ChecklistCard · MetricStripCard · ...)
-  └── FloatingComposer (multi-line prompt · context/model chips · send/stop)
+  ├── FloatingContextSheet (recessed bottom queue / review tray)
+  └── FloatingComposer (auto-grow · ContextCommandPopover · KbdHint · SegmentedControl)
 ```
 
 ---
@@ -163,8 +165,8 @@ export function SidePanelApp() {
 | :--- | :--- |
 | `@yours/ui` | Complete root barrel exporting icons, layout, chat components, and GenUI primitives. |
 | `@yours/ui/icons` | `ApertureIcon`, 48 named `*Icon` components, `APERTURE_ICON_NAMES`, `MatrixOrb`, `NotchEar`, `YoursMark`. |
-| `@yours/ui/layout` | `SidePanelShell`, `TopNotch` (144x36 -> 272x52 hover-grow & click drawer), `HookSidebarList`, `NotchDrawerSearch`, `NotchStatusPill`, `GreenLed`. |
-| `@yours/ui/components` | `FloatingComposer`, `QuotedContextBanner`, `VoiceDictationPill`, `AttachmentStrip`, `AttachmentDropzone`, `PromptCapsuleStack`, `SuggestionChipRow`, `ScrollToBottomButton`, `UserMessageBubble`, `AssistantMessage`, `CodeBlock`, `ActionBar`, `BranchPicker`, `FollowUpSuggestions`, `ReasoningTrace`, `ToolStepCard`, `PermissionApprovalCard`, `SourcesDrawer`, `ThreadHistoryDrawer`, `ErrorRecoveryBanner`, `MessageSkeleton`, `ToastPill`, `ModelDownloadGate`. |
+| `@yours/ui/layout` | `SidePanelShell` (with `sheet` tray slot), `TopNotch` (144x36 -> 272x52 hover-grow & click drawer), `HookSidebarList`, `NotchDrawerSearch`, `NotchOptionRow`, `NotchStatusPill`, `GreenLed`. |
+| `@yours/ui/components` | `FloatingComposer`, `FloatingContextSheet`, `ContextCommandPopover`, `KbdHint`, `SegmentedControl`, `QuotedContextBanner`, `VoiceDictationPill`, `AttachmentStrip`, `AttachmentDropzone`, `EmptyState`, `StatusBadge`, `PromptCapsuleStack`, `SuggestionChipRow`, `ScrollToBottomButton`, `UserMessageBubble`, `AssistantMessage`, `StreamingResponse`, `CodeBlock`, `ActionBar`, `BranchPicker`, `FollowUpSuggestions`, `ReasoningTrace`, `ToolStepCard`, `PermissionApprovalCard`, `SourcesDrawer`, `InlineCitationPill`, `InlineCitationPopover`, `ThreadHistoryDrawer`, `ErrorRecoveryBanner`, `MessageSkeleton`, `ToastPill`, `ModelDownloadGate`. |
 | `@yours/ui/genui` | `CompareTable`, `ChecklistCard`, `PageBriefCard`, `DraftCard`, `EntitySummaryCard`, `ChoicePromptCard`, `MetricStripCard`, `PageActionCard`. |
 | `@yours/ui/styles` | Full Cotton Paper + Anodized Obsidian CSS variables (`tokens.css`) and scoped `.yui-*` classes (`components.css`). |
 
