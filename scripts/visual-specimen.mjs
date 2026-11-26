@@ -952,7 +952,16 @@ function CommandPaletteAndDiffPanel({ theme }: { theme: 'light' | 'dark' }) {
           value=""
           onChange={() => {}}
           onSubmit={() => {}}
-          leftSlot={<StatusBadge tone="muted">Press ⌘K</StatusBadge>}
+          leftSlot={
+            <button
+              type="button"
+              className="yui-micro-pill"
+              data-slot="open-palette-btn"
+              onClick={() => setOpen(true)}
+            >
+              Press ⌘K
+            </button>
+          }
         />
       }
     >
@@ -3986,6 +3995,278 @@ async function main() {
         }
       }
       await page.emulateMedia({ forcedColors: 'none' });
+
+      // prefers-reduced-motion: reduce audit (animations/pulses disabled + static countdown without layout shift)
+      await page.emulateMedia({ reducedMotion: 'reduce' });
+      await page.goto(`${baseUrl}/?mode=single&theme=${theme}&panel=permissions`, { waitUntil: 'networkidle' });
+      await waitForSpecimen(`reduced-motion/${theme}/permissions`);
+      const dotAnim = await page.evaluate(() => {
+        const dot = document.querySelector('[data-slot="agent-handoff-card"] .yui-status-badge-dot.is-pulse');
+        if (!dot) return null;
+        const cs = getComputedStyle(dot);
+        return { animationName: cs.animationName, animationDuration: cs.animationDuration };
+      });
+      if (!dotAnim || dotAnim.animationName !== 'none') {
+        throw new Error(`StatusBadge dot pulse did not honor reduced motion (${theme}): ${JSON.stringify(dotAnim)}`);
+      }
+      const confirmHoldBefore = await page.locator('[data-slot="confirm-action-card"]').boundingBox();
+      const holdBtn = page.locator('[data-slot="confirm-action-card"] button:has-text("Hold to purge")');
+      await holdBtn.focus();
+      await page.keyboard.down('Space');
+      await page.waitForTimeout(220);
+      const reducedHoldState = await page.evaluate(() => {
+        const card = document.querySelector('[data-slot="confirm-action-card"]');
+        const status = card?.querySelector('[role="status"]');
+        return {
+          holding: card?.getAttribute('data-holding'),
+          statusText: status?.textContent?.trim() ?? null,
+        };
+      });
+      const confirmHoldDuring = await page.locator('[data-slot="confirm-action-card"]').boundingBox();
+      await page.keyboard.up('Space');
+      if (
+        reducedHoldState.holding !== 'true' ||
+        !reducedHoldState.statusText ||
+        !/Holding · \d+\.\ds left/.test(reducedHoldState.statusText) ||
+        !confirmHoldBefore ||
+        !confirmHoldDuring ||
+        Math.abs(confirmHoldDuring.height - confirmHoldBefore.height) > 1
+      ) {
+        throw new Error(
+          `ConfirmActionCard reduced-motion hold check failed (${theme}): ${JSON.stringify({ reducedHoldState, confirmHoldBefore, confirmHoldDuring })}`,
+        );
+      }
+
+      await page.goto(`${baseUrl}/?mode=single&theme=${theme}&panel=voice`, { waitUntil: 'networkidle' });
+      await waitForSpecimen(`reduced-motion/${theme}/voice`);
+      const almAnim = await page.evaluate(() => {
+        const bar = document.querySelector('[data-slot="audio-level-meter"].is-animated .yui-alm-bar:not(.yui-alm-bar--0)');
+        return bar ? getComputedStyle(bar).animationName : null;
+      });
+      if (almAnim !== 'none') {
+        throw new Error(`AudioLevelMeter animated bar did not honor reduced motion (${theme}): ${almAnim}`);
+      }
+
+      await page.goto(`${baseUrl}/?mode=single&theme=${theme}&panel=runtime`, { waitUntil: 'networkidle' });
+      await waitForSpecimen(`reduced-motion/${theme}/runtime`);
+      const vsbAnim = await page.evaluate(() => {
+        const bar = document.querySelector('[data-slot="voice-session-bar"] .yui-vm-bar');
+        return bar ? getComputedStyle(bar).animationName : null;
+      });
+      if (vsbAnim !== 'none') {
+        throw new Error(`VoiceSessionBar meter did not honor reduced motion (${theme}): ${vsbAnim}`);
+      }
+
+      await page.goto(`${baseUrl}/?mode=single&theme=${theme}&panel=live`, { waitUntil: 'networkidle' });
+      await waitForSpecimen(`reduced-motion/${theme}/live`);
+      const streamAnim = await page.evaluate(() => {
+        const caret = document.querySelector('[data-slot="streaming-response-caret"]');
+        const words = Array.from(document.querySelectorAll('.yui-sr-word'));
+        return {
+          caretAnim: caret ? getComputedStyle(caret).animationName : null,
+          hiddenWord: words.some((w) => parseFloat(getComputedStyle(w).opacity) < 0.99),
+        };
+      });
+      if (streamAnim.caretAnim !== 'none' || streamAnim.hiddenWord) {
+        throw new Error(`StreamingResponse reduced-motion check failed (${theme}): ${JSON.stringify(streamAnim)}`);
+      }
+      await page.emulateMedia({ reducedMotion: 'no-preference' });
+
+      // Keyboard-only focus, focus-ring contrast & ARIA contract audit at 380px
+      await page.goto(`${baseUrl}/?mode=single&theme=${theme}&panel=permissions`, { waitUntil: 'networkidle' });
+      await waitForSpecimen(`a11y/${theme}/permissions`);
+      const permA11yInit = await page.evaluate((activeTheme) => {
+        const active = document.activeElement;
+        const confirmCard = document.querySelector('[data-slot="confirm-action-card"]');
+        const isCancelFocused =
+          Boolean(active && confirmCard?.contains(active)) && active?.textContent?.trim() === 'Cancel';
+        const parseRgba = (str) => {
+          const m = str?.match(/rgba?\(([^)]+)\)/);
+          if (!m) return null;
+          const p = m[1].split(',').map((x) => parseFloat(x.trim()));
+          return [p[0], p[1], p[2], p[3] ?? 1];
+        };
+        const compositeOver = (fg, bg) => {
+          const a = fg[3] ?? 1;
+          return [fg[0] * a + bg[0] * (1 - a), fg[1] * a + bg[1] * (1 - a), fg[2] * a + bg[2] * (1 - a), 1];
+        };
+        const relLum = ([r, g, b]) => {
+          const f = (c) => {
+            const s = c / 255;
+            return s <= 0.03928 ? s / 12.92 : Math.pow((s + 0.055) / 1.055, 2.4);
+          };
+          return 0.2126 * f(r) + 0.7152 * f(g) + 0.0722 * f(b);
+        };
+        let outlineRatio = 0;
+        if (active) {
+          const stack = [];
+          let cur = active.parentElement;
+          while (cur && cur !== document.documentElement) {
+            const bg = parseRgba(getComputedStyle(cur).backgroundColor);
+            if (bg && bg[3] > 0) stack.unshift(bg);
+            cur = cur.parentElement;
+          }
+          const rootBg = activeTheme === 'dark' ? [18, 18, 21, 1] : [250, 248, 245, 1];
+          const surf = stack.reduce((acc, layer) => compositeOver(layer, acc), rootBg);
+          const outline = parseRgba(getComputedStyle(active).outlineColor);
+          if (outline) {
+            const fg = outline[3] < 1 ? compositeOver(outline, surf) : outline;
+            const l1 = Math.max(relLum(fg), relLum(surf));
+            const l2 = Math.min(relLum(fg), relLum(surf));
+            outlineRatio = Number(((l1 + 0.05) / (l2 + 0.05)).toFixed(2));
+          }
+        }
+        return { isCancelFocused, outlineRatio };
+      }, theme);
+      if (!permA11yInit.isCancelFocused || permA11yInit.outlineRatio < 3.0) {
+        throw new Error(`ConfirmActionCard Cancel focus or focus-ring contrast failed (${theme}): ${JSON.stringify(permA11yInit)}`);
+      }
+      await page.keyboard.press('Escape');
+      const cancelledMsg = await page.locator('.yui-composer-left').textContent();
+      if (!cancelledMsg?.includes('Cache purge cancelled')) {
+        throw new Error(`ConfirmActionCard Escape dismissal failed (${theme}): ${cancelledMsg}`);
+      }
+
+      const revokeAllBtn = page.locator('[data-slot="site-permissions-list"] button:has-text("Revoke all")');
+      await revokeAllBtn.focus();
+      await page.keyboard.press('Enter');
+      const revokeCancelFocused = await page.evaluate(() => {
+        const grp = document.querySelector('[data-slot="site-permissions-list"] [role="group"]');
+        const active = document.activeElement;
+        return Boolean(grp && active && grp.contains(active) && active.textContent?.trim() === 'Cancel');
+      });
+      if (!revokeCancelFocused) {
+        throw new Error(`SitePermissionsList confirmRevokeAll did not focus Cancel (${theme})`);
+      }
+      await page.keyboard.press('Escape');
+      const revokeRestored = await page.evaluate(
+        () => document.activeElement?.textContent?.includes('Revoke all') ?? false,
+      );
+      if (!revokeRestored) {
+        throw new Error(`SitePermissionsList Escape did not restore focus to Revoke all (${theme})`);
+      }
+
+      const activeSegRadio = page.locator('[data-slot="site-permissions-list"] [data-slot="segmented-control"] [role="radio"][aria-checked="true"]').first();
+      await activeSegRadio.focus();
+      await page.keyboard.press('ArrowLeft');
+      const segLeft = await page.evaluate(() => ({
+        text: document.activeElement?.textContent?.trim(),
+        checked: document.activeElement?.getAttribute('aria-checked'),
+      }));
+      if (segLeft.text !== 'Once' || segLeft.checked !== 'true') {
+        throw new Error(`SegmentedControl ArrowLeft roving focus failed (${theme}): ${JSON.stringify(segLeft)}`);
+      }
+      await page.keyboard.press('ArrowRight');
+      const segRight = await page.evaluate(() => ({
+        text: document.activeElement?.textContent?.trim(),
+        checked: document.activeElement?.getAttribute('aria-checked'),
+      }));
+      if (segRight.text !== 'Site' || segRight.checked !== 'true') {
+        throw new Error(`SegmentedControl ArrowRight roving focus failed (${theme}): ${JSON.stringify(segRight)}`);
+      }
+
+      await page.goto(`${baseUrl}/?mode=single&theme=${theme}&panel=palette`, { waitUntil: 'networkidle' });
+      await waitForSpecimen(`a11y/${theme}/palette`);
+      const paletteAria = await page.evaluate(() => {
+        const dlg = document.querySelector('[data-slot="command-palette"]');
+        const input = dlg?.querySelector('[role="combobox"]');
+        const list = dlg?.querySelector('[role="listbox"]');
+        const opts = dlg?.querySelectorAll('[role="option"]').length ?? 0;
+        return {
+          role: dlg?.getAttribute('role'),
+          modal: dlg?.getAttribute('aria-modal'),
+          controls: input?.getAttribute('aria-controls') === list?.id,
+          activeDesc: Boolean(input?.getAttribute('aria-activedescendant')),
+          opts,
+        };
+      });
+      if (paletteAria.role !== 'dialog' || paletteAria.modal !== 'true' || !paletteAria.controls || !paletteAria.activeDesc || paletteAria.opts < 3) {
+        throw new Error(`CommandPalette ARIA check failed (${theme}): ${JSON.stringify(paletteAria)}`);
+      }
+      for (let t = 0; t < 6; t++) {
+        await page.keyboard.press(t % 2 === 0 ? 'Tab' : 'Shift+Tab');
+        const inside = await page.evaluate(
+          () => document.querySelector('[data-slot="command-palette"]')?.contains(document.activeElement) ?? false,
+        );
+        if (!inside) throw new Error(`CommandPalette focus escaped trap on Tab/Shift+Tab (${theme})`);
+      }
+      await page.keyboard.press('Escape');
+      const openBtn = page.locator('[data-slot="open-palette-btn"]');
+      await openBtn.focus();
+      await page.keyboard.press('Enter');
+      const paletteReopened = await page.evaluate(
+        () => document.querySelector('[data-slot="command-palette"]')?.contains(document.activeElement) ?? false,
+      );
+      if (!paletteReopened) throw new Error(`CommandPalette reopen did not trap initial focus (${theme})`);
+      await page.keyboard.press('Escape');
+      const paletteRestored = await page.evaluate(
+        () => document.activeElement?.getAttribute('data-slot') === 'open-palette-btn',
+      );
+      if (!paletteRestored) throw new Error(`CommandPalette Escape did not restore trigger focus (${theme})`);
+
+      await page.goto(`${baseUrl}/?mode=single&theme=${theme}&panel=shortcuts`, { waitUntil: 'networkidle' });
+      await waitForSpecimen(`a11y/${theme}/shortcuts`);
+      const shortcutsCheck = await page.evaluate(() => ({
+        kbds: document.querySelectorAll('[data-slot="shortcut-sheet"] .yui-kbd').length,
+        toastRole: document.querySelector('[data-slot="status-toast"]')?.getAttribute('role'),
+        toastLive: document.querySelector('[data-slot="status-toast"]')?.getAttribute('aria-live'),
+      }));
+      if (shortcutsCheck.kbds < 6 || shortcutsCheck.toastRole !== 'status' || shortcutsCheck.toastLive !== 'polite') {
+        throw new Error(`ShortcutSheet/StatusToast ARIA check failed (${theme}): ${JSON.stringify(shortcutsCheck)}`);
+      }
+      const notchThreadsBtn = page.locator('.yui-notch-btn[aria-label="Threads"]');
+      await notchThreadsBtn.focus();
+      await page.keyboard.press('Enter');
+      const notchInside = await page.evaluate(
+        () => document.querySelector('.yui-notch-drawer')?.contains(document.activeElement) ?? false,
+      );
+      if (!notchInside) throw new Error(`TopNotch drawer did not move focus inside on Enter (${theme})`);
+      await page.keyboard.press('Tab');
+      const notchTrapped = await page.evaluate(
+        () => document.querySelector('.yui-notch-drawer')?.contains(document.activeElement) ?? false,
+      );
+      if (!notchTrapped) throw new Error(`TopNotch drawer escaped Tab trap (${theme})`);
+      await page.keyboard.press('Escape');
+      const notchRestored = await page.evaluate(
+        () => document.activeElement?.getAttribute('aria-label') === 'Threads',
+      );
+      if (!notchRestored) throw new Error(`TopNotch Escape did not restore focus to trigger (${theme})`);
+
+      await page.goto(`${baseUrl}/?mode=single&theme=${theme}&panel=storage`, { waitUntil: 'networkidle' });
+      await waitForSpecimen(`a11y/${theme}/storage`);
+      const findAria = await page.evaluate(() => {
+        const bar = document.querySelector('[data-slot="find-in-thread-bar"]');
+        const live = bar?.querySelector('[aria-live="polite"]');
+        return { role: bar?.getAttribute('role'), text: live?.textContent?.trim() };
+      });
+      if (findAria.role !== 'search' || findAria.text !== '2 / 7') {
+        throw new Error(`FindInThreadBar ARIA check failed (${theme}): ${JSON.stringify(findAria)}`);
+      }
+      await page.locator('[data-slot="find-in-thread-bar"] input[type="search"]').first().focus();
+      await page.keyboard.press('Escape');
+      const findClosed = await page.locator('.yui-composer-left').textContent();
+      if (!findClosed?.includes('Find bar closed via Esc')) {
+        throw new Error(`FindInThreadBar Escape callback failed (${theme}): ${findClosed}`);
+      }
+
+      await page.goto(`${baseUrl}/?mode=single&theme=${theme}&panel=preflight`, { waitUntil: 'networkidle' });
+      await waitForSpecimen(`a11y/${theme}/preflight`);
+      const tier4b = page.locator('[data-slot="device-capability-card"] button:has-text("4B Q4")');
+      await tier4b.focus();
+      await page.keyboard.press('Enter');
+      if ((await tier4b.getAttribute('aria-pressed')) !== 'true') {
+        throw new Error(`DeviceCapabilityCard keyboard tier selection failed (${theme})`);
+      }
+      const selToggle = page.locator('[data-slot="page-selection-card"] button[aria-expanded]');
+      await selToggle.focus();
+      await page.keyboard.press('Enter');
+      if ((await selToggle.getAttribute('aria-expanded')) !== 'true') {
+        throw new Error(`PageSelectionCard keyboard Expand toggle failed (${theme})`);
+      }
+      await page.keyboard.press('Space');
+      if ((await selToggle.getAttribute('aria-expanded')) !== 'false') {
+        throw new Error(`PageSelectionCard keyboard Collapse toggle failed (${theme})`);
+      }
 
       // Overview 20-up comparison sheet
       await page.setViewportSize({ width: 8104, height: 900 });

@@ -5,11 +5,13 @@ export {
   type HookSidebarItem,
   type HookSidebarListProps,
 } from './HookSidebarList.js';
-export { NotchDrawerSearch, type NotchDrawerSearchProps } from './NotchDrawerSearch.js';
 export {
   GreenLed,
+  NotchDrawerSearch,
+  NotchOptionRow,
   NotchStatusPill,
+  type NotchDrawerSearchProps,
+  type NotchOptionRowProps,
   type NotchStatusMode,
   type NotchStatusPillProps,
-} from './NotchStatusPill.js';
-export { NotchOptionRow, type NotchOptionRowProps } from './NotchOptionRow.js';
+} from './NotchPrimitives.js';

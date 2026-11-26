@@ -1,6 +1,7 @@
 import { useMemo } from 'react';
+import { DocumentIcon } from '../icons/ApertureIcon.js';
 import { useCopyFeedback, useHorizontalFade } from '../utils/clipboard.js';
-import { CheckIcon, CopyIcon, DocumentIcon } from '../icons/ApertureIcon.js';
+import { CardCopyButton, CardScrollWrap, cn } from './CardChrome.js';
 
 export type DiffLineType = 'context' | 'add' | 'remove';
 
@@ -70,13 +71,7 @@ export function DiffCard({
     onCopyPatched?.(computedStats.patchedOutput);
   };
 
-  const cardClass = ['yui-card-shell', 'yui-diff-card', className].filter(Boolean).join(' ');
-  const scrollWrapClass = [
-    'yui-data-scroll-wrap',
-    canScrollRight ? 'is-scrollable-right' : '',
-  ]
-    .filter(Boolean)
-    .join(' ');
+  const cardClass = cn('yui-card-shell yui-diff-card', className);
 
   let oldCursor = 1;
   let newCursor = 1;
@@ -96,45 +91,40 @@ export function DiffCard({
             <span className="yui-diff-stat-del">-{computedStats.dels}</span>
           </div>
         </div>
-        <button
-          type="button"
-          className="yui-micro-pill"
-          data-slot="diff-copy-btn"
-          aria-label={copied ? 'Copied patched output' : copyLabel}
+        <CardCopyButton
+          copied={copied}
+          copyLabel={copyLabel}
+          dataSlot="diff-copy-btn"
+          ariaLabel={copied ? 'Copied patched output' : copyLabel}
           onClick={handleCopy}
-        >
-          {copied ? <CheckIcon size={11} /> : <CopyIcon size={11} />}
-          <span>{copied ? 'Copied' : copyLabel}</span>
-        </button>
+        />
       </div>
 
-      <div className={scrollWrapClass} data-scrollable-right={canScrollRight ? 'true' : 'false'}>
-        <div ref={scrollRef} className="yui-data-scroll">
-          <div className="yui-diff-lines" role="region" aria-label={`${filename} diff hunks`}>
-            {lines.map((line, idx) => {
-              const oldNum = line.type === 'add' ? '' : String(line.oldLine ?? oldCursor++);
-              const newNum = line.type === 'remove' ? '' : String(line.newLine ?? newCursor++);
-              const marker = line.type === 'add' ? '+' : line.type === 'remove' ? '-' : ' ';
-              const lineClass = ['yui-diff-line', `yui-diff-line--${line.type}`].join(' ');
+      <CardScrollWrap scrollRef={scrollRef} canScrollRight={canScrollRight} scrollClass="yui-data-scroll">
+        <div className="yui-diff-lines" role="region" aria-label={`${filename} diff hunks`}>
+          {lines.map((line, idx) => {
+            const oldNum = line.type === 'add' ? '' : String(line.oldLine ?? oldCursor++);
+            const newNum = line.type === 'remove' ? '' : String(line.newLine ?? newCursor++);
+            const marker = line.type === 'add' ? '+' : line.type === 'remove' ? '-' : ' ';
+            const lineClass = `yui-diff-line yui-diff-line--${line.type}`;
 
-              return (
-                <div key={idx} className={lineClass}>
-                  <span className="yui-diff-ln" aria-hidden="true">
-                    {oldNum}
-                  </span>
-                  <span className="yui-diff-ln" aria-hidden="true">
-                    {newNum}
-                  </span>
-                  <span className="yui-diff-sigil" aria-hidden="true">
-                    {marker}
-                  </span>
-                  <code className="yui-diff-code">{line.content || ' '}</code>
-                </div>
-              );
-            })}
-          </div>
+            return (
+              <div key={idx} className={lineClass}>
+                <span className="yui-diff-ln" aria-hidden="true">
+                  {oldNum}
+                </span>
+                <span className="yui-diff-ln" aria-hidden="true">
+                  {newNum}
+                </span>
+                <span className="yui-diff-sigil" aria-hidden="true">
+                  {marker}
+                </span>
+                <code className="yui-diff-code">{line.content || ' '}</code>
+              </div>
+            );
+          })}
         </div>
-      </div>
+      </CardScrollWrap>
 
       {footerLabel ? (
         <div className="yui-genui-foot">

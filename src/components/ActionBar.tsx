@@ -1,4 +1,4 @@
-import { useState, type ReactNode } from 'react';
+import type { ReactNode } from 'react';
 import {
   BookmarkIcon,
   CheckIcon,
@@ -8,6 +8,7 @@ import {
   ThumbUpIcon,
   VolumeIcon,
 } from '../icons/ApertureIcon.js';
+import { useCopyFeedback } from '../utils/clipboard.js';
 
 export interface SpeedMetricsSummary {
   tokensPerSec?: number;
@@ -42,12 +43,11 @@ export function ActionBar({
   speedMetrics,
   rightSlot,
 }: ActionBarProps) {
-  const [copied, setCopied] = useState(false);
+  const { copied, triggerCopy } = useCopyFeedback(1200);
 
   const handleCopy = () => {
     onCopy?.();
-    setCopied(true);
-    setTimeout(() => setCopied(false), 1200);
+    triggerCopy();
   };
 
   const parts: string[] = [];

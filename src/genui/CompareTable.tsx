@@ -1,5 +1,5 @@
 import { BookmarkIcon, CompareIcon, CopyIcon } from '../icons/ApertureIcon.js';
-import { GreenLed } from '../layout/NotchStatusPill.js';
+import { GreenLed } from '../layout/NotchPrimitives.js';
 
 export interface CompareTableRow {
   feature: string;

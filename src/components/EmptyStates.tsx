@@ -1,6 +1,42 @@
+import type { ReactNode } from 'react';
 import { ApertureIcon, ArrowRightIcon, ShieldIcon } from '../icons/ApertureIcon.js';
 import type { ApertureIconName } from '../icons/iconData.js';
+import { MatrixOrb, type MatrixOrbState } from '../icons/MatrixOrb.js';
 import { YoursMark } from '../icons/YoursMark.js';
+import { cn } from '../utils/clipboard.js';
+
+export interface EmptyStateProps {
+  title: string;
+  subtitle?: string;
+  orbState?: MatrixOrbState;
+  orbSize?: number;
+  children?: ReactNode;
+  className?: string;
+}
+
+/**
+ * Minimalist Page 9 resting zero-state centered on the recessed stage,
+ * combining the 21-dot MatrixOrb with calm typography and optional starter actions.
+ */
+export function EmptyState({
+  title,
+  subtitle,
+  orbState = 'idle',
+  orbSize = 28,
+  children,
+  className,
+}: EmptyStateProps) {
+  return (
+    <div data-slot="empty-state" className={cn('yui-empty-state', className)}>
+      <div className="yui-empty-header">
+        <MatrixOrb state={orbState} size={orbSize} />
+        <h2 className="yui-empty-title">{title}</h2>
+        {subtitle ? <p className="yui-empty-subtitle">{subtitle}</p> : null}
+      </div>
+      {children ? <div className="yui-empty-actions">{children}</div> : null}
+    </div>
+  );
+}
 
 export interface EmptyPanelStarter {
   id: string;
@@ -31,10 +67,8 @@ export function EmptyPanelState({
   privacyLabel = 'On-device WebGPU · Zero telemetry',
   className,
 }: EmptyPanelStateProps) {
-  const rootClass = ['yui-empty-panel', className].filter(Boolean).join(' ');
-
   return (
-    <section data-slot="empty-panel-state" className={rootClass} aria-label={title}>
+    <section data-slot="empty-panel-state" className={cn('yui-empty-panel', className)} aria-label={title}>
       <div className="yui-empty-panel-hero">
         <span className="yui-empty-panel-mark" aria-hidden="true">
           <YoursMark size={24} />

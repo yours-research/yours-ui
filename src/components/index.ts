@@ -1,13 +1,5 @@
 export { FloatingComposer, type FloatingComposerProps } from './FloatingComposer.js';
 export {
-  QuotedContextBanner,
-  type QuotedContextBannerProps,
-} from './QuotedContextBanner.js';
-export {
-  VoiceDictationPill,
-  type VoiceDictationPillProps,
-} from './VoiceDictationPill.js';
-export {
   AttachmentDropzone,
   AttachmentStrip,
   type AttachmentDropzoneProps,
@@ -15,11 +7,15 @@ export {
   type AttachmentStripProps,
 } from './AttachmentChips.js';
 export {
+  FollowUpSuggestions,
   PromptCapsuleStack,
+  QuotedContextBanner,
   ScrollToBottomButton,
   SuggestionChipRow,
+  type FollowUpSuggestionsProps,
   type PromptCapsuleStackProps,
   type PromptStarterItem,
+  type QuotedContextBannerProps,
   type ScrollToBottomButtonProps,
   type SuggestionChipRowProps,
 } from './PromptSuggestions.js';
@@ -29,23 +25,26 @@ export {
   type AssistantMessageProps,
   type UserMessageBubbleProps,
 } from './MessageBubble.js';
-export { CodeBlock, type CodeBlockProps } from './CodeBlock.js';
+export {
+  CodeBlock,
+  CodeBlockCard,
+  type CodeBlockCardProps,
+  type CodeBlockProps,
+} from './CodeBlocks.js';
 export {
   ActionBar,
   type ActionBarProps,
   type SpeedMetricsSummary,
 } from './ActionBar.js';
 export { BranchPicker, type BranchPickerProps } from './BranchPicker.js';
-export {
-  FollowUpSuggestions,
-  type FollowUpSuggestionsProps,
-} from './FollowUpSuggestions.js';
 export { ReasoningTrace, type ReasoningTraceProps } from './ReasoningTrace.js';
 export { ToolStepCard, type ToolStepCardProps } from './ToolStepCard.js';
 export {
   PermissionApprovalCard,
+  PermissionCard,
   type PermissionApprovalCardProps,
-} from './PermissionApprovalCard.js';
+  type PermissionCardProps,
+} from './PermissionPrompts.js';
 export {
   SourcesDrawer,
   type SourceCitation,
@@ -75,7 +74,13 @@ export {
   type StreamingResponseProps,
   type StreamingResponseStatus,
 } from './StreamingResponse.js';
-export { EmptyState, type EmptyStateProps } from './EmptyState.js';
+export {
+  EmptyPanelState,
+  EmptyState,
+  type EmptyPanelStarter,
+  type EmptyPanelStateProps,
+  type EmptyStateProps,
+} from './EmptyStates.js';
 export {
   StatusBadge,
   type StatusBadgeProps,
@@ -122,19 +127,17 @@ export {
   type ModelDownloadState,
 } from './RuntimeTelemetry.js';
 export {
-  VoiceSessionBar,
-  type VoiceSessionBarProps,
-  type VoiceSessionState,
-} from './VoiceSessionBar.js';
-export {
   AudioLevelMeter,
+  VoiceDictationPill,
+  VoiceSessionBar,
+  VoiceSessionCard,
   type AudioLevelMeterProps,
   type AudioLevelMeterTone,
-} from './AudioLevelMeter.js';
-export {
-  VoiceSessionCard,
+  type VoiceDictationPillProps,
+  type VoiceSessionBarProps,
   type VoiceSessionCardProps,
-} from './VoiceSessionCard.js';
+  type VoiceSessionState,
+} from './VoicePrimitives.js';
 export {
   PromptTemplateList,
   type PromptTemplateItem,
@@ -178,11 +181,6 @@ export {
   type CommandPaletteProps,
 } from './CommandPalette.js';
 export {
-  EmptyPanelState,
-  type EmptyPanelStarter,
-  type EmptyPanelStateProps,
-} from './EmptyPanelState.js';
-export {
   DiffCard,
   type DiffCardProps,
   type DiffLine,
@@ -194,10 +192,6 @@ export {
   type ToolTraceStatus,
   type ToolTraceStep,
 } from './ToolTraceList.js';
-export {
-  PermissionCard,
-  type PermissionCardProps,
-} from './PermissionCard.js';
 export {
   ThreadHistoryList,
   type ThreadHistoryItem,
@@ -227,10 +221,6 @@ export {
   type CitationFootnoteItem,
   type CitationFootnoteListProps,
 } from './CitationFootnoteList.js';
-export {
-  CodeBlockCard,
-  type CodeBlockCardProps,
-} from './CodeBlockCard.js';
 export {
   OnboardingCard,
   type OnboardingCardProps,

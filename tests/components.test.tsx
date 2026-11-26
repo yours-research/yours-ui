@@ -3206,4 +3206,107 @@ describe('@yours/ui chat & runtime primitives', () => {
     expect(forced).toContain('.yui-sel-card');
     expect(forced).toContain('.yui-devcap-card');
   });
+
+  it('supports SegmentedControl roving arrow/Home/End focus & ShortcutSheet modal focus trap + Escape restoration', () => {
+    function Harness() {
+      const [mode, setMode] = useState<'off' | 'once' | 'site'>('once');
+      const [modalOpen, setModalOpen] = useState(false);
+      return (
+        <div>
+          <SegmentedControl
+            ariaLabel="Mode"
+            value={mode}
+            onChange={setMode}
+            options={[
+              { value: 'off', label: 'Off' },
+              { value: 'once', label: 'Once' },
+              { value: 'site', label: 'Site' },
+              { value: 'locked' as 'site', label: 'Locked', disabled: true },
+            ]}
+          />
+          <button type="button" data-slot="open-shortcuts" onClick={() => setModalOpen(true)}>
+            Shortcuts
+          </button>
+          <ShortcutSheet
+            open={modalOpen}
+            onClose={() => setModalOpen(false)}
+            items={[{ label: 'Command palette', keys: ['⌘', 'K'] }]}
+          />
+        </div>
+      );
+    }
+
+    const el = renderNode(<Harness />);
+    const radios = el.querySelectorAll('[role="radio"]') as NodeListOf<HTMLButtonElement>;
+    expect(radios[1].getAttribute('tabindex')).toBe('0');
+    act(() => {
+      radios[1].focus();
+      radios[1].dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowRight', bubbles: true }));
+    });
+    expect(document.activeElement).toBe(radios[2]);
+    expect(radios[2].getAttribute('aria-checked')).toBe('true');
+
+    // Wraps past disabled option back to index 0
+    act(() => {
+      radios[2].dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowRight', bubbles: true }));
+    });
+    expect(document.activeElement).toBe(radios[0]);
+    expect(radios[0].getAttribute('aria-checked')).toBe('true');
+
+    // End jumps to last enabled radio (index 2), Home jumps to index 0
+    act(() => {
+      radios[0].dispatchEvent(new KeyboardEvent('keydown', { key: 'End', bubbles: true }));
+    });
+    expect(document.activeElement).toBe(radios[2]);
+    act(() => {
+      radios[2].dispatchEvent(new KeyboardEvent('keydown', { key: 'Home', bubbles: true }));
+    });
+    expect(document.activeElement).toBe(radios[0]);
+
+    // Modal ShortcutSheet traps Tab and restores trigger focus on Escape
+    const openBtn = el.querySelector('[data-slot="open-shortcuts"]') as HTMLButtonElement;
+    act(() => {
+      openBtn.focus();
+      openBtn.click();
+    });
+    const sheet = el.querySelector('[data-slot="shortcut-sheet"]') as HTMLElement;
+    expect(sheet.getAttribute('role')).toBe('dialog');
+    expect(sheet.getAttribute('aria-modal')).toBe('true');
+    expect(sheet.contains(document.activeElement)).toBe(true);
+    act(() => {
+      document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
+    });
+    expect(el.querySelector('[data-slot="shortcut-sheet"]')).toBeNull();
+    expect(document.activeElement).toBe(openBtn);
+  });
+
+  it('verifies reduced-motion & ARIA contracts across AudioLevelMeter, AgentHandoffCard, VoiceSessionBar, FindInThreadBar, and DeviceCapabilityCard', async () => {
+    const cssSource = await readSourceFile('../src/styles/components.css');
+    const reducedBlock = cssSource.slice(cssSource.indexOf('@media (prefers-reduced-motion: reduce)'));
+    expect(reducedBlock).toContain('animation: none !important');
+    expect(reducedBlock).toContain('transition: none !important');
+
+    const el = renderNode(
+      <div>
+        <AudioLevelMeter level={0.8} tone="speaking" animated />
+        <AgentHandoffCard
+          title="Login required"
+          reason="Sign in to proceed"
+          origin="auth.example"
+          state="waiting"
+        />
+        <VoiceSessionBar state="speaking" />
+        <FindInThreadBar query="local" totalMatches={4} currentMatch={2} onPrev={() => {}} onNext={() => {}} />
+        <DeviceCapabilityCard status="ready" adapterName="WebGPU M2" rechecking onRecheck={() => {}} />
+      </div>,
+    );
+
+    expect(el.querySelector('[data-slot="audio-level-meter"]')?.getAttribute('role')).toBe('meter');
+    expect(el.querySelector('[data-slot="agent-handoff-card"] .yui-status-badge-dot')?.classList.contains('is-pulse')).toBe(true);
+    expect(el.querySelector('[data-slot="voice-session-bar"]')?.getAttribute('aria-live')).toBe('polite');
+    expect(el.querySelector('[data-slot="find-in-thread-bar"]')?.getAttribute('role')).toBe('search');
+    expect(el.querySelector('[data-slot="find-in-thread-bar"] [aria-live="polite"]')?.textContent).toBe('2 / 4');
+    const recheckBtn = Array.from(el.querySelectorAll('[data-slot="device-capability-card"] button')).at(-1);
+    expect(recheckBtn?.getAttribute('aria-busy')).toBe('true');
+  });
 });

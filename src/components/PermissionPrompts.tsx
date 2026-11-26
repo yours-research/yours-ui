@@ -1,5 +1,57 @@
 import type { KeyboardEvent } from 'react';
 import { GlobeIcon, ShieldIcon } from '../icons/ApertureIcon.js';
+import { cn } from '../utils/clipboard.js';
+
+export interface PermissionApprovalCardProps {
+  title: string;
+  description: string;
+  ruleBadge?: string;
+  approveLabel?: string;
+  denyLabel?: string;
+  onApprove: () => void;
+  onDeny: () => void;
+}
+
+/**
+ * Capability confirmation gate matching `@yours/guard` policy decisions
+ * (`require_approval`, Lethal Trifecta breaker, and origin confirmations).
+ */
+export function PermissionApprovalCard({
+  title,
+  description,
+  ruleBadge,
+  approveLabel = 'Allow once',
+  denyLabel = 'Decline',
+  onApprove,
+  onDeny,
+}: PermissionApprovalCardProps) {
+  return (
+    <div className="yui-approval-card" role="alert">
+      <div className="yui-approval-head">
+        <div className="yui-icon-badge">
+          <ShieldIcon size={14} />
+        </div>
+        <div className="yui-col-min">
+          <div className="yui-prompt-capsule-title">{title}</div>
+          <div className="yui-prompt-capsule-sub">{description}</div>
+          {ruleBadge ? (
+            <div className="yui-badge-row">
+              <span className="yui-badge">{ruleBadge}</span>
+            </div>
+          ) : null}
+        </div>
+      </div>
+      <div className="yui-btn-row">
+        <button type="button" className="yui-pill-btn yui-pill-btn--ghost" onClick={onDeny}>
+          {denyLabel}
+        </button>
+        <button type="button" className="yui-pill-btn yui-pill-btn--primary" onClick={onApprove}>
+          {approveLabel}
+        </button>
+      </div>
+    </div>
+  );
+}
 
 export interface PermissionCardProps {
   title: string;
@@ -37,8 +89,6 @@ export function PermissionCard({
   disabled = false,
   className,
 }: PermissionCardProps) {
-  const cardClass = ['yui-card-shell', 'yui-perm-card', className].filter(Boolean).join(' ');
-
   const handleKeyDown = (event: KeyboardEvent<HTMLElement>) => {
     if (disabled) return;
     if (event.key === 'Escape') {
@@ -58,7 +108,7 @@ export function PermissionCard({
       role="region"
       aria-label={title}
       tabIndex={disabled ? -1 : 0}
-      className={cardClass}
+      className={cn('yui-card-shell yui-perm-card', className)}
       onKeyDown={handleKeyDown}
     >
       <div className="yui-perm-head">
@@ -98,7 +148,9 @@ export function PermissionCard({
           >
             {alwaysSiteLabel}
           </button>
-        ) : null}
+        ) : (
+          <span />
+        )}
         <div className="yui-action-group">
           <button
             type="button"

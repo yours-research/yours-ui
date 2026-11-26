@@ -165,8 +165,8 @@ All public subpaths (`@yours/ui`, `@yours/ui/icons`, `@yours/ui/layout`, `@yours
 
 | Entrypoint | Raw | Gzip | Budget Guard |
 | :--- | :---: | :---: | :---: |
-| Total `dist/` JS (`89` ESM modules) | `192.71 KB` | `77.98 KB` | `<= 80.00 KB` |
-| `@yours/ui/styles` (`tokens.css` + `components.css` + `index.css`) | `116.89 KB` | `17.98 KB` | `<= 19.00 KB` |
+| Total `dist/` JS (`79` ESM modules) | `185.93 KB` | `75.05 KB` | `<= 80.00 KB` |
+| `@yours/ui/styles` (`tokens.css` + `components.css` + `index.css`) | `116.89 KB` | `18.00 KB` | `<= 19.00 KB` |
 
 Run `npm run build && npm run check:size` to inspect live raw and gzipped sizes per entrypoint.
 
