@@ -33,12 +33,12 @@ export function TabContextList({
   emptyLabel = 'No tabs or snippets attached.',
   className,
 }: TabContextListProps) {
-  const listClass = ['yui-tabctx-list', className].filter(Boolean).join(' ');
+  const listClass = ['yui-tabctx-list yui-div-list', className].filter(Boolean).join(' ');
 
   if (items.length === 0) {
     return (
       <div data-slot="tab-context-list" className={listClass} role="status">
-        <div className="yui-tabctx-empty">{emptyLabel}</div>
+        <div className="yui-empty-box yui-tabctx-empty">{emptyLabel}</div>
       </div>
     );
   }
@@ -52,17 +52,17 @@ export function TabContextList({
           .join(' ');
 
         const body = (
-          <span className="yui-tabctx-left">
-            <span className="yui-tabctx-icon" aria-hidden="true">
+          <span className="yui-row yui-w-full">
+            <span className="yui-sq-22" aria-hidden="true">
               {isSnippet ? <PageIcon size={13} /> : <GlobeIcon size={13} />}
             </span>
             <span className="yui-col-min">
-              <span className="yui-tabctx-domain-row">
-                <span className="yui-tabctx-domain">{item.domain}</span>
-                {isSnippet ? <span className="yui-tabctx-kind">Snippet</span> : null}
+              <span className="yui-row yui-w-full yui-gap-4 yui-tabctx-domain-row">
+                <span className="yui-ellipsis yui-tabctx-domain">{item.domain}</span>
+                {isSnippet ? <span className="yui-perm-rule yui-tabctx-kind">Snippet</span> : null}
                 <span className="yui-tabctx-tok">{item.tokenLabel}</span>
               </span>
-              <span className="yui-tabctx-title">{item.title}</span>
+              <span className="yui-ellipsis yui-tabctx-title">{item.title}</span>
             </span>
           </span>
         );
@@ -86,11 +86,11 @@ export function TabContextList({
               <div className="yui-tabctx-main">{body}</div>
             )}
 
-            <div className="yui-tabctx-right">
+            <div className="yui-action-group">
               {onToggleMute ? (
                 <button
                   type="button"
-                  className={item.muted ? 'yui-tabctx-mute-btn is-muted' : 'yui-tabctx-mute-btn'}
+                  className={item.muted ? 'yui-micro-pill yui-tabctx-mute-btn is-muted' : 'yui-micro-pill yui-tabctx-mute-btn'}
                   aria-pressed={Boolean(item.muted)}
                   aria-label={item.muted ? `Unmute ${item.domain}` : `Mute ${item.domain}`}
                   onClick={() => onToggleMute(item.id)}

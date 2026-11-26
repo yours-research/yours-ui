@@ -40,7 +40,7 @@ export function HardwareStatusStrip({
         <StatusBadge tone={HARDWARE_TONE[status]} dot pulse={status === 'probing'}>
           {tierLabel}
         </StatusBadge>
-        {adapterLabel ? <span className="yui-hw-adapter">{adapterLabel}</span> : null}
+        {adapterLabel ? <span className="yui-ellipsis yui-hw-adapter">{adapterLabel}</span> : null}
       </div>
       <div className="yui-hw-right">
         {memoryLabel ? <span className="yui-hw-metric">{memoryLabel}</span> : null}
@@ -116,7 +116,7 @@ export function ModelDownloadProgressBar({
     >
       <div className="yui-dl-top">
         <div className="yui-dl-title-wrap">
-          <span className="yui-dl-title">{modelLabel}</span>
+          <span className="yui-ellipsis yui-dl-title">{modelLabel}</span>
           {hardwareLabel ? <StatusBadge tone="neutral">{hardwareLabel}</StatusBadge> : null}
         </div>
         <div className="yui-action-group">

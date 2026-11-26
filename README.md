@@ -165,8 +165,8 @@ All public subpaths (`@yours/ui`, `@yours/ui/icons`, `@yours/ui/layout`, `@yours
 
 | Entrypoint | Raw | Gzip | Budget Guard |
 | :--- | :---: | :---: | :---: |
-| Total `dist/` JS (`85` ESM modules) | `225.40 KB` | `78.43 KB` | `<= 80.00 KB` |
-| `@yours/ui/styles` (`tokens.css` + `components.css` + `index.css`) | `137.96 KB` | `18.93 KB` | `<= 19.00 KB` |
+| Total `dist/` JS (`87` ESM modules) | `186.96 KB` | `75.35 KB` | `<= 80.00 KB` |
+| `@yours/ui/styles` (`tokens.css` + `components.css` + `index.css`) | `115.75 KB` | `17.79 KB` | `<= 19.00 KB` |
 
 Run `npm run build && npm run check:size` to inspect live raw and gzipped sizes per entrypoint.
 
@@ -187,7 +187,7 @@ Run `npm run build && npm run check:size` to inspect live raw and gzipped sizes 
 
 - **Shell, Overlay & Navigation:** `CommandPalette`, `ContextCommandPopover`, `FindInThreadBar`, `FloatingComposer`, `FloatingContextSheet`, `EmptyPanelState`, `EmptyState`, `KbdHint`, `OnboardingCard`, `PromptCapsuleStack`, `PromptTemplateList`, `QuotedContextBanner`, `ScrollToBottomButton`, `SegmentedControl`, `ShortcutSheet`, `StatusBadge`, `StatusToast`, `SuggestionChipRow`, `ThreadHistoryDrawer`, `ThreadHistoryList`, `ToastPill`.
 - **Conversation, Citations & Diffs:** `ActionBar`, `AssistantMessage`, `AttachmentDropzone`, `AttachmentStrip`, `AudioLevelMeter`, `BranchPicker`, `CitationFootnoteList`, `CodeBlock`, `CodeBlockCard`, `DiffCard`, `FollowUpSuggestions`, `InlineCitationPill`, `InlineCitationPopover`, `InlineNotice`, `MessageSkeleton`, `SourcesDrawer`, `StreamingResponse`, `UserMessageBubble`, `VoiceDictationPill`, `VoiceSessionBar`, `VoiceSessionCard`.
-- **Reasoning, Tools, Context & Guard:** `AgentHandoffCard`, `ContextBudgetMeter`, `PermissionApprovalCard`, `PermissionCard`, `ReasoningTrace`, `SitePermissionsList`, `TabContextList`, `ToolStepCard`, `ToolTraceList`.
+- **Reasoning, Tools, Context & Guard:** `AgentHandoffCard`, `ConfirmActionCard`, `ContextBudgetMeter`, `PermissionApprovalCard`, `PermissionCard`, `ReasoningTrace`, `SitePermissionsList`, `TabContextList`, `ToolStepCard`, `ToolTraceList`.
 - **Local Runtime, Models, Memory, Data & Settings:** `ArtifactPreviewCard`, `DataTableCard`, `ErrorRecoveryBanner`, `ErrorRecoveryCard`, `ExportSessionCard`, `HardwareStatusStrip`, `LocalVaultExportCard`, `MemoryInspectorList`, `MemoryRecordCard`, `ModelDownloadGate`, `ModelDownloadProgressBar`, `ModelParametersCard`, `ModelRosterList`, `NetworkAuditCard`, `SettingsSection`, `SettingsToggleRow`, `StorageQuotaCard`.
 
 ---

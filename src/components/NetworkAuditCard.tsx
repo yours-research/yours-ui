@@ -1,4 +1,5 @@
 import { ArrowDownIcon, ShieldIcon, TrashIcon } from '../icons/ApertureIcon.js';
+import { CardFooterChrome, CardHeaderChrome } from './CardChrome.js';
 import { StatusBadge } from './StatusBadge.js';
 
 export type NetworkAuditDecision = 'blocked' | 'allowed-once' | 'local';
@@ -64,29 +65,27 @@ export function NetworkAuditCard({
   exportJsonLabel = 'Export JSON',
   className,
 }: NetworkAuditCardProps) {
-  const cardClass = ['yui-audit-card', className].filter(Boolean).join(' ');
+  const cardClass = ['yui-card-shell', 'yui-audit-card', className].filter(Boolean).join(' ');
 
   return (
     <section data-slot="network-audit-card" className={cardClass} aria-label={title}>
-      <header className="yui-params-head">
-        <div className="yui-col-min">
-          <div className="yui-setting-title-row">
-            <ShieldIcon size={13} className="yui-privacy-icon" />
-            <h3 className="yui-genui-title">{title}</h3>
-          </div>
-          {subtitle ? <p className="yui-genui-muted">{subtitle}</p> : null}
-        </div>
-        {badge ? (
-          <StatusBadge tone="local" dot>
-            {badge}
-          </StatusBadge>
-        ) : null}
-      </header>
+      <CardHeaderChrome
+        icon={<ShieldIcon size={13} className="yui-privacy-icon" />}
+        title={title}
+        subtitle={subtitle}
+        right={
+          badge ? (
+            <StatusBadge tone="local" dot>
+              {badge}
+            </StatusBadge>
+          ) : null
+        }
+      />
 
       {metrics.length > 0 ? (
         <div className="yui-audit-metrics" role="list" aria-label="Isolation summary">
           {metrics.map((metric) => (
-            <div key={metric.id} className="yui-audit-metric-tile" role="listitem">
+            <div key={metric.id} className="yui-col yui-well yui-audit-metric-tile" role="listitem">
               <span className="yui-audit-metric-label">{metric.label}</span>
               <strong className="yui-audit-metric-val">{metric.value}</strong>
             </div>
@@ -95,25 +94,25 @@ export function NetworkAuditCard({
       ) : null}
 
       {events.length === 0 ? (
-        <div className="yui-audit-empty" role="status">
+        <div className="yui-empty-box yui-audit-empty" role="status">
           {emptyLabel}
         </div>
       ) : (
-        <ul className="yui-storage-list yui-audit-list" role="list">
+        <ul className="yui-list-plain yui-well yui-storage-list yui-div-list" role="list">
           {events.map((ev) => (
             <li
               key={ev.id}
-              className="yui-audit-row"
+              className="yui-col yui-audit-row"
               data-audit-id={ev.id}
               data-decision={ev.decision}
             >
-              <div className="yui-audit-row-top">
+              <div className="yui-row-between">
                 <span className="yui-audit-target">{ev.target}</span>
-                <span className={`yui-audit-pill is-${ev.decision}`}>
+                <span className={`yui-badge yui-audit-pill is-${ev.decision}`}>
                   {ev.decisionLabel ?? DECISION_LABELS[ev.decision]}
                 </span>
               </div>
-              <div className="yui-audit-row-sub">
+              <div className="yui-row-between">
                 <span className="yui-audit-detail">{ev.detail ?? ''}</span>
                 <span className="yui-audit-time">{ev.timestamp}</span>
               </div>
@@ -122,13 +121,9 @@ export function NetworkAuditCard({
         </ul>
       )}
 
-      <footer className="yui-storage-foot">
-        <span className="yui-storage-privacy">
-          <ShieldIcon size={11} className="yui-privacy-icon" />
-          <span>{privacyNote}</span>
-        </span>
+      <CardFooterChrome privacyNote={privacyNote}>
         {onClearLog || onExportJson ? (
-          <div className="yui-storage-row-actions">
+          <div className="yui-action-group">
             {onClearLog ? (
               <button
                 type="button"
@@ -151,7 +146,7 @@ export function NetworkAuditCard({
             ) : null}
           </div>
         ) : null}
-      </footer>
+      </CardFooterChrome>
     </section>
   );
 }

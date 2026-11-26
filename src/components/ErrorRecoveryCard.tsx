@@ -58,7 +58,7 @@ export function ErrorRecoveryCard({
     onCopyDiagnostics?.(diagnostics);
   };
 
-  const rootClass = ['yui-recovery-card', className].filter(Boolean).join(' ');
+  const rootClass = ['yui-card-shell', 'yui-recovery-card', className].filter(Boolean).join(' ');
   const chevronClass = ['yui-recovery-chevron', traceOpen ? 'is-open' : '']
     .filter(Boolean)
     .join(' ');
@@ -77,8 +77,8 @@ export function ErrorRecoveryCard({
           </span>
           <div className="yui-col-min">
             {badgeLabel ? (
-              <span className="yui-recovery-badge">
-                <span className="yui-recovery-badge-dot" aria-hidden="true" />
+              <span className="yui-badge yui-recovery-badge">
+                <span className="yui-status-badge-dot" aria-hidden="true" />
                 <span>{badgeLabel}</span>
               </span>
             ) : null}
@@ -89,7 +89,7 @@ export function ErrorRecoveryCard({
       </div>
 
       {diagnostics ? (
-        <div className="yui-recovery-trace-wrap">
+        <div className="yui-well yui-storage-list">
           <button
             type="button"
             className="yui-recovery-toggle"
@@ -97,17 +97,17 @@ export function ErrorRecoveryCard({
             aria-controls={traceId}
             onClick={() => setTraceOpen((prev) => !prev)}
           >
-            <span className="yui-recovery-toggle-label">{diagnosticsLabel}</span>
+            <span className="yui-ellipsis">{diagnosticsLabel}</span>
             <ChevronDownIcon size={12} className={chevronClass} />
           </button>
 
           {traceOpen ? (
             <div id={traceId} className="yui-recovery-trace">
               <div className="yui-recovery-trace-bar">
-                <span className="yui-recovery-trace-cap">LOCAL TRACE</span>
+                <span className="yui-perm-meta-label">LOCAL TRACE</span>
                 <button
                   type="button"
-                  className="yui-recovery-copy"
+                  className="yui-micro-pill yui-recovery-copy"
                   aria-label="Copy diagnostics"
                   onClick={handleCopy}
                 >
@@ -115,7 +115,7 @@ export function ErrorRecoveryCard({
                   <span>{copied ? 'Copied' : 'Copy diagnostics'}</span>
                 </button>
               </div>
-              <pre className="yui-recovery-pre">
+              <pre className="yui-recovery-pre yui-x-scroll">
                 <code>{diagnostics}</code>
               </pre>
             </div>
@@ -124,7 +124,7 @@ export function ErrorRecoveryCard({
       ) : null}
 
       {onRetry || onSwitchModel ? (
-        <div className="yui-recovery-actions">
+        <div className="yui-actions-end">
           {onSwitchModel ? (
             <button
               type="button"

@@ -102,7 +102,7 @@ export function ToolTraceList({
       ? `${runningCount} running · ${steps.length} total`
       : `${steps.length} ${steps.length === 1 ? 'step' : 'steps'}`);
 
-  const cardClass = ['yui-trace-card', className].filter(Boolean).join(' ');
+  const cardClass = ['yui-card-shell', 'yui-trace-card', className].filter(Boolean).join(' ');
 
   const isStepOpen = (stepId: string) =>
     expandedStepId !== undefined ? expandedStepId === stepId : Boolean(uncontrolledExpanded[stepId]);
@@ -128,11 +128,11 @@ export function ToolTraceList({
         onClick={() => setLedgerCollapsed((prev) => !prev)}
       >
         <span className="yui-trace-head-left">
-          <ApertureIcon name="sliders" size={12.5} className="yui-trace-head-icon" />
+          <ApertureIcon name="sliders" size={12.5} className="yui-privacy-icon" />
           <span className="yui-trace-head-title">{title}</span>
         </span>
         <span className="yui-trace-head-right">
-          <span className="yui-trace-summary">{resolvedSummary}</span>
+          <span className="yui-audit-time">{resolvedSummary}</span>
           <ChevronDownIcon
             size={12}
             className={ledgerCollapsed ? 'yui-trace-chevron' : 'yui-trace-chevron is-open'}
@@ -147,7 +147,7 @@ export function ToolTraceList({
         inert={ledgerCollapsed ? true : undefined}
       >
         <div className="yui-disclosure-inner">
-          <ul className="yui-trace-list">
+          <ul className="yui-list-plain yui-div-list">
             {steps.map((step) => {
               const hasDetail = Boolean(step.input || step.output);
               const stepOpen = hasDetail && isStepOpen(step.id);
@@ -169,12 +169,12 @@ export function ToolTraceList({
                       aria-controls={detailId}
                       onClick={() => toggleStep(step.id)}
                     >
-                      <span className="yui-trace-left">
+                      <span className="yui-row yui-flex-1">
                         <StatusGlyph status={step.status} />
                         <ApertureIcon name={iconName} size={13} className="yui-trace-tool-icon" />
                         <span className="yui-col-min">
-                          <span className="yui-trace-tool">{step.tool}</span>
-                          {step.label ? <span className="yui-trace-label">{step.label}</span> : null}
+                          <span className="yui-ellipsis yui-trace-tool">{step.tool}</span>
+                          {step.label ? <span className="yui-ellipsis yui-trace-label">{step.label}</span> : null}
                         </span>
                       </span>
                       <span className="yui-trace-right">
@@ -189,12 +189,12 @@ export function ToolTraceList({
                     </button>
                   ) : (
                     <div className="yui-trace-static">
-                      <span className="yui-trace-left">
+                      <span className="yui-row yui-flex-1">
                         <StatusGlyph status={step.status} />
                         <ApertureIcon name={iconName} size={13} className="yui-trace-tool-icon" />
                         <span className="yui-col-min">
-                          <span className="yui-trace-tool">{step.tool}</span>
-                          {step.label ? <span className="yui-trace-label">{step.label}</span> : null}
+                          <span className="yui-ellipsis yui-trace-tool">{step.tool}</span>
+                          {step.label ? <span className="yui-ellipsis yui-trace-label">{step.label}</span> : null}
                         </span>
                       </span>
                       <span className="yui-trace-right">
@@ -216,13 +216,13 @@ export function ToolTraceList({
                         <div className="yui-trace-detail">
                           {step.input ? (
                             <div className="yui-trace-io-block">
-                              <span className="yui-trace-io-tag">Input</span>
+                              <span className="yui-perm-meta-label">Input</span>
                               <pre className="yui-trace-pre">{step.input}</pre>
                             </div>
                           ) : null}
                           {step.output ? (
                             <div className="yui-trace-io-block">
-                              <span className="yui-trace-io-tag">
+                              <span className="yui-perm-meta-label">
                                 {step.status === 'blocked' || step.status === 'error'
                                   ? 'Note'
                                   : 'Output'}

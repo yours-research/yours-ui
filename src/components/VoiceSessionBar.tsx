@@ -95,7 +95,7 @@ export function VoiceSessionBar({
             <span key={idx} className={`yui-vm-bar yui-vm-bar--${step}`} />
           ))}
         </div>
-        <span className="yui-voice-label">{resolvedLabel}</span>
+        <span className="yui-ellipsis yui-voice-label">{resolvedLabel}</span>
         {elapsedLabel ? <span className="yui-voice-time">{elapsedLabel}</span> : null}
       </div>
 

@@ -38,13 +38,13 @@ export function CodeBlockCard({
   const lines = code.split('\n');
   const langLabel = (language || 'text').trim() || 'text';
   const langAria = langLabel.toUpperCase();
-  const rootClass = ['yui-codecard', className].filter(Boolean).join(' ');
+  const rootClass = ['yui-card-shell', 'yui-codecard', className].filter(Boolean).join(' ');
 
   return (
     <div data-slot="code-block-card" className={rootClass}>
-      <div className="yui-codecard-head">
+      <div className="yui-row-between yui-codecard-head">
         <div className="yui-codecard-head-left">
-          {title ? <span className="yui-codecard-title">{title}</span> : null}
+          {title ? <span className="yui-ellipsis yui-codecard-title">{title}</span> : null}
           <span className="yui-codecard-lang">{langLabel}</span>
         </div>
         <button
@@ -66,7 +66,7 @@ export function CodeBlockCard({
           .join(' ')}
         data-scrollable-right={canScrollRight ? 'true' : 'false'}
       >
-        <div ref={scrollRef} className="yui-codecard-scroll">
+        <div ref={scrollRef} className="yui-x-scroll">
           <pre className="yui-codecard-pre">
             <code>
               {lines.map((line, idx) => (

@@ -95,8 +95,7 @@ function compactDistJs(dir) {
       if (esbuild) {
         compacted = esbuild.transformSync(src, {
           loader: 'js',
-          minifyWhitespace: true,
-          minifySyntax: true,
+          minify: true,
           legalComments: 'none',
         }).code;
       } else {

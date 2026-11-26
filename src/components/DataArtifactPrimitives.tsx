@@ -139,7 +139,7 @@ export function DataTableCard({
     onCopy?.(formatted);
   };
 
-  const cardClass = ['yui-data-card', className].filter(Boolean).join(' ');
+  const cardClass = ['yui-card-shell', 'yui-data-card', className].filter(Boolean).join(' ');
   const scrollWrapClass = [
     'yui-data-scroll-wrap',
     canScrollRight ? 'is-scrollable-right' : '',
@@ -179,7 +179,7 @@ export function DataTableCard({
         className={scrollWrapClass}
         data-scrollable-right={canScrollRight ? 'true' : 'false'}
       >
-        <div ref={scrollRef} className="yui-data-scroll">
+        <div ref={scrollRef} className="yui-x-scroll">
           <table className="yui-data-table">
             <thead>
               <tr>
@@ -354,7 +354,7 @@ export function ArtifactPreviewCard({
     onCopy?.(preview);
   };
 
-  const cardClass = ['yui-artifact-card', className].filter(Boolean).join(' ');
+  const cardClass = ['yui-card-shell', 'yui-artifact-card', className].filter(Boolean).join(' ');
   const disclosureClass = ['yui-disclosure', isExpanded ? 'is-open' : '']
     .filter(Boolean)
     .join(' ');

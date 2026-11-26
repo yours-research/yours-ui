@@ -1,4 +1,5 @@
-import { AlertIcon, GlobeIcon, ShieldIcon } from '../icons/ApertureIcon.js';
+import { AlertIcon, GlobeIcon } from '../icons/ApertureIcon.js';
+import { CardFooterChrome, CardHeaderChrome, CardMetaScope } from './CardChrome.js';
 import { StatusBadge } from './StatusBadge.js';
 
 export type AgentHandoffState = 'waiting' | 'user-active';
@@ -51,7 +52,20 @@ export function AgentHandoffCard({
       : state === 'user-active'
         ? 'Tab yours'
         : 'Human input needed';
-  const cardClass = ['yui-handoff-card', className].filter(Boolean).join(' ');
+  const cardClass = ['yui-card-shell', 'yui-handoff-card', className].filter(Boolean).join(' ');
+
+  const metaRows = [
+    {
+      label: originLabel,
+      value: (
+        <span className="yui-sperm-origin">
+          <GlobeIcon size={11} className="yui-privacy-icon" />
+          <span className="yui-sperm-host">{origin}</span>
+        </span>
+      ),
+    },
+    ...(progressLabel ? [{ label: progressTitle, value: progressLabel }] : []),
+  ];
 
   return (
     <section
@@ -60,38 +74,22 @@ export function AgentHandoffCard({
       className={cardClass}
       aria-label={title}
     >
-      <header className="yui-params-head">
-        <div className="yui-col-min">
-          <div className="yui-setting-title-row">
-            <AlertIcon size={13} className="yui-handoff-icon" />
-            <h3 className="yui-genui-title">{title}</h3>
-          </div>
-          <p className="yui-genui-muted">{reason}</p>
-        </div>
-        {badgeText ? (
-          <StatusBadge tone="amber" dot pulse={state === 'waiting'}>
-            {badgeText}
-          </StatusBadge>
-        ) : null}
-      </header>
+      <CardHeaderChrome
+        icon={<AlertIcon size={13} className="yui-handoff-icon" />}
+        title={title}
+        subtitle={reason}
+        right={
+          badgeText ? (
+            <StatusBadge tone="amber" dot pulse={state === 'waiting'}>
+              {badgeText}
+            </StatusBadge>
+          ) : null
+        }
+      />
 
-      <div className="yui-perm-scope">
-        <div className="yui-perm-meta-row">
-          <span className="yui-perm-meta-label">{originLabel}</span>
-          <span className="yui-perm-meta-val yui-sperm-origin">
-            <GlobeIcon size={11} className="yui-privacy-icon" />
-            <span className="yui-sperm-host">{origin}</span>
-          </span>
-        </div>
-        {progressLabel ? (
-          <div className="yui-perm-meta-row">
-            <span className="yui-perm-meta-label">{progressTitle}</span>
-            <span className="yui-perm-meta-val">{progressLabel}</span>
-          </div>
-        ) : null}
-      </div>
+      <CardMetaScope rows={metaRows} />
 
-      <footer className="yui-storage-foot">
+      <CardFooterChrome privacyNote={privacyNote}>
         <div className="yui-btn-row">
           {onTakeOver && state === 'waiting' ? (
             <button
@@ -116,22 +114,12 @@ export function AgentHandoffCard({
             </button>
           ) : null}
           {onCancel ? (
-            <button
-              type="button"
-              className="yui-pill-btn"
-              onClick={onCancel}
-            >
+            <button type="button" className="yui-pill-btn" onClick={onCancel}>
               {cancelLabel}
             </button>
           ) : null}
         </div>
-        {privacyNote ? (
-          <span className="yui-storage-privacy">
-            <ShieldIcon size={11} className="yui-privacy-icon" />
-            <span>{privacyNote}</span>
-          </span>
-        ) : null}
-      </footer>
+      </CardFooterChrome>
     </section>
   );
 }

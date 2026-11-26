@@ -102,7 +102,7 @@ export function VoiceSessionCard({
       interimTranscript.length > 0);
   const hasProse = transcript.trim().length > 0 || interimTranscript.trim().length > 0;
 
-  const rootClass = ['yui-voice-card', `is-${state}`, muted ? 'is-muted' : '', className]
+  const rootClass = ['yui-card-shell', 'yui-voice-card', `is-${state}`, muted ? 'is-muted' : '', className]
     .filter(Boolean)
     .join(' ');
 
@@ -116,7 +116,7 @@ export function VoiceSessionCard({
       <div className="yui-voice-card-head">
         <div className="yui-voice-card-status">
           <MatrixOrb state={muted ? 'idle' : ORB_STATE_MAP[state]} size={18} />
-          <span className="yui-voice-card-title">{resolvedStatus}</span>
+          <span className="yui-ellipsis yui-voice-card-title">{resolvedStatus}</span>
           {elapsedLabel ? <span className="yui-voice-time">{elapsedLabel}</span> : null}
         </div>
         <AudioLevelMeter
@@ -129,9 +129,9 @@ export function VoiceSessionCard({
         />
       </div>
 
-      <div className="yui-voice-transcript" aria-live="polite">
+      <div className="yui-well yui-voice-transcript" aria-live="polite">
         {hasProse ? (
-          <p className="yui-voice-prose">
+          <p className="yui-prose-12">
             {transcript ? <span className="yui-voice-committed">{transcript}</span> : null}
             {transcript && interimTranscript ? ' ' : null}
             {interimTranscript ? (
@@ -140,7 +140,7 @@ export function VoiceSessionCard({
             {showCaret ? <span className="yui-voice-caret" aria-hidden="true" /> : null}
           </p>
         ) : (
-          <p className="yui-voice-placeholder">
+          <p className="yui-prose-12 yui-voice-placeholder">
             <span>{placeholder}</span>
             {showCaret ? <span className="yui-voice-caret" aria-hidden="true" /> : null}
           </p>
@@ -149,7 +149,7 @@ export function VoiceSessionCard({
 
       <div className="yui-voice-card-controls">
         <div className="yui-voice-card-btns">
-          <div className="yui-voice-card-btns-left">
+          <div className="yui-action-group">
             {onToggleBargeIn ? (
               <button
                 type="button"
@@ -161,7 +161,7 @@ export function VoiceSessionCard({
               </button>
             ) : null}
           </div>
-          <div className="yui-voice-card-btns-right">
+          <div className="yui-action-group">
             {onToggleMute ? (
               <button
                 type="button"
@@ -187,7 +187,7 @@ export function VoiceSessionCard({
           </div>
         </div>
 
-        <div className="yui-voice-ptt-row">
+        <div className="yui-center-row">
           {onPushToTalk ? (
             <button
               type="button"
@@ -209,8 +209,8 @@ export function VoiceSessionCard({
         </div>
       </div>
 
-      <div className="yui-voice-privacy">
-        <ShieldIcon size={11.5} className="yui-voice-privacy-icon" />
+      <div className="yui-storage-privacy yui-privacy-foot yui-voice-privacy">
+        <ShieldIcon size={11.5} className="yui-privacy-icon" />
         <span>{privacyNote}</span>
       </div>
     </section>

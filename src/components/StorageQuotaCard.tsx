@@ -60,11 +60,11 @@ export function StorageQuotaCard({
     return segment;
   });
 
-  const rootClass = ['yui-storage-card', className].filter(Boolean).join(' ');
+  const rootClass = ['yui-card-shell', 'yui-storage-card', className].filter(Boolean).join(' ');
 
   return (
     <section data-slot="storage-quota-card" className={rootClass} aria-label={title}>
-      <header className="yui-storage-head">
+      <header className="yui-params-head">
         <div className="yui-col-min">
           <h3 className="yui-genui-title">{title}</h3>
           {subtitle ? <p className="yui-genui-muted">{subtitle}</p> : null}
@@ -102,7 +102,7 @@ export function StorageQuotaCard({
       </div>
 
       {entries.length > 0 ? (
-        <ul className="yui-storage-list" role="list">
+        <ul className="yui-list-plain yui-well yui-storage-list yui-div-list" role="list">
           {entries.map((entry) => {
             const tone = entry.tone ?? 'other';
             const status = entry.status ?? 'idle';
@@ -114,7 +114,7 @@ export function StorageQuotaCard({
             return (
               <li
                 key={entry.id}
-                className="yui-storage-row"
+                className="yui-col-5 yui-storage-row"
                 data-storage-id={entry.id}
                 data-status={status}
               >
@@ -124,14 +124,14 @@ export function StorageQuotaCard({
                       className={`yui-storage-dot yui-storage-dot--${tone}`}
                       aria-hidden="true"
                     />
-                    <span className="yui-storage-row-title-wrap">
+                    <span className="yui-row yui-wrap yui-flex-1 yui-storage-row-title-wrap">
                       <span className="yui-storage-row-label">{entry.label}</span>
                       {badgeText ? (
                         <span
                           className={
                             status === 'verified'
-                              ? 'yui-storage-status is-verified'
-                              : 'yui-storage-status'
+                              ? 'yui-badge yui-storage-status is-verified'
+                              : 'yui-badge yui-storage-status'
                           }
                         >
                           {status === 'verified' ? <CheckIcon size={10} /> : null}
@@ -144,14 +144,14 @@ export function StorageQuotaCard({
                 </div>
 
                 {entry.detail || entry.onVerify || entry.onClear ? (
-                  <div className="yui-storage-row-sub">
+                  <div className="yui-row yui-storage-row-sub">
                     {entry.detail ? (
                       <span className="yui-storage-row-detail">{entry.detail}</span>
                     ) : (
                       <span />
                     )}
                     {entry.onVerify || entry.onClear ? (
-                      <div className="yui-storage-row-actions">
+                      <div className="yui-action-group">
                         {entry.onVerify ? (
                           <button
                             type="button"

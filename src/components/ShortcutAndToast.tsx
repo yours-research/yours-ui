@@ -76,7 +76,7 @@ export function ShortcutSheet({
         ? [{ items }]
         : [];
 
-  const cardClass = ['yui-shortcut-sheet', className].filter(Boolean).join(' ');
+  const cardClass = ['yui-card-shell', 'yui-shortcut-sheet', className].filter(Boolean).join(' ');
 
   return (
     <section
@@ -88,7 +88,7 @@ export function ShortcutSheet({
       aria-label={title}
     >
       {title || subtitle || badge || onClose ? (
-        <header className="yui-shortcut-head">
+        <header className="yui-params-head yui-shortcut-head">
           <div className="yui-col-min">
             <div className="yui-setting-title-row">
               {title ? <h3 className="yui-genui-title">{title}</h3> : null}
@@ -113,13 +113,13 @@ export function ShortcutSheet({
         {resolvedGroups.map((group, gIdx) => (
           <div key={group.id ?? group.title ?? gIdx} className="yui-shortcut-group">
             {group.title ? <div className="yui-shortcut-group-title">{group.title}</div> : null}
-            <div className="yui-shortcut-list">
+            <div className="yui-div-list">
               {group.items.map((item, idx) => (
-                <div key={item.id ?? `${item.label}-${idx}`} className="yui-shortcut-row">
+                <div key={item.id ?? `${item.label}-${idx}`} className="yui-row-between yui-shortcut-row">
                   <div className="yui-shortcut-copy">
                     <span className="yui-shortcut-label">{item.label}</span>
                     {item.description ? (
-                      <span className="yui-shortcut-desc">{item.description}</span>
+                      <span className="yui-muted-note">{item.description}</span>
                     ) : null}
                   </div>
                   <KbdHint keys={item.keys} />

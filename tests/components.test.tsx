@@ -13,6 +13,7 @@ import {
   CodeBlock,
   CodeBlockCard,
   CommandPalette,
+  ConfirmActionCard,
   ContextBudgetMeter,
   ContextCommandPopover,
   DataTableCard,
@@ -2928,6 +2929,173 @@ describe('@yours/ui chat & runtime primitives', () => {
     expect(cssSource).toContain('.yui-handoff-card');
     expect(cssSource.slice(cssSource.indexOf('@media (forced-colors: active)'))).toContain(
       '.yui-handoff-card',
+    );
+  });
+
+  it('supports optional inline Revoke all confirmation on SitePermissionsList with Cancel focus and Escape dismissal', () => {
+    const onRevokeAll = vi.fn();
+    const el = renderNode(
+      <SitePermissionsList
+        confirmRevokeAll
+        items={[
+          { id: 's1', origin: 'docs.yours.sh', scope: 'Read active tab', mode: 'once' },
+        ]}
+        onRevokeAll={onRevokeAll}
+      />,
+    );
+
+    const revokeAllBtn = Array.from(el.querySelectorAll('button')).find((b) =>
+      b.textContent?.includes('Revoke all'),
+    ) as HTMLButtonElement;
+    act(() => {
+      revokeAllBtn.click();
+    });
+
+    const confirmGroup = el.querySelector('[role="group"]') as HTMLElement;
+    expect(confirmGroup).not.toBeNull();
+    const cancelBtn = Array.from(confirmGroup.querySelectorAll('button')).find(
+      (b) => b.textContent?.trim() === 'Cancel',
+    ) as HTMLButtonElement;
+    expect(document.activeElement).toBe(cancelBtn);
+    expect(onRevokeAll).toHaveBeenCalledTimes(0);
+
+    act(() => {
+      confirmGroup.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
+    });
+    expect(el.querySelector('[role="group"]')).toBeNull();
+    const restoredBtn = Array.from(el.querySelectorAll('button')).find((b) =>
+      b.textContent?.includes('Revoke all'),
+    ) as HTMLButtonElement;
+    expect(document.activeElement).toBe(restoredBtn);
+
+    act(() => {
+      restoredBtn.click();
+    });
+    const confirmRevokeBtn = Array.from(
+      el.querySelectorAll('[role="group"] button'),
+    ).find((b) => b.textContent?.includes('Confirm revoke')) as HTMLButtonElement;
+    act(() => {
+      confirmRevokeBtn.click();
+    });
+    expect(onRevokeAll).toHaveBeenCalledTimes(1);
+  });
+
+  it('renders ConfirmActionCard with summary rows, Cancel focus, Esc dismissal, confirmPhrase gating, hold-to-confirm, reduced-motion fallback, and zero inline styles', async () => {
+    const onConfirm = vi.fn();
+    const onCancel = vi.fn();
+    const el = renderNode(
+      <ConfirmActionCard
+        title="Purge OPFS workspace cache"
+        description="Removes locally cached weights and vector indexes on this device."
+        rows={[
+          { label: 'Scope', value: 'OPFS · 2.4 GB' },
+          { label: 'Entries', value: '142 chunks' },
+        ]}
+        confirmPhrase="PURGE"
+        onConfirm={onConfirm}
+        onCancel={onCancel}
+      />,
+    );
+
+    const card = el.querySelector('[data-slot="confirm-action-card"]') as HTMLElement;
+    expect(card).not.toBeNull();
+    expect(card.getAttribute('data-tone')).toBe('danger');
+    expect(el.textContent).toContain('OPFS · 2.4 GB');
+    expect(el.textContent).toContain('142 chunks');
+    expect(el.querySelectorAll('[style]').length).toBe(0);
+
+    const buttons = Array.from(card.querySelectorAll('button'));
+    const cancelBtn = buttons.find((b) => b.textContent?.trim() === 'Cancel') as HTMLButtonElement;
+    const confirmBtn = buttons.find((b) => b.textContent?.trim() === 'Confirm') as HTMLButtonElement;
+    expect(document.activeElement).toBe(cancelBtn);
+    expect(confirmBtn.disabled).toBe(true);
+
+    const input = card.querySelector('input') as HTMLInputElement;
+    const nativeSetter = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value')?.set;
+    act(() => {
+      nativeSetter?.call(input, 'PURGE');
+      input.dispatchEvent(new Event('input', { bubbles: true }));
+    });
+    expect(confirmBtn.disabled).toBe(false);
+
+    act(() => {
+      confirmBtn.click();
+    });
+    expect(onConfirm).toHaveBeenCalledTimes(1);
+
+    act(() => {
+      card.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
+    });
+    expect(onCancel).toHaveBeenCalledTimes(1);
+
+    const origMatchMedia = window.matchMedia;
+    Object.defineProperty(window, 'matchMedia', {
+      configurable: true,
+      writable: true,
+      value: (query: string) => ({
+        matches: query === '(prefers-reduced-motion: reduce)',
+        media: query,
+        addEventListener: () => {},
+        removeEventListener: () => {},
+        addListener: () => {},
+        removeListener: () => {},
+        onchange: null,
+        dispatchEvent: () => false,
+      }),
+    });
+    vi.useFakeTimers();
+    try {
+      const onHoldConfirm = vi.fn();
+      const holdEl = renderNode(
+        <ConfirmActionCard
+          title="Revoke site cookies"
+          description="Hold to confirm clearing stored auth cookies."
+          tone="amber"
+          holdDurationMs={400}
+          confirmLabel="Clear cookies"
+          onConfirm={onHoldConfirm}
+        />,
+      );
+      const holdCard = holdEl.querySelector('[data-slot="confirm-action-card"]') as HTMLElement;
+      expect(holdCard.getAttribute('data-tone')).toBe('amber');
+      const holdBtn = Array.from(holdCard.querySelectorAll('button')).find((b) =>
+        b.textContent?.includes('Hold to clear cookies'),
+      ) as HTMLButtonElement;
+
+      act(() => {
+        holdBtn.dispatchEvent(new KeyboardEvent('keydown', { key: ' ', bubbles: true }));
+      });
+      expect(holdCard.getAttribute('data-holding')).toBe('true');
+      act(() => {
+        vi.advanceTimersByTime(200);
+      });
+      const statusEl = holdCard.querySelector('[role="status"]');
+      expect(statusEl?.textContent).toContain('Holding ·');
+      expect(onHoldConfirm).toHaveBeenCalledTimes(0);
+
+      act(() => {
+        holdBtn.dispatchEvent(new KeyboardEvent('keyup', { key: ' ', bubbles: true }));
+      });
+      expect(holdCard.getAttribute('data-holding')).toBe('false');
+
+      act(() => {
+        holdBtn.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }));
+      });
+      act(() => {
+        vi.advanceTimersByTime(520);
+      });
+      expect(onHoldConfirm).toHaveBeenCalledTimes(1);
+    } finally {
+      vi.useRealTimers();
+      window.matchMedia = origMatchMedia;
+    }
+
+    const cssSource = await readSourceFile('../src/styles/components.css');
+    expect(cssSource).toContain('.yui-confirm-card');
+    expect(cssSource).toContain('.yui-pill-btn--danger');
+    expect(cssSource).toContain('.yui-sperm-top');
+    expect(cssSource.slice(cssSource.indexOf('@media (forced-colors: active)'))).toContain(
+      '.yui-confirm-card',
     );
   });
 });

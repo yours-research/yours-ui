@@ -280,3 +280,9 @@ export {
   type AgentHandoffCardProps,
   type AgentHandoffState,
 } from './AgentHandoffCard.js';
+export {
+  ConfirmActionCard,
+  type ConfirmActionCardProps,
+  type ConfirmActionSummaryRow,
+  type ConfirmActionTone,
+} from './ConfirmActionCard.js';

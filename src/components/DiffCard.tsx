@@ -70,7 +70,7 @@ export function DiffCard({
     onCopyPatched?.(computedStats.patchedOutput);
   };
 
-  const cardClass = ['yui-diff-card', className].filter(Boolean).join(' ');
+  const cardClass = ['yui-card-shell', 'yui-diff-card', className].filter(Boolean).join(' ');
   const scrollWrapClass = [
     'yui-data-scroll-wrap',
     canScrollRight ? 'is-scrollable-right' : '',

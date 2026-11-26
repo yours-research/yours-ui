@@ -742,7 +742,7 @@ function StreamingCodeBlock({ lang, code, animate, caret }: StreamingCodeBlockPr
         className={cx('yui-data-scroll-wrap', canScrollRight && 'has-right-fade')}
         data-scrollable-right={canScrollRight ? 'true' : 'false'}
       >
-        <div ref={scrollRef} className="yui-sr-code-scroll">
+        <div ref={scrollRef} className="yui-x-scroll">
           <pre className="yui-sr-code-pre">
             <code>
               {lines.map((line, idx) => (
@@ -826,7 +826,7 @@ function StreamingTable({
         className={cx('yui-data-scroll-wrap', canScrollRight && 'has-right-fade')}
         data-scrollable-right={canScrollRight ? 'true' : 'false'}
       >
-        <div ref={scrollRef} className="yui-sr-table-scroll">
+        <div ref={scrollRef} className="yui-x-scroll">
           <table className="yui-sr-table">
             <thead>
               <tr>
