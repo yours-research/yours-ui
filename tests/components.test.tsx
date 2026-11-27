@@ -4,11 +4,14 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import {
   ActionBar,
   AgentHandoffCard,
+  AgentStepRow,
+  AgentStepsCard,
   ArtifactPreviewCard,
   AttachmentDropzone,
   AttachmentStrip,
   AudioLevelMeter,
   BranchPicker,
+  CitationChip,
   CitationFootnoteList,
   CodeBlock,
   CodeBlockCard,
@@ -38,6 +41,8 @@ import {
   MemoryInspectorList,
   MemoryRecordCard,
   MessageSkeleton,
+  MessageSources,
+  MessageSourcesPill,
   ModelDownloadGate,
   ModelDownloadProgressBar,
   ModelParametersCard,
@@ -60,10 +65,14 @@ import {
   ShimmerText,
   ShortcutSheet,
   SitePermissionsList,
+  SourceFavicon,
+  SourcePreviewPopover,
   SourcesDrawer,
   type SitePermissionItem,
   StatusBadge,
   StatusToast,
+  StepTree,
+  StepTreeItem,
   StorageQuotaCard,
   StreamingResponse,
   SuggestionChipRow,
@@ -3735,6 +3744,126 @@ describe('@yours/ui chat & runtime primitives', () => {
     expect(hwStrip.textContent).toContain('INT4 KV');
     expect(hwStrip.textContent).toContain('SHA-256');
     expect(hwStrip.querySelector('.yui-telem-chip.is-spec')?.textContent).toBe('1.58x');
+    expect(el.querySelectorAll('[style]').length).toBe(0);
+  });
+
+  it('supports MessageSourcesPill < 1 / N > cycling, CitationChip, ActionBar leftSlot, and AgentStepsCard auto-collapse on hasFinal', () => {
+    const sources = [
+      {
+        id: 's1',
+        title: 'Chromium MV3 Side Panel Docs',
+        url: 'https://developer.chrome.com/docs/extensions/reference/api/sidePanel',
+        domain: 'developer.chrome.com',
+        faviconUrl: 'https://developer.chrome.com/favicon.ico',
+        snippet: 'Side panels run beside the page under strict CSP.',
+      },
+      {
+        id: 's2',
+        title: 'WebGPU Adapter Spec',
+        url: 'https://www.w3.org/TR/webgpu/',
+        domain: 'w3.org',
+        snippet: 'Inspect GPUAdapter limits before weight load.',
+      },
+    ];
+    const onSelectSource = vi.fn();
+
+    function Harness({ hasFinal }: { hasFinal: boolean }) {
+      return (
+        <div>
+          <AgentStepsCard
+            hasFinal={hasFinal}
+            active={!hasFinal}
+            activityLabel="Searching the web"
+            durationText="4.9s"
+          >
+            <StepTree>
+              <AgentStepRow
+                icon="searching"
+                title="Searched web"
+                detail="developer.chrome.com"
+                status={hasFinal ? 'success' : 'running'}
+                input='{"q":"mv3"}'
+                output='{"hits":2}'
+              />
+              <AgentStepRow icon="reading" title="Read specification" status="success" />
+            </StepTree>
+          </AgentStepsCard>
+          <p>
+            Inline claim <CitationChip source={sources[0]} index={0} onSelectSource={onSelectSource} />
+          </p>
+          <ActionBar
+            onCopy={() => {}}
+            leftSlot={
+              <MessageSourcesPill sources={sources} onSelectSource={onSelectSource} />
+            }
+            speedMetrics={{ tokensPerSec: 94.2, speedupMultiplier: 1.58 }}
+          />
+        </div>
+      );
+    }
+
+    expect(MessageSources).toBe(MessageSourcesPill);
+    expect(SourceFavicon).toBeTypeOf('function');
+    expect(SourcePreviewPopover).toBeTypeOf('function');
+    expect(StepTreeItem).toBeTypeOf('function');
+
+    const el = renderNode(<Harness hasFinal={false} />);
+    const stepsCard = el.querySelector('[data-slot="agent-steps-card"]') as HTMLElement;
+    expect(stepsCard.getAttribute('data-expanded')).toBe('true');
+    expect(el.querySelectorAll('[data-slot="step-tree-item"]').length).toBe(2);
+
+    // Step row expands I/O payload on click
+    const stepTrigger = el.querySelector('.yui-step-trigger') as HTMLButtonElement;
+    act(() => {
+      stepTrigger.click();
+    });
+    expect(stepTrigger.getAttribute('aria-expanded')).toBe('true');
+    expect(el.textContent).toContain('"hits":2');
+
+    // hasFinal -> true auto-collapses AgentStepsCard cleanly to "Worked for 4.9s"
+    rerenderNode(<Harness hasFinal={true} />);
+    expect(stepsCard.getAttribute('data-expanded')).toBe('false');
+    expect(stepsCard.textContent).toContain('Worked for 4.9s');
+
+    // CitationChip renders "1" and opens compact popover
+    const citeBtn = el.querySelector('[data-slot="inline-citation-chip"] button') as HTMLButtonElement;
+    expect(citeBtn.textContent).toBe('1');
+    act(() => {
+      citeBtn.click();
+    });
+    expect(citeBtn.getAttribute('aria-expanded')).toBe('true');
+    expect(el.textContent).toContain('Side panels run beside the page');
+    expect(el.textContent).not.toContain('Show on page');
+
+    // ActionBar leftSlot + MessageSourcesPill < 1 / 2 > navigation
+    const srcPill = el.querySelector('[data-slot="message-sources"] [data-slot="sources"]') as HTMLButtonElement;
+    expect(srcPill.textContent).toContain('2 sources');
+    expect(el.querySelector('[data-slot="action-bar-left"]') ?? srcPill.closest('.yui-row')).toBeTruthy();
+    act(() => {
+      srcPill.click();
+    });
+    const dialog = el.querySelector('[data-slot="message-sources"] [role="dialog"]') as HTMLElement;
+    expect(dialog.textContent).toContain('1 / 2');
+    expect(dialog.textContent).toContain('Chromium MV3 Side Panel Docs');
+
+    const nextBtn = dialog.querySelector('[aria-label="Next source"]') as HTMLButtonElement;
+    act(() => {
+      nextBtn.click();
+    });
+    expect(dialog.textContent).toContain('2 / 2');
+    expect(dialog.textContent).toContain('WebGPU Adapter Spec');
+
+    // ArrowLeft cycles back to 1 / 2 and link click invokes onSelectSource
+    act(() => {
+      dialog.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowLeft', bubbles: true }));
+    });
+    expect(dialog.textContent).toContain('1 / 2');
+    const titleLink = dialog.querySelector('a.yui-src-title') as HTMLAnchorElement;
+    expect(titleLink.getAttribute('rel')).toBe('noopener noreferrer');
+    act(() => {
+      titleLink.click();
+    });
+    expect(onSelectSource).toHaveBeenCalledTimes(1);
     expect(el.querySelectorAll('[style]').length).toBe(0);
   });
 });

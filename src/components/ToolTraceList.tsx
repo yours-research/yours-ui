@@ -1,9 +1,18 @@
-import { useEffect, useId, useRef, useState, type ReactNode } from 'react';
-import { ChevronDownIcon } from '../icons/ApertureIcon.js';
+import {
+  Children,
+  Fragment,
+  isValidElement,
+  useEffect,
+  useId,
+  useRef,
+  useState,
+  type ReactNode,
+} from 'react';
+import { ApertureIcon, ChevronDownIcon, ChevronRightIcon } from '../icons/ApertureIcon.js';
 import type { ApertureIconName } from '../icons/iconData.js';
 import { ToolStatusIcon, type ToolStatusKind } from '../icons/ToolStatusIcons.js';
 import { cn } from '../utils/clipboard.js';
-import { InlineToolStatus } from './InlineToolStatus.js';
+import { InlineToolStatus, ToolFavicon } from './InlineToolStatus.js';
 
 export type ToolTraceStatus = 'running' | 'done' | 'blocked' | 'error';
 
@@ -341,3 +350,374 @@ export function ToolTraceList({
 }
 
 export const ToolChain = ToolTraceList;
+
+const TOOL_STATUS_KINDS = new Set<string>([
+  'thinking',
+  'reading',
+  'searching',
+  'researching',
+  'tabs',
+  'analyzing',
+  'calculating',
+  'writing',
+  'memory',
+  'done',
+  'blocked',
+  'error',
+]);
+
+export interface StepTreeItemProps {
+  children: ReactNode;
+  branch?: boolean;
+  continuesBelow?: boolean;
+  branchesReachParentIcon?: boolean;
+  className?: string;
+}
+
+/** Single row within `StepTree` rendering a `1px` vertical stem & horizontal elbow connector. */
+export function StepTreeItem({
+  children,
+  branch = true,
+  continuesBelow = false,
+  branchesReachParentIcon = false,
+  className,
+}: StepTreeItemProps) {
+  return (
+    <div
+      data-slot="step-tree-item"
+      data-branch={branch ? 'true' : 'false'}
+      data-continues={continuesBelow ? 'true' : undefined}
+      className={cn('yui-st-item', branch && 'is-branch', continuesBelow && 'is-cont', className)}
+    >
+      <div className={cn('yui-st-rail', branchesReachParentIcon && 'is-wide')} aria-hidden="true">
+        <div className="yui-st-stem" />
+        {branch ? <div className="yui-st-elbow" /> : null}
+      </div>
+      <div data-step-tree-content="" className={cn('yui-st-content yui-flex-1', branch && 'is-branch')}>
+        {children}
+      </div>
+    </div>
+  );
+}
+
+export interface StepTreeProps {
+  children: ReactNode;
+  branchesReachParentIcon?: boolean;
+  className?: string;
+}
+
+function flattenFragments(children: ReactNode): ReactNode[] {
+  return Children.toArray(children).flatMap((child) =>
+    isValidElement<{ children?: ReactNode }>(child) && child.type === Fragment
+      ? flattenFragments(child.props.children)
+      : [child],
+  );
+}
+
+/** Hierarchical work step tree assigning `StepTreeItem` hairline connectors to each child step. */
+export function StepTree({ children, branchesReachParentIcon = false, className }: StepTreeProps) {
+  const items = flattenFragments(children);
+  if (items.length === 0) return null;
+
+  return (
+    <div data-slot="step-tree" className={cn('yui-col', className)}>
+      {items.map((child, idx) => (
+        <StepTreeItem key={idx} branchesReachParentIcon={branchesReachParentIcon}>
+          {child}
+        </StepTreeItem>
+      ))}
+    </div>
+  );
+}
+
+export type AgentStepStatus = 'idle' | 'running' | 'success' | 'error' | 'blocked';
+
+export interface AgentStepRowProps {
+  icon?: ToolStatusKind | ApertureIconName;
+  iconUrl?: string;
+  title: ReactNode;
+  label?: string;
+  detail?: string;
+  body?: ReactNode;
+  status?: AgentStepStatus;
+  statusText?: string;
+  expandable?: boolean;
+  expanded?: boolean;
+  defaultExpanded?: boolean;
+  onToggle?: () => void;
+  input?: string;
+  output?: string;
+  children?: ReactNode;
+  className?: string;
+}
+
+/**
+ * Quiet work timeline step row featuring muted icon, human verb + detail, hover-revealed
+ * chevron, and expandable I/O payload or nested children.
+ */
+export function AgentStepRow({
+  icon = 'thinking',
+  iconUrl,
+  title,
+  label,
+  detail,
+  body,
+  status = 'idle',
+  statusText,
+  expandable,
+  expanded: controlledExpanded,
+  defaultExpanded = false,
+  onToggle,
+  input,
+  output,
+  children,
+  className,
+}: AgentStepRowProps) {
+  const bodyId = useId();
+  const [uncontrolledExpanded, setUncontrolledExpanded] = useState(defaultExpanded);
+  const hasPayload = Boolean(children || input || output);
+  const canExpand = Boolean((expandable ?? hasPayload) && (hasPayload || onToggle));
+  const isOpen = canExpand && (controlledExpanded ?? uncontrolledExpanded);
+
+  const toggle = () => {
+    if (!canExpand) return;
+    if (controlledExpanded === undefined) setUncontrolledExpanded((prev) => !prev);
+    onToggle?.();
+  };
+
+  const iconKind: ToolStatusKind | null =
+    status === 'error' || status === 'blocked'
+      ? status
+      : TOOL_STATUS_KINDS.has(icon)
+        ? (icon as ToolStatusKind)
+        : null;
+
+  return (
+    <div
+      data-slot="agent-step-row"
+      data-status={status}
+      className={cn('yui-col yui-step-row', className)}
+    >
+      <div className="yui-row yui-gap-7">
+        <span className="yui-step-icon" aria-hidden="true">
+          {iconUrl ? (
+            <ToolFavicon favicon={iconUrl} />
+          ) : iconKind ? (
+            <ToolStatusIcon kind={iconKind} size={13} active={status === 'running'} />
+          ) : (
+            <ApertureIcon name={icon as ApertureIconName} size={13} />
+          )}
+        </span>
+
+        <div className="yui-col-min">
+          {label ? <span className="yui-trace-label">{label}</span> : null}
+          <div className="yui-row yui-gap-5">
+            {canExpand ? (
+              <button
+                type="button"
+                className="yui-row yui-gap-5 yui-step-trigger"
+                aria-expanded={isOpen}
+                aria-controls={hasPayload ? bodyId : undefined}
+                onClick={toggle}
+              >
+                <span className="yui-ellipsis yui-trace-action">{title}</span>
+                {detail ? <span className="yui-ellipsis yui-trace-label">{detail}</span> : null}
+                <ChevronDownIcon
+                  size={12}
+                  className={cn('yui-trace-chevron yui-step-chevron', isOpen && 'is-open')}
+                />
+              </button>
+            ) : (
+              <>
+                <span className="yui-ellipsis yui-trace-action">{title}</span>
+                {detail ? <span className="yui-ellipsis yui-trace-label">{detail}</span> : null}
+              </>
+            )}
+          </div>
+          {body ? <div className="yui-muted-note">{body}</div> : null}
+        </div>
+
+        {statusText || status === 'running' ? (
+          <span className="yui-row yui-gap-4 yui-trace-latency">
+            {status === 'running' ? <span className="yui-status-toast-dot yui-step-dot" aria-hidden="true" /> : null}
+            {statusText ? <span>{statusText}</span> : null}
+          </span>
+        ) : null}
+      </div>
+
+      {hasPayload ? (
+        <div
+          id={bodyId}
+          className={cn('yui-disclosure', isOpen && 'is-open')}
+          aria-hidden={!isOpen}
+          inert={!isOpen ? true : undefined}
+        >
+          <div className="yui-disclosure-inner">
+            <div className="yui-step-children">
+              {input || output ? (
+                <div className="yui-well yui-trace-detail">
+                  {input ? (
+                    <div className="yui-col">
+                      <span className="yui-perm-meta-label">Input</span>
+                      <pre className="yui-trace-pre">{input}</pre>
+                    </div>
+                  ) : null}
+                  {output ? (
+                    <div className="yui-col">
+                      <span className="yui-perm-meta-label">
+                        {status === 'blocked' || status === 'error' ? 'Note' : 'Output'}
+                      </span>
+                      <pre className="yui-trace-pre">{output}</pre>
+                    </div>
+                  ) : null}
+                </div>
+              ) : null}
+              {children}
+            </div>
+          </div>
+        </div>
+      ) : null}
+    </div>
+  );
+}
+
+export interface AgentStepsCardProps {
+  children?: ReactNode;
+  steps?: readonly ToolTraceStep[];
+  /** When `hasFinal` transitions to `true`, auto-collapses unless manually toggled. */
+  hasFinal?: boolean;
+  active?: boolean;
+  status?: ToolStatusKind;
+  activityLabel?: string;
+  activityDetail?: string;
+  durationText?: string;
+  summaryLabel?: string;
+  toolCount?: number;
+  thinkingCount?: number;
+  expanded?: boolean;
+  defaultExpanded?: boolean;
+  onExpandedChange?: (expanded: boolean) => void;
+  onToggle?: () => void;
+  timer?: boolean;
+  className?: string;
+}
+
+/**
+ * Unified collapsible agent timeline grouping reasoning & intermediate tool steps before
+ * an assistant answer: stays expanded while working, then auto-collapses to a quiet summary
+ * row once `hasFinal` turns `true` (unless manually toggled).
+ */
+export function AgentStepsCard({
+  children,
+  steps,
+  hasFinal = false,
+  active,
+  status,
+  activityLabel,
+  activityDetail,
+  durationText,
+  summaryLabel,
+  expanded: controlledExpanded,
+  defaultExpanded,
+  onExpandedChange,
+  onToggle,
+  timer = true,
+  className,
+}: AgentStepsCardProps) {
+  const panelId = useId();
+  const userToggledRef = useRef(false);
+  const prevHasFinalRef = useRef(hasFinal);
+  const [uncontrolledExpanded, setUncontrolledExpanded] = useState<boolean>(() =>
+    defaultExpanded !== undefined ? defaultExpanded : !hasFinal,
+  );
+
+  useEffect(() => {
+    if (hasFinal && !prevHasFinalRef.current && !userToggledRef.current) {
+      if (controlledExpanded === undefined) setUncontrolledExpanded(false);
+      onExpandedChange?.(false);
+    }
+    prevHasFinalRef.current = hasFinal;
+  }, [hasFinal, controlledExpanded, onExpandedChange]);
+
+  const isExpanded = controlledExpanded ?? uncontrolledExpanded;
+  const isWorking = active ?? (!hasFinal && status !== 'error' && status !== 'blocked');
+  const resolvedState: ToolStatusKind =
+    status ?? (isWorking ? 'thinking' : 'done');
+
+  const resolvedLabel = isWorking
+    ? (activityLabel ?? 'Working')
+    : (summaryLabel ?? (durationText ? `Worked for ${durationText}` : 'Worked'));
+
+  const handleToggle = () => {
+    userToggledRef.current = true;
+    const next = !isExpanded;
+    if (controlledExpanded === undefined) setUncontrolledExpanded(next);
+    onToggle?.();
+    onExpandedChange?.(next);
+  };
+
+  return (
+    <section
+      data-slot="agent-steps-card"
+      data-expanded={isExpanded ? 'true' : 'false'}
+      data-active={isWorking ? 'true' : 'false'}
+      className={cn('yui-col', className)}
+    >
+      <button
+        type="button"
+        className="yui-trace-head yui-trace-head--inline"
+        aria-expanded={isExpanded}
+        aria-controls={panelId}
+        onClick={handleToggle}
+      >
+        <InlineToolStatus
+          state={resolvedState}
+          label={resolvedLabel}
+          detail={activityDetail}
+          shimmer={isWorking}
+          timer={timer && isWorking}
+          elapsed={durationText}
+          className="yui-trace-its"
+          rightSlot={
+            <ChevronRightIcon
+              size={12}
+              className={cn('yui-activity-chevron', isExpanded && 'is-open')}
+            />
+          }
+        />
+      </button>
+
+      <div
+        id={panelId}
+        className={cn('yui-disclosure', isExpanded && 'is-open')}
+        aria-hidden={!isExpanded}
+        inert={!isExpanded ? true : undefined}
+      >
+        <div className="yui-disclosure-inner">
+          <div className="yui-col-5 yui-pt-2">
+            {children ?? (
+              <StepTree>
+                {(steps ?? []).map((step) => (
+                  <AgentStepRow
+                    key={step.id}
+                    icon={inferToolKind(step)}
+                    iconUrl={typeof step.favicon === 'string' ? step.favicon : undefined}
+                    title={step.actionLabel ?? step.label ?? step.tool}
+                    detail={step.detail}
+                    status={step.status === 'done' ? 'success' : step.status}
+                    statusText={
+                      step.latencyLabel ??
+                      (step.durationMs !== undefined ? formatDurationMs(step.durationMs) : undefined)
+                    }
+                    input={step.input}
+                    output={step.output}
+                  />
+                ))}
+              </StepTree>
+            )}
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+}

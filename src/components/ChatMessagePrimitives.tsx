@@ -361,12 +361,13 @@ export interface ActionBarProps {
   onThumbDown?: () => void;
   feedback?: 'up' | 'down' | null;
   speedMetrics?: SpeedMetricsSummary;
+  leftSlot?: ReactNode;
   rightSlot?: ReactNode;
 }
 
 /**
  * Monochrome icon action bar (`copy`, `retry`, `thumb-up`, `thumb-down`, `bookmark`,
- * `volume`) with optional tabular-nums local inference speed telemetry.
+ * `volume`) with optional `leftSlot` (e.g. `MessageSourcesPill`) and tabular-nums telemetry.
  */
 export function ActionBar({
   onCopy,
@@ -377,6 +378,7 @@ export function ActionBar({
   onThumbDown,
   feedback = null,
   speedMetrics,
+  leftSlot,
   rightSlot,
 }: ActionBarProps) {
   const { copied, triggerCopy } = useCopyFeedback(1200);
@@ -425,7 +427,9 @@ export function ActionBar({
 
   return (
     <div className="yui-action-row">
-      <div className="yui-action-group">
+      <div className="yui-row yui-wrap">
+        {leftSlot ? <div className="yui-row yui-shrink-0">{leftSlot}</div> : null}
+        <div className="yui-action-group">
         {onCopy ? (
           <button
             type="button"
@@ -488,6 +492,7 @@ export function ActionBar({
             <VolumeIcon size={13} />
           </button>
         ) : null}
+        </div>
       </div>
 
       {rightSlot ?? telemetryNode}
