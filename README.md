@@ -38,8 +38,8 @@ SidePanelShell (outer bezel + recessed stage + focus veil + bottom sheet slot)
   ├── Stream Region
   │     ├── EmptyState / PromptCapsuleStack / MatrixOrb (idle · thinking · streaming)
   │     ├── StreamingResponse · UserMessageBubble · AssistantMessage · ActionBar
-  │     ├── InlineCitationPill · InlineCitationPopover · SourcesDrawer · WebSearchSourcesStrip · BranchPicker
-  │     ├── ReasoningTrace · ToolStepCard · PermissionApprovalCard (@yours/guard)
+  │     ├── InlineCitationPill · CitationChip · MessageSourcesPill · SourcePreviewPopover · WebSearchSourcesStrip · BranchPicker
+  │     ├── AgentStepsCard · StepTree · AgentStepRow · ReasoningTrace · ToolStepCard · PermissionApprovalCard (@yours/guard)
   │     ├── ModelDownloadGate (@yours/models) · StatusBadge · VoiceDictationPill
   │     └── 8 Generative UI Primitives (CompareTable · ChecklistCard · MetricStripCard · ...)
   ├── FloatingContextSheet (recessed bottom queue / review tray)
@@ -165,8 +165,8 @@ All public subpaths (`@yours/ui`, `@yours/ui/icons`, `@yours/ui/layout`, `@yours
 
 | Entrypoint | Raw | Gzip | Budget Guard |
 | :--- | :---: | :---: | :---: |
-| Total `dist/` JS (`62` ESM modules) | `197.41 KB` | `76.07 KB` | `<= 80.00 KB` |
-| `@yours/ui/styles` (`tokens.css` + `components.css` + `index.css`) | `110.80 KB` | `18.38 KB` | `<= 19.00 KB` |
+| Total `dist/` JS (`62` ESM modules) | `207.23 KB` | `78.79 KB` | `<= 80.00 KB` |
+| `@yours/ui/styles` (`tokens.css` + `components.css` + `index.css`) | `110.38 KB` | `18.99 KB` | `<= 19.00 KB` |
 
 Run `npm run build && npm run check:size` to inspect live raw and gzipped sizes per entrypoint.
 
@@ -186,8 +186,8 @@ Run `npm run build && npm run check:size` to inspect live raw and gzipped sizes 
 ### `@yours/ui/components` Inventory
 
 - **Shell, Overlay & Navigation:** `CommandPalette`, `ContextCommandPopover`, `FindInThreadBar`, `FloatingComposer`, `FloatingContextSheet`, `EmptyPanelState`, `EmptyState`, `KbdHint`, `OfflineStatusBanner`, `OnboardingCard`, `PromptCapsuleStack`, `PromptTemplateList`, `QuotedContextBanner`, `ScrollToBottomButton`, `SegmentedControl`, `ShortcutSheet`, `StatusBadge`, `StatusToast`, `SuggestionChipRow`, `ThreadHistoryDrawer`, `ThreadHistoryList`, `ToastPill`.
-- **Conversation, Citations & Diffs:** `ActionBar`, `AssistantMessage`, `AttachmentDropzone`, `AttachmentStrip`, `AudioLevelMeter`, `BranchPicker`, `CitationFootnoteList`, `CodeBlock`, `CodeBlockCard`, `DiffCard`, `FollowUpSuggestions`, `InlineCitationPill`, `InlineCitationPopover`, `InlineNotice`, `MessageSkeleton`, `SessionCheckpointCard`, `SourcesDrawer`, `StreamingResponse`, `UserMessageBubble`, `VoiceDictationPill`, `VoiceSessionBar`, `VoiceSessionCard`, `WebSearchSourcesStrip`.
-- **Reasoning, Tools, Context & Guard:** `AgentHandoffCard`, `ConfirmActionCard`, `ContextBudgetMeter`, `InlineToolStatus`, `PageSelectionCard`, `PermissionApprovalCard`, `PermissionCard`, `ReasoningTrace`, `ShimmerText`, `SitePermissionsList`, `TabContextList`, `ToolChain`, `ToolStepCard`, `ToolTraceList`.
+- **Conversation, Citations & Diffs:** `ActionBar`, `AssistantMessage`, `AttachmentDropzone`, `AttachmentStrip`, `AudioLevelMeter`, `BranchPicker`, `CitationChip`, `CitationFootnoteList`, `CodeBlock`, `CodeBlockCard`, `DiffCard`, `FollowUpSuggestions`, `InlineCitationPill`, `InlineCitationPopover`, `InlineNotice`, `MessageSkeleton`, `MessageSources`, `MessageSourcesPill`, `SessionCheckpointCard`, `SourceFavicon`, `SourcePreviewPopover`, `SourcesDrawer`, `StreamingResponse`, `UserMessageBubble`, `VoiceDictationPill`, `VoiceSessionBar`, `VoiceSessionCard`, `WebSearchSourcesStrip`.
+- **Reasoning, Tools, Context & Guard:** `AgentHandoffCard`, `AgentStepRow`, `AgentStepsCard`, `ConfirmActionCard`, `ContextBudgetMeter`, `InlineToolStatus`, `PageSelectionCard`, `PermissionApprovalCard`, `PermissionCard`, `ReasoningTrace`, `ShimmerText`, `SitePermissionsList`, `StepTree`, `StepTreeItem`, `TabContextList`, `ToolChain`, `ToolStepCard`, `ToolTraceList`.
 - **Local Runtime, Models, Memory, Data & Settings:** `ArtifactPreviewCard`, `DataTableCard`, `DeviceCapabilityCard`, `ErrorRecoveryBanner`, `ErrorRecoveryCard`, `ExportSessionCard`, `HardwareStatusStrip`, `LocalVaultExportCard`, `MemoryInspectorList`, `MemoryRecordCard`, `ModelDownloadGate`, `ModelDownloadProgressBar`, `ModelParametersCard`, `ModelRosterList`, `NetworkAuditCard`, `SettingsSection`, `SettingsToggleRow`, `StorageQuotaCard`.
 
 ---

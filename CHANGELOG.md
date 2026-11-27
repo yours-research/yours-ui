@@ -3,7 +3,14 @@
 All notable milestones for **`@yours/ui`** are documented here.
 The library targets Chrome MV3 side panels (`340px–440px`), maintains zero runtime dependencies, zero JSX inline `style` attributes, and zero `dangerouslySetInnerHTML`.
 
-## Unreleased / Milestone 30 (PR #33)
+## Unreleased / Milestone 31 (PR #34)
+
+- **`MessageSourcesPill` (`MessageSources`), `SourcePreviewPopover`, `SourceFavicon` & `CitationChip` (`src/components/InlineCitationPopover.tsx`):** Added compact stacked-favicon sources pill (`<= 3` distinct-domain favicons with CSS hover/open fan-out), single `< 1 / N >` source preview popover with `ArrowLeft`/`ArrowRight` keyboard cycling, strict CSP-safe `SourceFavicon` (`https:` / `data:image/` explicit `faviconUrl` or monogram/document fallback without unsolicited external `/favicon.ico` fetches), `noopener noreferrer` external links (never `"Show on page"`), truncated URLs, 3-line clamped snippets, and `16px` monospace `CitationChip` pills using phrasing elements (`<span>`) valid inside Markdown `<p>`.
+- **`AgentStepsCard`, `StepTree`, `StepTreeItem` & `AgentStepRow` (`src/components/ToolTraceList.tsx`):** Added unified work timeline grouping reasoning & intermediate tool steps — expanded while active with shimmer + live timer and `1px` hairline `StepTree` elbow connectors, then auto-collapsing cleanly once `hasFinal` transitions to `true` (e.g. `Worked for 4.9s`) unless manually toggled.
+- **`ActionBar` `leftSlot` (`src/components/ChatMessagePrimitives.tsx`):** Added optional `leftSlot?: ReactNode` so `MessageSourcesPill` sits inline alongside copy/regenerate/feedback controls while speed telemetry stays aligned, wrapping cleanly at `320px`/`340px` and staying inline at `728px`.
+- **Verification:** `npm run build` (`207.23 KB` raw / `78.79 KB` gzip JS across `62` modules; `110.38 KB` raw / `18.99 KB` gzip CSS across `3` files), `npm run typecheck`, `npm test` (`68/68` across `5` files), and `npm run verify:visual` (`320px`/`340px`/`380px`/`400px` side panels + `728px` desktop web-demo light/dark audits, zero inline `style=`, zero CSP errors, WCAG AA contrast) passing.
+
+## Milestone 30 (PR #33)
 
 - **Fix `MemoryRecordCard` (`MemoryInspector`) Right-Edge Clipping at `320px`/`340px`:** Removed accidental `.yui-cmd-item-label` (`white-space: nowrap; overflow: hidden;`) selector grouping from `.yui-mem-card` / `.yui-hw-*` / `.yui-dl-bar-card`, separated `.yui-mem-time` from `.yui-mem-summary`, and enforced `white-space: normal; overflow-wrap: anywhere` so descriptions wrap cleanly across multiple lines with automated Playwright `scrollWidth <= clientWidth` checks.
 - **Fix Narrow Table Clipping (`320px` & `340px`):** Tightened `.yui-sr-th` / `.yui-sr-td` padding and font sizing (`6px`, `9.5px`/`11px`) plus `CompareTable` (`.yui-table-cell-val`, `.yui-table-col-head`, `.yui-table-row`) under `@container (max-width: 340px)` so all columns (`"WebGPU"` and `CompareTable` values) render unclipped at `320px` and `340px`.

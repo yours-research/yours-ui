@@ -1,8 +1,19 @@
-import { useEffect, useId, useLayoutEffect, useRef, useState, type ComponentProps } from 'react';
+import {
+  useEffect,
+  useId,
+  useLayoutEffect,
+  useRef,
+  useState,
+  type ComponentProps,
+  type RefObject,
+} from 'react';
 import {
   ArrowRightIcon,
   ChevronDownIcon,
+  ChevronLeftIcon,
+  ChevronRightIcon,
   ChevronUpIcon,
+  DocumentIcon,
   ExternalLinkIcon,
   GlobeIcon,
 } from '../icons/ApertureIcon.js';
@@ -22,6 +33,47 @@ function getSourceHost(domain?: string, url?: string): string {
     }
   }
   return 'source';
+}
+
+function getFaviconUrl(source: { faviconUrl?: string }): string | undefined {
+  const raw = source.faviconUrl?.trim();
+  if (!raw) return undefined;
+  if (isSafeHttpUrl(raw) || /^data:image\/(png|jpeg|webp|gif|svg\+xml|x-icon|vnd\.microsoft\.icon)[;,]/i.test(raw)) {
+    return raw;
+  }
+  return undefined;
+}
+
+function useDismissOnOutsideAndEscape(
+  wrapRef: RefObject<HTMLElement | null>,
+  isOpen: boolean,
+  onClose: () => void,
+) {
+  useEffect(() => {
+    if (!isOpen) return;
+    const onPointerDown = (event: PointerEvent) => {
+      if (wrapRef.current && !wrapRef.current.contains(event.target as Node)) onClose();
+    };
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') onClose();
+    };
+    document.addEventListener('pointerdown', onPointerDown);
+    document.addEventListener('keydown', onKeyDown);
+    return () => {
+      document.removeEventListener('pointerdown', onPointerDown);
+      document.removeEventListener('keydown', onKeyDown);
+    };
+  }, [wrapRef, isOpen, onClose]);
+}
+
+function usePopoverEdgeAlign(cardRef: RefObject<HTMLElement | null>, isOpen: boolean, dep?: unknown) {
+  useLayoutEffect(() => {
+    const card = cardRef.current;
+    if (!isOpen || !card) return;
+    const rect = card.getBoundingClientRect();
+    const vw = typeof window !== 'undefined' ? window.innerWidth : 380;
+    card.dataset.align = rect.right > vw - 12 ? 'end' : 'start';
+  }, [cardRef, isOpen, dep]);
 }
 
 export interface InlineCitationPillProps
@@ -419,34 +471,8 @@ export function InlineCitationPopover({
 
   useEffect(() => clearHoverTimer, []);
 
-  useEffect(() => {
-    if (!isOpen) return;
-    const onPointerDown = (event: PointerEvent) => {
-      if (wrapRef.current && !wrapRef.current.contains(event.target as Node)) {
-        setOpen(false);
-      }
-    };
-    const onKeyDown = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') {
-        setOpen(false);
-      }
-    };
-    document.addEventListener('pointerdown', onPointerDown);
-    document.addEventListener('keydown', onKeyDown);
-    return () => {
-      document.removeEventListener('pointerdown', onPointerDown);
-      document.removeEventListener('keydown', onKeyDown);
-    };
-  }, [isOpen]);
-
-  useLayoutEffect(() => {
-    const card = cardRef.current;
-    if (!isOpen || !card) return;
-    const rect = card.getBoundingClientRect();
-    const vw = typeof window !== 'undefined' ? window.innerWidth : 380;
-    const shiftRight = rect.right > vw - 12;
-    card.dataset.align = shiftRight ? 'end' : 'start';
-  }, [isOpen]);
+  useDismissOnOutsideAndEscape(wrapRef, isOpen, () => setOpen(false));
+  usePopoverEdgeAlign(cardRef, isOpen);
 
   const domainText = getSourceHost(source.domain, source.url);
   const monogram = (domainText.charAt(0) || '?').toUpperCase();
@@ -677,5 +703,384 @@ export function CitationFootnoteList({
         })}
       </ol>
     </section>
+  );
+}
+
+export interface SourceFaviconSource {
+  url?: string;
+  domain?: string;
+  faviconUrl?: string;
+}
+
+export interface SourceFaviconProps {
+  source: SourceFaviconSource;
+  className?: string;
+}
+
+/**
+ * Compact 16px circular domain favicon with CSP-safe `https?:` loading and
+ * graceful monogram / document fallback when offline or blocked.
+ */
+export function SourceFavicon({ source, className }: SourceFaviconProps) {
+  const iconUrl = getFaviconUrl(source);
+  const [failedUrl, setFailedUrl] = useState<string | null>(null);
+  const isBroken = Boolean(iconUrl && failedUrl === iconUrl);
+  const host = source.domain?.trim() || (source.url ? getSourceHost(undefined, source.url) : '');
+
+  return (
+    <span data-slot="source-favicon" aria-hidden="true" className={cn('yui-wss-fav yui-src-fav', className)}>
+      {iconUrl ? (
+        <img
+          src={iconUrl}
+          alt=""
+          referrerPolicy="no-referrer"
+          loading="lazy"
+          className={cn('yui-wss-fav-img', isBroken && 'is-hidden')}
+          onError={() => setFailedUrl(iconUrl)}
+        />
+      ) : null}
+      {!iconUrl || isBroken ? (
+        host ? <span>{host.charAt(0).toUpperCase()}</span> : <DocumentIcon size={10} />
+      ) : null}
+    </span>
+  );
+}
+
+export interface SourcePreviewItem {
+  id?: string;
+  title: string;
+  url?: string;
+  domain?: string;
+  faviconUrl?: string;
+  snippet?: string;
+}
+
+export type ResponseSource = SourcePreviewItem;
+
+export interface SourcePreviewPopoverProps {
+  id?: string;
+  source?: SourcePreviewItem;
+  sources?: readonly SourcePreviewItem[];
+  index?: number;
+  defaultIndex?: number;
+  onIndexChange?: (index: number, source: SourcePreviewItem) => void;
+  onSelectSource?: (source: SourcePreviewItem) => void;
+  onClose?: () => void;
+  compact?: boolean;
+  label?: string;
+  className?: string;
+}
+
+/**
+ * Single clean source preview dialog supporting `< 1 / N >` cycling, `ArrowLeft`/`ArrowRight`
+ * keyboard navigation, external `noopener noreferrer` links, truncated URL, and 3-line snippet.
+ */
+export function SourcePreviewPopover({
+  id,
+  source,
+  sources,
+  index: controlledIndex,
+  defaultIndex = 0,
+  onIndexChange,
+  onSelectSource,
+  onClose,
+  compact = false,
+  label,
+  className,
+}: SourcePreviewPopoverProps) {
+  const list = sources && sources.length > 0 ? sources : source ? [source] : [];
+  const [uncontrolledIndex, setUncontrolledIndex] = useState(defaultIndex);
+  const cardRef = useRef<HTMLDivElement | null>(null);
+  const current = Math.max(0, Math.min(controlledIndex ?? uncontrolledIndex, Math.max(0, list.length - 1)));
+  const active = list[current];
+
+  usePopoverEdgeAlign(cardRef, Boolean(active), current);
+  if (!active) return null;
+
+  const move = (delta: number) => {
+    if (list.length <= 1) return;
+    const next = (current + delta + list.length) % list.length;
+    if (controlledIndex === undefined) setUncontrolledIndex(next);
+    onIndexChange?.(next, list[next]);
+  };
+
+  const host = active.domain?.trim() || (active.url ? getSourceHost(undefined, active.url) : 'Saved on this device');
+  const safeHref = isSafeHttpUrl(active.url) ? active.url.trim() : undefined;
+
+  return (
+    <span
+      ref={cardRef}
+      id={id}
+      role="dialog"
+      aria-label={label ?? (list.length > 1 ? 'Answer sources' : active.title)}
+      className={cn('yui-cite-card yui-src-popover', compact && 'is-compact', className)}
+      onKeyDown={(event) => {
+        if (event.key === 'ArrowLeft' || event.key === 'ArrowRight') {
+          event.preventDefault();
+          move(event.key === 'ArrowRight' ? 1 : -1);
+        }
+      }}
+    >
+      {list.length > 1 ? (
+        <span className="yui-cmd-head">
+          <button
+            type="button"
+            className="yui-icon-btn"
+            aria-label="Previous source"
+            onClick={() => move(-1)}
+          >
+            <ChevronLeftIcon size={13} />
+          </button>
+          <span className="yui-its-elapsed" aria-live="polite">
+            {current + 1} / {list.length}
+          </span>
+          <button
+            type="button"
+            className="yui-icon-btn"
+            aria-label="Next source"
+            onClick={() => move(1)}
+          >
+            <ChevronRightIcon size={13} />
+          </button>
+        </span>
+      ) : null}
+
+      <span className="yui-col yui-col-5 yui-card-pad">
+        <span className="yui-row yui-gap-5">
+          <SourceFavicon source={active} />
+          <span className="yui-ellipsis yui-wss-host">{host}</span>
+        </span>
+
+        {safeHref ? (
+          <a
+            href={safeHref}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="yui-src-title"
+            aria-label={`Open source: ${active.title}`}
+            onClick={() => {
+              onSelectSource?.(active);
+              onClose?.();
+            }}
+          >
+            {active.title}
+          </a>
+        ) : onSelectSource ? (
+          <button
+            type="button"
+            className="yui-src-title"
+            aria-label={`Open source: ${active.title}`}
+            onClick={() => {
+              onSelectSource(active);
+              onClose?.();
+            }}
+          >
+            {active.title}
+          </button>
+        ) : (
+          <span className="yui-src-title">{active.title}</span>
+        )}
+
+        {active.url ? <span className="yui-ellipsis yui-muted-note">{active.url}</span> : null}
+        {active.snippet ? <span className="yui-src-snippet">{active.snippet}</span> : null}
+      </span>
+    </span>
+  );
+}
+
+export interface MessageSourcesPillProps {
+  sources: readonly SourcePreviewItem[];
+  label?: string;
+  open?: boolean;
+  defaultOpen?: boolean;
+  onOpenChange?: (open: boolean) => void;
+  onPreview?: (index: number, source: SourcePreviewItem) => void;
+  onSelectSource?: (source: SourcePreviewItem) => void;
+  className?: string;
+}
+
+export type MessageSourcesProps = MessageSourcesPillProps;
+
+/**
+ * Compact `trueforge`-style sources capsule with overlapping stacked favicons, CSS hover/open
+ * fan-out animation, and a single `< 1 / N >` `SourcePreviewPopover`.
+ */
+export function MessageSourcesPill({
+  sources,
+  label,
+  open: controlledOpen,
+  defaultOpen = false,
+  onOpenChange,
+  onPreview,
+  onSelectSource,
+  className,
+}: MessageSourcesPillProps) {
+  const popoverId = useId();
+  const wrapRef = useRef<HTMLDivElement | null>(null);
+  const [uncontrolledOpen, setUncontrolledOpen] = useState(defaultOpen);
+  const [index, setIndex] = useState(0);
+
+  const isOpen = controlledOpen ?? uncontrolledOpen;
+  const setOpen = (next: boolean) => {
+    if (controlledOpen === undefined) setUncontrolledOpen(next);
+    if (next) {
+      setIndex(0);
+      if (sources[0]) onPreview?.(0, sources[0]);
+    }
+    onOpenChange?.(next);
+  };
+
+  useDismissOnOutsideAndEscape(wrapRef, isOpen, () => setOpen(false));
+  if (sources.length === 0) return null;
+
+  const icons = sources
+    .filter(
+      (item, pos, list) =>
+        list.findIndex((other) => getSourceHost(other.domain, other.url) === getSourceHost(item.domain, item.url)) === pos,
+    )
+    .slice(0, 3);
+  const pillText = label ?? `${sources.length} ${sources.length === 1 ? 'source' : 'sources'}`;
+
+  return (
+    <div
+      ref={wrapRef}
+      data-slot="message-sources"
+      data-open={isOpen ? 'true' : 'false'}
+      className={cn('yui-cite-wrap yui-src-wrap', className)}
+    >
+      <button
+        type="button"
+        data-slot="sources"
+        aria-label={pillText}
+        aria-haspopup="dialog"
+        aria-expanded={isOpen}
+        aria-controls={isOpen ? popoverId : undefined}
+        className="yui-src-pill"
+        onClick={() => setOpen(!isOpen)}
+      >
+        <span className="yui-src-stack" aria-hidden="true">
+          {icons.map((item, pos) => (
+            <span key={item.id ?? item.url ?? pos} className="yui-src-mark">
+              <SourceFavicon source={item} />
+            </span>
+          ))}
+        </span>
+        <span className="yui-src-pill-label">{pillText}</span>
+      </button>
+
+      {isOpen ? (
+        <SourcePreviewPopover
+          id={popoverId}
+          sources={sources}
+          index={index}
+          onIndexChange={(next, src) => {
+            setIndex(next);
+            onPreview?.(next, src);
+          }}
+          onSelectSource={onSelectSource}
+          onClose={() => setOpen(false)}
+        />
+      ) : null}
+    </div>
+  );
+}
+
+export const MessageSources = MessageSourcesPill;
+
+export interface CitationChipProps {
+  source: SourcePreviewItem;
+  /** Zero-based citation index rendered as 1-based badge (e.g. `0` -> `"1"`). */
+  index: number;
+  label?: number | string;
+  hoverOpen?: boolean;
+  open?: boolean;
+  defaultOpen?: boolean;
+  onOpenChange?: (open: boolean) => void;
+  onPreview?: (index: number, source: SourcePreviewItem) => void;
+  onSelectSource?: (source: SourcePreviewItem) => void;
+  className?: string;
+}
+
+/** Quiet 16px inline monospace citation badge (`1`, `2`) opening `SourcePreviewPopover`. */
+export function CitationChip({
+  source,
+  index,
+  label,
+  hoverOpen = true,
+  open: controlledOpen,
+  defaultOpen = false,
+  onOpenChange,
+  onPreview,
+  onSelectSource,
+  className,
+}: CitationChipProps) {
+  const cardId = useId();
+  const wrapRef = useRef<HTMLSpanElement | null>(null);
+  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const [uncontrolledOpen, setUncontrolledOpen] = useState(defaultOpen);
+  const isOpen = controlledOpen ?? uncontrolledOpen;
+
+  const setOpen = (next: boolean) => {
+    if (controlledOpen === undefined) setUncontrolledOpen(next);
+    if (next) onPreview?.(index, source);
+    onOpenChange?.(next);
+  };
+
+  const clearHover = () => {
+    if (timerRef.current !== null) {
+      clearTimeout(timerRef.current);
+      timerRef.current = null;
+    }
+  };
+
+  useEffect(() => clearHover, []);
+  useDismissOnOutsideAndEscape(wrapRef, isOpen, () => setOpen(false));
+
+  const display = label ?? index + 1;
+
+  return (
+    <span
+      ref={wrapRef}
+      data-slot="inline-citation-chip"
+      data-open={isOpen ? 'true' : 'false'}
+      className={cn('yui-cite-wrap', className)}
+      onMouseEnter={() => {
+        if (!hoverOpen) return;
+        clearHover();
+        timerRef.current = setTimeout(() => setOpen(true), 100);
+      }}
+      onMouseLeave={() => {
+        if (!hoverOpen) return;
+        clearHover();
+        timerRef.current = setTimeout(() => setOpen(false), 160);
+      }}
+    >
+      <button
+        type="button"
+        data-slot="inline-citation"
+        aria-label={`Citation ${display}: ${source.title}`}
+        aria-haspopup="dialog"
+        aria-expanded={isOpen}
+        aria-controls={isOpen ? cardId : undefined}
+        className={cn('yui-cite-chip', isOpen && 'is-open')}
+        onClick={() => {
+          clearHover();
+          setOpen(!isOpen);
+        }}
+      >
+        {display}
+      </button>
+
+      {isOpen ? (
+        <SourcePreviewPopover
+          id={cardId}
+          source={source}
+          compact
+          label={`Citation ${display} preview`}
+          onSelectSource={onSelectSource}
+          onClose={() => setOpen(false)}
+        />
+      ) : null}
+    </span>
   );
 }

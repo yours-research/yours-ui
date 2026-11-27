@@ -171,6 +171,16 @@ describe('@yours/ui built ESM & CSS exports smoke test', () => {
     expect(componentsMod.ToolChain).toBe(componentsMod.ToolTraceList);
     expect(typeof rootMod.WebSearchSourcesStrip).toBe('function');
     expect(typeof componentsMod.WebSearchSourcesStrip).toBe('function');
+    expect(typeof rootMod.MessageSourcesPill).toBe('function');
+    expect(typeof componentsMod.MessageSourcesPill).toBe('function');
+    expect(componentsMod.MessageSources).toBe(componentsMod.MessageSourcesPill);
+    expect(typeof componentsMod.SourcePreviewPopover).toBe('function');
+    expect(typeof componentsMod.SourceFavicon).toBe('function');
+    expect(typeof rootMod.CitationChip).toBe('function');
+    expect(typeof rootMod.AgentStepsCard).toBe('function');
+    expect(typeof rootMod.StepTree).toBe('function');
+    expect(typeof rootMod.StepTreeItem).toBe('function');
+    expect(typeof rootMod.AgentStepRow).toBe('function');
     expect(typeof genuiMod.CompareTable).toBe('function');
     expect(typeof genuiMod.MetricStripCard).toBe('function');
     expect(typeof genuiMod.TimelineCard).toBe('function');
@@ -230,7 +240,7 @@ describe('@yours/ui built ESM & CSS exports smoke test', () => {
         "import { AudioLevelMeter, VoiceSessionCard, type FloatingComposerProps } from '@yours/ui';",
         "import { MicIcon, ToolStatusIcon, YoursMark } from '@yours/ui/icons';",
         "import { SidePanelShell, TopNotch } from '@yours/ui/layout';",
-        "import { ErrorRecoveryCard, FloatingComposer, InlineNotice, InlineToolStatus, ShimmerText, ToolChain, WebSearchSourcesStrip } from '@yours/ui/components';",
+        "import { ErrorRecoveryCard, FloatingComposer, InlineNotice, InlineToolStatus, ShimmerText, ToolChain, WebSearchSourcesStrip, MessageSourcesPill, MessageSources, CitationChip, AgentStepsCard, StepTree, StepTreeItem, AgentStepRow, ActionBar } from '@yours/ui/components';",
         "import { PromptTemplateList, ExportSessionCard, FindInThreadBar, StorageQuotaCard, ModelParametersCard, NetworkAuditCard, SitePermissionsList, AgentHandoffCard, ConfirmActionCard, PageSelectionCard, DeviceCapabilityCard, OfflineStatusBanner, SessionCheckpointCard } from '@yours/ui/components';",
         "import { CompareTable, MetricStripCard, QuoteExcerptCard, TimelineCard } from '@yours/ui/genui';",
         '',
@@ -247,6 +257,11 @@ describe('@yours/ui built ESM & CSS exports smoke test', () => {
         '      <ShimmerText>Scanning workspace</ShimmerText>',
         '      <InlineToolStatus state="searching" detail="yours.sh" timer />',
         '      <WebSearchSourcesStrip sources={[{ id: "w1", title: "MV3 CSP", url: "https://developer.chrome.com/docs/extensions/mv3" }]} />',
+        '      <MessageSourcesPill sources={[{ id: "m1", title: "Spec", url: "https://developer.chrome.com/docs/extensions/mv3" }]} />',
+        '      <MessageSources sources={[{ id: "m2", title: "Spec 2", url: "https://w3.org/TR/webgpu/" }]} />',
+        '      <CitationChip source={{ title: "Spec", url: "https://w3.org/TR/webgpu/" }} index={0} />',
+        '      <AgentStepsCard hasFinal durationText="2.1s"><StepTree><StepTreeItem><AgentStepRow title="Checked tabs" status="success" /></StepTreeItem></StepTree></AgentStepsCard>',
+        '      <ActionBar onCopy={() => {}} leftSlot={<MessageSourcesPill sources={[{ title: "Ref", url: "https://yours.sh" }]} />} />',
         '      <ToolChain steps={[{ id: "s1", tool: "search", state: "searching", actionLabel: "Searching docs", status: "running" }]} />',
         '      <AudioLevelMeter level={0.6} tone="active" />',
         '      <VoiceSessionCard state="listening" transcript="Testing" />',
@@ -339,7 +354,7 @@ describe('@yours/ui built ESM & CSS exports smoke test', () => {
         `assert(genui.includes('yui-qec-quote') && !genui.includes('yui-shell') && !genui.includes('yui-cmd-panel'));`,
         `const comp = await bundle("import { FindInThreadBar } from '@yours/ui/components'; console.log(FindInThreadBar);");`,
         `assert(comp.includes('yui-find-bar') && !comp.includes('yui-shell') && !comp.includes('yui-qec-quote') && !comp.includes('yui-handoff-card') && !comp.includes('yui-confirm-card') && !comp.includes('yui-sel-card') && !comp.includes('yui-devcap-card') && !comp.includes('yui-offline-banner') && !comp.includes('yui-ckpt-card'));`,
-        `assert(!comp.includes('yui-its') && !comp.includes('yui-trace-rail-list') && !comp.includes('yui-shimmer-text') && !comp.includes('yui-wss-trigger'));`,
+        `assert(!comp.includes('yui-its') && !comp.includes('yui-trace-rail-list') && !comp.includes('yui-shimmer-text') && !comp.includes('yui-wss-trigger') && !comp.includes('yui-src-pill') && !comp.includes('yui-st-item'));`,
         `const shimmerChain = await bundle("import { ShimmerText, InlineToolStatus, ToolChain } from '@yours/ui/components'; console.log(ShimmerText, InlineToolStatus, ToolChain);");`,
         `assert(shimmerChain.includes('yui-shimmer-text') && shimmerChain.includes('yui-its') && shimmerChain.includes('yui-trace-rail-list') && !shimmerChain.includes('yui-shell') && !shimmerChain.includes('yui-qec-quote') && !shimmerChain.includes('yui-ckpt-card'));`,
         `const wss = await bundle("import { WebSearchSourcesStrip } from '@yours/ui/components'; console.log(WebSearchSourcesStrip);");`,

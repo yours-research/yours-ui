@@ -35,6 +35,8 @@ import { useState } from 'react';
 import { createRoot } from 'react-dom/client';
 import {
   ActionBar,
+  AgentStepRow,
+  AgentStepsCard,
   ArtifactPreviewCard,
   AssistantMessage,
   AttachIcon,
@@ -42,6 +44,7 @@ import {
   BranchPicker,
   ChecklistCard,
   ChoicePromptCard,
+  CitationChip,
   CitationFootnoteList,
   CodeBlockCard,
   CommandPalette,
@@ -69,6 +72,7 @@ import {
   LocalVaultExportCard,
   MatrixOrb,
   MemoryInspectorList,
+  MessageSourcesPill,
   MetricStripCard,
   ModelParametersCard,
   NetworkAuditCard,
@@ -105,6 +109,7 @@ import {
   SourcesDrawer,
   StatusBadge,
   StatusToast,
+  StepTree,
   StorageQuotaCard,
   StreamingResponse,
   TabContextList,
@@ -298,6 +303,26 @@ function ActiveChatPanel({ theme }: { theme: 'light' | 'dark' }) {
               onThumbDown={() => {}}
               onSave={() => {}}
               onSpeak={() => {}}
+              leftSlot={
+                <MessageSourcesPill
+                  sources={[
+                    {
+                      id: 'ms1',
+                      title: 'Chromium MV3 Side Panel Specification',
+                      domain: 'developer.chrome.com',
+                      url: 'https://developer.chrome.com/docs/extensions/reference/api/sidePanel',
+                      snippet: 'Side panels run beside active tabs under strict CSP.',
+                    },
+                    {
+                      id: 'ms2',
+                      title: 'Yours Local Architecture Whitepaper',
+                      domain: 'yours.sh',
+                      url: 'https://yours.sh/docs/architecture',
+                      snippet: 'All local WebGPU inference stays inside isolated workers.',
+                    },
+                  ]}
+                />
+              }
               speedMetrics={{
                 tokensPerSec: 86.4,
                 ttftMs: 74,
@@ -1098,6 +1123,44 @@ function ToolShimmerChainPanel({ theme }: { theme: 'light' | 'dark' }) {
         favicon={<PageIcon size={12} />}
         timer
       />
+
+      <AgentStepsCard
+        active
+        activityLabel="Searching the web"
+        durationText="2.4s"
+      >
+        <StepTree>
+          <AgentStepRow
+            icon="reading"
+            title="Read active tab"
+            detail="yours.sh/spec"
+            status="success"
+            statusText="42 ms"
+          />
+          <AgentStepRow
+            icon="searching"
+            title="Searching references"
+            detail="developer.chrome.com"
+            status="running"
+            input='{"q":"mv3 sidepanel"}'
+            output='{"hits":2}'
+          />
+        </StepTree>
+      </AgentStepsCard>
+
+      <AgentStepsCard
+        hasFinal
+        durationText="4.9s"
+        summaryLabel="Worked for 4.9s"
+      >
+        <StepTree>
+          <AgentStepRow icon="memory" title="Recalled local memory" status="success" statusText="18 ms" />
+        </StepTree>
+      </AgentStepsCard>
+
+      <p className="yui-prose-12">
+        Grounded claim <CitationChip source={{ title: 'Chromium MV3 Side Panel', domain: 'developer.chrome.com', url: 'https://developer.chrome.com/docs/extensions/reference/api/sidePanel', snippet: 'Extension pages run strict CSP.' }} index={0} /> verified locally.
+      </p>
 
       <WebSearchSourcesStrip
         sources={[
@@ -2255,7 +2318,9 @@ function SpecimenApp() {
           ? 'yui-spec-single yui-spec-single--container360'
           : widthMode === '400'
             ? 'yui-spec-single yui-spec-single--wide'
-            : 'yui-spec-single';
+            : widthMode === '728'
+              ? 'yui-spec-single yui-spec-single--desktop728'
+              : 'yui-spec-single';
 
   if (mode === 'single') {
     return (
@@ -2362,6 +2427,10 @@ body:has([data-theme="dark"]) {
 
 .yui-spec-single--wide {
   width: 400px;
+}
+
+.yui-spec-single--desktop728 {
+  width: 728px;
 }
 
 .yui-spec-single > .yui-shell {
@@ -4751,6 +4820,30 @@ async function main() {
         }
         await page.emulateMedia({ forcedColors: 'none', reducedMotion: 'no-preference' });
       }
+
+      // 728px desktop web-demo audit (MessageSourcesPill < 1 / 2 >, CitationChip, AgentStepsCard, ActionBar leftSlot)
+      await page.setViewportSize({ width: 728, height: 828 });
+      await page.goto(`${baseUrl}/?mode=single&theme=${theme}&panel=chat&width=728`, { waitUntil: 'networkidle' });
+      await waitForSpecimen(`desktop728/${theme}/chat`);
+      await page.locator('[data-slot="message-sources"] [data-slot="sources"]').click();
+      await page.locator('[data-slot="message-sources"] [aria-label="Next source"]').click();
+      const desktopAudit = await page.evaluate(() => {
+        const pop = document.querySelector('[data-slot="message-sources"] [role="dialog"]');
+        const r = pop?.getBoundingClientRect();
+        return {
+          overflow: document.documentElement.scrollWidth > 728,
+          inlineStyles: document.querySelectorAll('#specimen-root [style]').length,
+          counter: pop?.querySelector('[aria-live="polite"]')?.textContent?.trim() ?? null,
+          popWithin: Boolean(r && r.left >= 0 && r.right <= 728),
+        };
+      });
+      if (desktopAudit.overflow || desktopAudit.inlineStyles !== 0 || desktopAudit.counter !== '2 / 2' || !desktopAudit.popWithin) {
+        throw new Error(`728px desktop web-demo audit failed (${theme}): ${JSON.stringify(desktopAudit)}`);
+      }
+      await auditPanelContrast(theme, 'desktop-728');
+      const desktopPath = path.join(OUT_DIR, `specimen-${theme}-desktop-728.png`);
+      await page.screenshot({ path: desktopPath });
+      outputs.push(desktopPath);
 
       // Overview full-width comparison sheet
       await page.setViewportSize({ width: 8104, height: 900 });
