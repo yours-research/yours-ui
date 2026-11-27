@@ -27,9 +27,9 @@ Import only the subpaths your surface needs (`"sideEffects": ["**/*.css"]` keeps
 | Subpath | Contents |
 | :--- | :--- |
 | `@yours/ui/styles` | `tokens.css` (CSS variables) + `components.css` (`.yui-*` classes) |
-| `@yours/ui/icons` | `ApertureIcon`, `APERTURE_ICON_NAMES`, 48 `*Icon` bindings, `MatrixOrb`, `NotchEar`, `YoursMark` |
+| `@yours/ui/icons` | `ApertureIcon`, `APERTURE_ICON_NAMES`, 50 `*Icon` bindings (`ThinkIcon`, `TurboIcon`, ...), `MatrixOrb`, `NotchEar`, `YoursMark` |
 | `@yours/ui/layout` | `SidePanelShell`, `TopNotch`, `HookSidebarList`, `NotchDrawerSearch`, `NotchOptionRow`, `NotchStatusPill`, `GreenLed` |
-| `@yours/ui/components` | Chat stream, composer, `ActionBar` (`leftSlot`), `MessageSourcesPill` (`MessageSources`), `CitationChip`, `SourcePreviewPopover`, `SourceFavicon`, `AgentStepsCard`, `StepTree`, `AgentStepRow`, `FindInThreadBar`, `InlineToolStatus`, `ToolTraceList`, `WebSearchSourcesStrip`, `StorageQuotaCard`, `ModelParametersCard`, `NetworkAuditCard`, `SitePermissionsList`, `AgentHandoffCard`, `ConfirmActionCard`, `PageSelectionCard`, `DeviceCapabilityCard`, `OfflineStatusBanner`, `SessionCheckpointCard`, drawers, overlays |
+| `@yours/ui/components` | Chat stream, composer, `ActionBar` (`leftSlot`), `MessageSourcesPill` (`MessageSources`), `CitationChip`, `SourcePreviewPopover`, `SourceFavicon`, `AgentStepsCard`, `StepTree`, `AgentStepRow`, `SearchModal`, `WebSearch` (`WebSearchActivity`), `FindInThreadBar`, `InlineToolStatus`, `ToolTraceList`, `WebSearchSourcesStrip`, `StorageQuotaCard`, `ModelParametersCard`, `NetworkAuditCard`, `SitePermissionsList`, `AgentHandoffCard`, `ConfirmActionCard`, `PageSelectionCard`, `DeviceCapabilityCard`, `OfflineStatusBanner`, `SessionCheckpointCard`, drawers, overlays |
 | `@yours/ui/genui` | All 10 side-panel Generative UI cards (`CompareTable`, `ChecklistCard`, `PageBriefCard`, `DraftCard`, `EntitySummaryCard`, `ChoicePromptCard`, `MetricStripCard`, `PageActionCard`, `TimelineCard`, `QuoteExcerptCard`) |
 | `@yours/ui` | Convenience root re-export barrel |
 

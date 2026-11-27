@@ -318,3 +318,15 @@ export {
   SessionCheckpointCard,
   type SessionCheckpointCardProps,
 } from './SessionCheckpointCard.js';
+export {
+  SearchModal,
+  type SearchModalItem,
+  type SearchModalProps,
+} from './SearchModal.js';
+export {
+  WebSearch,
+  WebSearchActivity,
+  type WebSearchProps,
+  type WebSearchSource,
+  type WebSearchStatus,
+} from './WebSearch.js';

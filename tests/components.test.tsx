@@ -58,6 +58,7 @@ import {
   QuotedContextBanner,
   ReasoningTrace,
   ScrollToBottomButton,
+  SearchModal,
   SegmentedControl,
   SessionCheckpointCard,
   SettingsSection,
@@ -87,11 +88,14 @@ import {
   VoiceDictationPill,
   VoiceSessionBar,
   VoiceSessionCard,
+  WebSearch,
+  WebSearchActivity,
   WebSearchSourcesStrip,
   type StreamingResponseFeedback,
   type StreamingResponseProps,
   type StreamingResponseStatus,
 } from '../src/components/index.js';
+import { ThinkIcon, TurboIcon } from '../src/icons/index.js';
 import { SidePanelShell } from '../src/layout/index.js';
 import DefaultStreamingResponse from '../src/components/StreamingResponse.js';
 
@@ -3865,5 +3869,156 @@ describe('@yours/ui chat & runtime primitives', () => {
     });
     expect(onSelectSource).toHaveBeenCalledTimes(1);
     expect(el.querySelectorAll('[style]').length).toBe(0);
+  });
+
+  it('supports Rare-UI parity WebSearch progress ring, skeleton cards, stacked fan-out favicons, and staggered cards with zero inline styles', () => {
+    const sources = [
+      { id: 'w1', title: 'SidePanel API Reference', url: 'https://developer.chrome.com/docs/sidepanel', snippet: 'Build extension side panels.' },
+      { id: 'w2', title: 'Same Domain Second Page', url: 'https://developer.chrome.com/docs/csp', domain: 'developer.chrome.com' },
+      { id: 'w3', title: 'WebGPU Working Draft', url: 'https://www.w3.org/TR/webgpu/' },
+      { id: 'w4', title: 'Yours Design Tokens', url: 'https://yours.sh/tokens' },
+      { id: 'w5', title: 'MDN Container Queries', url: 'https://developer.mozilla.org/css-containment' },
+      { id: 'w6', title: 'OPFS Overview', url: 'https://web.dev/opfs' },
+    ];
+    const onSelectSource = vi.fn();
+
+    expect(WebSearchActivity).toBe(WebSearch);
+    const searchingEl = renderNode(
+      <WebSearch
+        status="searching"
+        sources={[]}
+        query="mv3 csp"
+        progress={0.6}
+        defaultOpen
+      />,
+    );
+    const arc = searchingEl.querySelector('.yui-ws-ring-arc') as SVGCircleElement;
+    expect(arc).not.toBeNull();
+    expect(arc.getAttribute('stroke-dashoffset')).toBeTruthy();
+    expect(searchingEl.textContent).toContain('Searching the web');
+    expect(searchingEl.textContent).toContain('mv3 csp');
+    expect(searchingEl.querySelectorAll('.yui-ws-skel-card').length).toBe(2);
+    expect(searchingEl.querySelectorAll('[style]').length).toBe(0);
+
+    const doneEl = renderNode(
+      <WebSearch
+        status="done"
+        sources={sources}
+        onSelectSource={onSelectSource}
+      />,
+    );
+    const trigger = doneEl.querySelector('.yui-ws-pill') as HTMLButtonElement;
+    expect(trigger.textContent).toContain('Searched 6 sites');
+    // At most 4 distinct domains stacked on the pill
+    expect(doneEl.querySelectorAll('.yui-ws-mark').length).toBe(4);
+    expect(trigger.getAttribute('aria-expanded')).toBe('false');
+
+    act(() => {
+      trigger.click();
+    });
+    expect(trigger.getAttribute('aria-expanded')).toBe('true');
+    const links = doneEl.querySelectorAll('a.yui-ws-card');
+    expect(links.length).toBe(6);
+    expect(links[0]?.getAttribute('rel')).toBe('noopener noreferrer');
+    act(() => {
+      (links[0] as HTMLAnchorElement).click();
+    });
+    expect(onSelectSource).toHaveBeenCalledWith(sources[0]);
+    expect(doneEl.querySelectorAll('[style]').length).toBe(0);
+
+    // Unlinked renders clickable buttons when onSelectSource is present
+    const unlinkedEl = renderNode(
+      <WebSearch status="done" sources={sources.slice(0, 2)} linked={false} defaultOpen onSelectSource={onSelectSource} />,
+    );
+    expect(unlinkedEl.querySelectorAll('a.yui-ws-card').length).toBe(0);
+    expect(unlinkedEl.querySelectorAll('button.yui-ws-card').length).toBe(2);
+  });
+
+  it('supports split-preview SearchModal navigation, filtering, preview stage, esc dismissal, and focus restoration with zero inline styles', () => {
+    const onSelectItem = vi.fn();
+    const onClose = vi.fn();
+    const items = [
+      {
+        id: 'folder',
+        group: 'DISPLAY',
+        label: 'Folder component',
+        description: 'Animated folder cards fan out smoothly.',
+        icon: 'document' as const,
+        preview: <div data-testid="folder-preview">Preview Card</div>,
+      },
+      {
+        id: 'think',
+        group: 'AI KIT',
+        label: 'Thinking mode',
+        description: 'Reasoning pass with ThinkIcon silhouette.',
+        preview: <ThinkIcon size={28} />,
+      },
+      {
+        id: 'turbo',
+        group: 'AI KIT',
+        label: 'Turbo acceleration',
+        description: 'Speculative decoding with TurboIcon bolt.',
+        preview: <TurboIcon size={28} />,
+      },
+    ];
+
+    function Harness() {
+      const [open, setOpen] = useState(false);
+      return (
+        <div>
+          <button type="button" data-testid="opener" onClick={() => setOpen(true)}>
+            Open Search
+          </button>
+          <SearchModal
+            open={open}
+            items={items}
+            onSelectItem={onSelectItem}
+            onClose={() => {
+              onClose();
+              setOpen(false);
+            }}
+          />
+        </div>
+      );
+    }
+
+    const el = renderNode(<Harness />);
+    const opener = el.querySelector('[data-testid="opener"]') as HTMLButtonElement;
+    act(() => {
+      opener.focus();
+      opener.click();
+    });
+
+    const dialog = el.querySelector('[data-slot="search-modal"]') as HTMLElement;
+    expect(dialog).not.toBeNull();
+    expect(dialog.getAttribute('aria-modal')).toBe('true');
+    const input = dialog.querySelector('.yui-sm-input') as HTMLInputElement;
+    expect(document.activeElement).toBe(input);
+    expect(dialog.querySelector('.yui-sm-count')?.textContent).toBe('3 of 3');
+    expect(dialog.querySelector('.yui-brand-mark')).not.toBeNull();
+    expect(dialog.querySelector('[data-testid="folder-preview"]')).not.toBeNull();
+
+    // ArrowDown moves selection to Thinking mode & updates preview pane + active arrow
+    act(() => {
+      input.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowDown', bubbles: true }));
+    });
+    expect(dialog.querySelector('.yui-sm-preview-title')?.textContent).toBe('Thinking mode');
+    expect(dialog.querySelector('.yui-sm-arrow')?.closest('.yui-sm-row')?.textContent).toContain('Thinking mode');
+
+    // Enter selects the active item
+    act(() => {
+      input.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }));
+    });
+    expect(onSelectItem).toHaveBeenCalledWith(items[1]);
+
+    // esc pill closes modal and restores focus to opener
+    const escBtn = dialog.querySelector('.yui-sm-esc-btn') as HTMLButtonElement;
+    expect(el.querySelectorAll('[style]').length).toBe(0);
+    act(() => {
+      escBtn.click();
+    });
+    expect(onClose).toHaveBeenCalledTimes(1);
+    expect(el.querySelector('[data-slot="search-modal"]')).toBeNull();
+    expect(document.activeElement).toBe(opener);
   });
 });

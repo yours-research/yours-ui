@@ -19,11 +19,11 @@ import {
 } from '../icons/ApertureIcon.js';
 import { CardCopyButton, cn } from './CardChrome.js';
 
-function isSafeHttpUrl(url?: string): url is string {
+export function isSafeHttpUrl(url?: string): url is string {
   return typeof url === 'string' && /^https?:\/\//i.test(url.trim());
 }
 
-function getSourceHost(domain?: string, url?: string): string {
+export function getSourceHost(domain?: string, url?: string): string {
   if (domain?.trim()) return domain.trim().replace(/^www\./i, '');
   if (url) {
     try {

@@ -12,7 +12,9 @@ import {
   SendIcon,
   ShieldIcon,
   TabStackIcon,
+  ThinkIcon,
   ToolStatusIcon,
+  TurboIcon,
   type ToolStatusKind,
   YoursMark,
 } from '../src/icons/index.js';
@@ -44,8 +46,8 @@ afterEach(() => {
 });
 
 describe('@yours/ui Aperture icons & brand SVGs', () => {
-  it('exports and renders all 48 Aperture icons cleanly without errors', () => {
-    expect(APERTURE_ICON_NAMES).toHaveLength(48);
+  it('exports and renders all 50 Aperture icons cleanly without errors', () => {
+    expect(APERTURE_ICON_NAMES).toHaveLength(50);
     const el = renderNode(
       <div>
         {APERTURE_ICON_NAMES.map((name) => (
@@ -54,7 +56,7 @@ describe('@yours/ui Aperture icons & brand SVGs', () => {
       </div>,
     );
     const svgs = el.querySelectorAll('svg');
-    expect(svgs.length).toBe(48);
+    expect(svgs.length).toBe(50);
     for (const svg of svgs) {
       expect(svg.children.length).toBeGreaterThan(0);
     }
@@ -69,6 +71,8 @@ describe('@yours/ui Aperture icons & brand SVGs', () => {
         <LocalDeviceIcon size={14} />
         <ShieldIcon size={14} />
         <SendIcon size={14} />
+        <ThinkIcon size={15} />
+        <TurboIcon size={15} />
         <MatrixOrb state="idle" size={28} />
         <MatrixOrb state="thinking" size={16} />
         <MatrixOrb state="streaming" size={16} />
@@ -78,7 +82,7 @@ describe('@yours/ui Aperture icons & brand SVGs', () => {
       </div>,
     );
 
-    expect(el.querySelectorAll('.yui-icon').length).toBe(6);
+    expect(el.querySelectorAll('.yui-icon').length).toBe(8);
     expect(el.querySelectorAll('.yui-matrix-orb').length).toBe(3);
     expect(el.querySelectorAll('.yui-matrix-orb--idle circle').length).toBe(21);
     expect(el.querySelectorAll('.yui-notch-ear').length).toBe(2);
