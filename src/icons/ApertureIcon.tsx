@@ -10,7 +10,7 @@ export interface ApertureIconProps extends Omit<SVGProps<SVGSVGElement>, 'name'>
 }
 
 /**
- * Renders any of the 48 Aperture (Set E) outline SVG icons using pure React
+ * Renders any of the 50 Aperture (Set E) outline SVG icons using pure React
  * SVG elements with zero `dangerouslySetInnerHTML`.
  */
 export function ApertureIcon({
@@ -96,9 +96,11 @@ export const SparkTrendIcon = createNamedIcon('spark-trend');
 export const StopIcon = createNamedIcon('stop');
 export const TabStackIcon = createNamedIcon('tab-stack');
 export const ThemeIcon = createNamedIcon('theme');
+export const ThinkIcon = createNamedIcon('think');
 export const ThumbDownIcon = createNamedIcon('thumb-down');
 export const ThumbUpIcon = createNamedIcon('thumb-up');
 export const TrashIcon = createNamedIcon('trash');
+export const TurboIcon = createNamedIcon('turbo');
 export const UndoIcon = createNamedIcon('undo');
 export const UploadIcon = createNamedIcon('upload');
 export const VolumeIcon = createNamedIcon('volume');

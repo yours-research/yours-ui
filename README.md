@@ -24,7 +24,7 @@
   </p>
 </div>
 
-**`@yours/ui`** is the MIT-licensed React component library, design token system, and 48-icon Aperture SVG kit for **Yours Research** (`Tactile Localism × Rare UI Minimalism`).
+**`@yours/ui`** is the MIT-licensed React component library, design token system, and 50-icon Aperture SVG kit for **Yours Research** (`Tactile Localism × Rare UI Minimalism`).
 
 Built specifically for local-first Chromium MV3 side panels (`340px–440px`), it pairs **Light Cotton Paper** (`#FAF8F5` / `#F2EFE9` / `#FFFFFF`) and **Dark Anodized Obsidian** (`#09090B` / `#111113` / `#18181B`) recessed-stage surfaces with pure React primitives — **zero runtime dependencies**, **zero Tailwind requirement**, and **zero `dangerouslySetInnerHTML`**. See the [Consumer MV3 Integration Guide](./docs/CONSUMERS.md) for strict CSP configuration, subpath tree-shaking, focus management, and RTL/`forced-colors` details.
 
@@ -165,8 +165,8 @@ All public subpaths (`@yours/ui`, `@yours/ui/icons`, `@yours/ui/layout`, `@yours
 
 | Entrypoint | Raw | Gzip | Budget Guard |
 | :--- | :---: | :---: | :---: |
-| Total `dist/` JS (`62` ESM modules) | `207.23 KB` | `78.79 KB` | `<= 80.00 KB` |
-| `@yours/ui/styles` (`tokens.css` + `components.css` + `index.css`) | `110.38 KB` | `18.99 KB` | `<= 19.00 KB` |
+| Total `dist/` JS (`64` ESM modules) | `215.97 KB` | `82.23 KB` | `<= 84.00 KB` |
+| `@yours/ui/styles` (`tokens.css` + `components.css` + `index.css`) | `115.90 KB` | `19.91 KB` | `<= 21.00 KB` |
 
 Run `npm run build && npm run check:size` to inspect live raw and gzipped sizes per entrypoint.
 
@@ -177,7 +177,7 @@ Run `npm run build && npm run check:size` to inspect live raw and gzipped sizes 
 | Subpath | Contents |
 | :--- | :--- |
 | `@yours/ui` | Complete root barrel re-exporting `@yours/ui/icons`, `@yours/ui/layout`, `@yours/ui/components`, and `@yours/ui/genui`. |
-| `@yours/ui/icons` | `ApertureIcon`, `APERTURE_ICON_NAMES`, 48 named `*Icon` SVG components, `ToolStatusIcon` (12 animated tool/AI states), `MatrixOrb`, `NotchEar`, `YoursMark`. |
+| `@yours/ui/icons` | `ApertureIcon`, `APERTURE_ICON_NAMES`, 50 named `*Icon` SVG components (`ThinkIcon`, `TurboIcon`, ...), `ToolStatusIcon` (12 animated tool/AI states), `MatrixOrb`, `NotchEar`, `YoursMark`. |
 | `@yours/ui/layout` | `SidePanelShell` (`overlay`, `sheet` & `toast` z-45 slots + `ResizeObserver` scroll-edge fades), `TopNotch` (`144x36` -> `272x52` hover-grow & drawer), `HookSidebarList`, `NotchDrawerSearch`, `NotchOptionRow`, `NotchStatusPill`, `GreenLed`. |
 | `@yours/ui/components` | Grouped below across shell/command, conversation, tools/guard, runtime/models, and data/settings. |
 | `@yours/ui/genui` | `CompareTable`, `ChecklistCard`, `PageBriefCard`, `DraftCard`, `EntitySummaryCard`, `ChoicePromptCard`, `MetricStripCard`, `PageActionCard`, `TimelineCard`, `QuoteExcerptCard`. |
@@ -185,8 +185,8 @@ Run `npm run build && npm run check:size` to inspect live raw and gzipped sizes 
 
 ### `@yours/ui/components` Inventory
 
-- **Shell, Overlay & Navigation:** `CommandPalette`, `ContextCommandPopover`, `FindInThreadBar`, `FloatingComposer`, `FloatingContextSheet`, `EmptyPanelState`, `EmptyState`, `KbdHint`, `OfflineStatusBanner`, `OnboardingCard`, `PromptCapsuleStack`, `PromptTemplateList`, `QuotedContextBanner`, `ScrollToBottomButton`, `SegmentedControl`, `ShortcutSheet`, `StatusBadge`, `StatusToast`, `SuggestionChipRow`, `ThreadHistoryDrawer`, `ThreadHistoryList`, `ToastPill`.
-- **Conversation, Citations & Diffs:** `ActionBar`, `AssistantMessage`, `AttachmentDropzone`, `AttachmentStrip`, `AudioLevelMeter`, `BranchPicker`, `CitationChip`, `CitationFootnoteList`, `CodeBlock`, `CodeBlockCard`, `DiffCard`, `FollowUpSuggestions`, `InlineCitationPill`, `InlineCitationPopover`, `InlineNotice`, `MessageSkeleton`, `MessageSources`, `MessageSourcesPill`, `SessionCheckpointCard`, `SourceFavicon`, `SourcePreviewPopover`, `SourcesDrawer`, `StreamingResponse`, `UserMessageBubble`, `VoiceDictationPill`, `VoiceSessionBar`, `VoiceSessionCard`, `WebSearchSourcesStrip`.
+- **Shell, Overlay & Navigation:** `CommandPalette`, `ContextCommandPopover`, `FindInThreadBar`, `FloatingComposer`, `FloatingContextSheet`, `EmptyPanelState`, `EmptyState`, `KbdHint`, `OfflineStatusBanner`, `OnboardingCard`, `PromptCapsuleStack`, `PromptTemplateList`, `QuotedContextBanner`, `ScrollToBottomButton`, `SearchModal`, `SegmentedControl`, `ShortcutSheet`, `StatusBadge`, `StatusToast`, `SuggestionChipRow`, `ThreadHistoryDrawer`, `ThreadHistoryList`, `ToastPill`.
+- **Conversation, Citations & Diffs:** `ActionBar`, `AssistantMessage`, `AttachmentDropzone`, `AttachmentStrip`, `AudioLevelMeter`, `BranchPicker`, `CitationChip`, `CitationFootnoteList`, `CodeBlock`, `CodeBlockCard`, `DiffCard`, `FollowUpSuggestions`, `InlineCitationPill`, `InlineCitationPopover`, `InlineNotice`, `MessageSkeleton`, `MessageSources`, `MessageSourcesPill`, `SessionCheckpointCard`, `SourceFavicon`, `SourcePreviewPopover`, `SourcesDrawer`, `StreamingResponse`, `UserMessageBubble`, `VoiceDictationPill`, `VoiceSessionBar`, `VoiceSessionCard`, `WebSearch`, `WebSearchActivity`, `WebSearchSourcesStrip`.
 - **Reasoning, Tools, Context & Guard:** `AgentHandoffCard`, `AgentStepRow`, `AgentStepsCard`, `ConfirmActionCard`, `ContextBudgetMeter`, `InlineToolStatus`, `PageSelectionCard`, `PermissionApprovalCard`, `PermissionCard`, `ReasoningTrace`, `ShimmerText`, `SitePermissionsList`, `StepTree`, `StepTreeItem`, `TabContextList`, `ToolChain`, `ToolStepCard`, `ToolTraceList`.
 - **Local Runtime, Models, Memory, Data & Settings:** `ArtifactPreviewCard`, `DataTableCard`, `DeviceCapabilityCard`, `ErrorRecoveryBanner`, `ErrorRecoveryCard`, `ExportSessionCard`, `HardwareStatusStrip`, `LocalVaultExportCard`, `MemoryInspectorList`, `MemoryRecordCard`, `ModelDownloadGate`, `ModelDownloadProgressBar`, `ModelParametersCard`, `ModelRosterList`, `NetworkAuditCard`, `SettingsSection`, `SettingsToggleRow`, `StorageQuotaCard`.
 

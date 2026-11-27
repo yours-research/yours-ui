@@ -93,6 +93,7 @@ import {
   QuoteExcerptCard,
   QuotedContextBanner,
   ReasoningTrace,
+  SearchModal,
   SegmentedControl,
   SettingsSection,
   SettingsToggleRow,
@@ -113,6 +114,7 @@ import {
   StorageQuotaCard,
   StreamingResponse,
   TabContextList,
+  ThinkIcon,
   ThreadHistoryList,
   TimelineCard,
   ToastPill,
@@ -121,9 +123,11 @@ import {
   ToolStepCard,
   ToolTraceList,
   TopNotch,
+  TurboIcon,
   UserMessageBubble,
   VoiceSessionBar,
   VoiceSessionCard,
+  WebSearch,
   WebSearchSourcesStrip,
   AudioLevelMeter,
 } from '../src/index.js';
@@ -1191,6 +1195,42 @@ function ToolShimmerChainPanel({ theme }: { theme: 'light' | 'dark' }) {
             id: 'ws5',
             title: 'CSS Container Query Reflow',
             url: 'https://developer.mozilla.org/docs/Web/CSS/CSS_containment',
+          },
+        ]}
+      />
+
+      <WebSearch
+        status="searching"
+        query="mv3 side panel"
+        progress={0.62}
+        sources={[]}
+      />
+
+      <WebSearch
+        status="done"
+        defaultOpen
+        sources={[
+          {
+            id: 'ws-p1',
+            title: 'Chromium Side Panel MV3 API',
+            url: 'https://developer.chrome.com/docs/extensions/reference/api/sidePanel',
+            snippet: 'Render isolated UI surfaces beside active browser tabs.',
+          },
+          {
+            id: 'ws-p2',
+            title: 'WebGPU Adapter Limits',
+            url: 'https://www.w3.org/TR/webgpu/',
+            snippet: 'Inspect GPUAdapter headroom before weight load.',
+          },
+          {
+            id: 'ws-p3',
+            title: 'OPFS Quota Best Practices',
+            url: 'https://web.dev/articles/origin-private-file-system',
+          },
+          {
+            id: 'ws-p4',
+            title: 'Yours UI Design Tokens',
+            url: 'https://yours.sh/docs/tokens',
           },
         ]}
       />
@@ -2302,6 +2342,76 @@ function RtlShowcasePanel({ theme }: { theme: 'light' | 'dark' }) {
   );
 }
 
+function SearchModalShowcasePanel({ theme }: { theme: 'light' | 'dark' }) {
+  const items = [
+    {
+      id: 'think-mode',
+      group: 'DISPLAY',
+      label: 'Reasoning mode',
+      description: 'Extended local chain-of-thought pass with ThinkIcon geometry and collapsed settled trace.',
+      icon: 'think' as const,
+      preview: (
+        <div className="yui-col yui-col-8 yui-card-pad">
+          <div className="yui-row yui-gap-8">
+            <span className="yui-step-icon"><ThinkIcon size={18} /></span>
+            <span className="yui-prompt-capsule-title">Think pass · Extended</span>
+          </div>
+          <span className="yui-muted-note">Strict 24×24 Aperture geometry readable at 15–16px.</span>
+        </div>
+      ),
+    },
+    {
+      id: 'turbo-mode',
+      group: 'AI KIT',
+      label: 'Turbo speculative decode',
+      description: 'Accelerated local draft verification paired with crisp 0/45/90 TurboIcon geometry.',
+      icon: 'turbo' as const,
+      preview: (
+        <div className="yui-col yui-col-8 yui-card-pad">
+          <div className="yui-row yui-gap-8">
+            <span className="yui-step-icon"><TurboIcon size={18} /></span>
+            <span className="yui-prompt-capsule-title">Turbo · 1.58x speedup</span>
+          </div>
+          <span className="yui-muted-note">Tree speculation at 86.4 tok/s locally.</span>
+        </div>
+      ),
+    },
+    {
+      id: 'web-search',
+      group: 'AI KIT',
+      label: 'Web Search activity',
+      description: 'Animated progress ring during web lookup, transitioning into stacked fan-out favicons and source cards.',
+      icon: 'globe' as const,
+    },
+    {
+      id: 'agent-steps',
+      group: 'AI KIT',
+      label: 'Agent steps timeline',
+      description: 'Unified hairline reasoning and tool execution timeline that settles neatly after final output.',
+      icon: 'checklist' as const,
+    },
+    {
+      id: 'citations',
+      group: 'DISPLAY',
+      label: 'Inline citation popover',
+      description: 'Compact 16px monospace pill opening external-safe source previews on hover or click.',
+      icon: 'quote' as const,
+    },
+    {
+      id: 'shortcuts',
+      group: 'NAVIGATION',
+      label: 'Keyboard shortcuts',
+      description: 'Inspect global side-panel navigation, voice barge-in, and focus-trap bindings.',
+      icon: 'sliders' as const,
+    },
+  ];
+  return (
+    <SidePanelShell theme={theme}>
+      <SearchModal open items={items} />
+    </SidePanelShell>
+  );
+}
+
 function SpecimenApp() {
   const params = new URLSearchParams(window.location.search);
   const mode = params.get('mode') || 'gallery';
@@ -2352,6 +2462,7 @@ function SpecimenApp() {
         {panel === 'preflight' ? <PreflightAndSelectionPanel theme={theme} /> : null}
         {panel === 'resilience' ? <SessionAndOfflinePanel theme={theme} /> : null}
         {panel === 'rtl' ? <RtlShowcasePanel theme={theme} /> : null}
+        {panel === 'search-modal' ? <SearchModalShowcasePanel theme={theme} /> : null}
       </div>
     );
   }
@@ -4844,6 +4955,40 @@ async function main() {
       const desktopPath = path.join(OUT_DIR, `specimen-${theme}-desktop-728.png`);
       await page.screenshot({ path: desktopPath });
       outputs.push(desktopPath);
+
+      // Split-preview SearchModal desktop audit (760x560)
+      await page.setViewportSize({ width: 760, height: 560 });
+      await page.goto(`${baseUrl}/?mode=single&theme=${theme}&panel=search-modal&width=728`, { waitUntil: 'networkidle' });
+      await waitForSpecimen(`search-modal/${theme}`);
+      await page.mouse.move(0, 0);
+      await page.locator('[data-slot="search-modal"] .yui-sm-input').press('ArrowDown');
+      await page.waitForTimeout(180);
+      const smAudit = await page.evaluate(() => {
+        const dlg = document.querySelector('[data-slot="search-modal"]');
+        const r = dlg?.getBoundingClientRect();
+        return {
+          overflow: document.documentElement.scrollWidth > 760,
+          inlineStyles: document.querySelectorAll('#specimen-root [style]').length,
+          activeTitle: dlg?.querySelector('.yui-sm-preview-title')?.textContent?.trim() ?? null,
+          hasArrow: Boolean(dlg?.querySelector('.yui-sm-row.is-active .yui-sm-arrow')),
+          hasCount: dlg?.querySelector('.yui-sm-count')?.textContent?.trim() ?? null,
+          withinViewport: Boolean(r && r.left >= 0 && r.right <= 760 && r.top >= 0 && r.bottom <= 560),
+        };
+      });
+      if (
+        smAudit.overflow ||
+        smAudit.inlineStyles !== 0 ||
+        smAudit.activeTitle !== 'Turbo speculative decode' ||
+        !smAudit.hasArrow ||
+        smAudit.hasCount !== '6 of 6' ||
+        !smAudit.withinViewport
+      ) {
+        throw new Error(`SearchModal desktop audit failed (${theme}): ${JSON.stringify(smAudit)}`);
+      }
+      await auditPanelContrast(theme, 'search-modal');
+      const smPath = path.join(OUT_DIR, `specimen-${theme}-search-modal-728.png`);
+      await page.screenshot({ path: smPath });
+      outputs.push(smPath);
 
       // Overview full-width comparison sheet
       await page.setViewportSize({ width: 8104, height: 900 });
